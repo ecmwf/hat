@@ -69,21 +69,12 @@ def display_map(ds: xr.Dataset, name: str, minv: float = 0, maxv: float = 1):
     # Define style function
     def style_function(feature):
         property = feature["properties"][name]
-        return {
-            "fillOpacity": 0.7,
-            "weight": 0,
-            "fillColor": colormap(property)
-        }
+        return {"fillOpacity": 0.7, "weight": 0, "fillColor": colormap(property)}
 
-    m = folium.Map(location=[48, 5],
-                   zoom_start=5,
-                   prefer_canvas=True,
-                   tiles=None)
+    m = folium.Map(location=[48, 5], zoom_start=5, prefer_canvas=True, tiles=None)
     _ = folium.GeoJson(
         gdf,
-        marker=folium.CircleMarker(fillColor="white",
-                                   fillOpacity=0.5,
-                                   radius=5),
+        marker=folium.CircleMarker(fillColor="white", fillOpacity=0.5, radius=5),
         name=name,
         style_function=style_function,
         tooltip=folium.GeoJsonTooltip(fields=["station_id", name]),

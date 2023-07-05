@@ -17,10 +17,9 @@ def arr_to_image(arr: np.array) -> np.array:
     return img
 
 
-def numpy_to_png(arr: np.array,
-                 dim="time",
-                 index="somedate",
-                 fpath="image.png") -> None:
+def numpy_to_png(
+    arr: np.array, dim="time", index="somedate", fpath="image.png"
+) -> None:
     """Save numpy array to png"""
 
     # image from array

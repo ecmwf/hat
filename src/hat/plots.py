@@ -29,11 +29,11 @@ def plot_timeseries(t, y, jupyter=False):
 
 
 def histogram(
-        arr: Union[np.array, np.ma.MaskedArray],
-        bins=10,
-        clip=None,
-        title="Histogram",
-        figsize=(6, 4),
+    arr: Union[np.array, np.ma.MaskedArray],
+    bins=10,
+    clip=None,
+    title="Histogram",
+    figsize=(6, 4),
 ):
     """plot histogram of a numpy array or masked numpy array"""
 

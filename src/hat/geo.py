@@ -1,13 +1,14 @@
 # add file location to python path
-from pyproj import CRS, Transformer
-from jsonschema import ValidationError, validate
-import xarray as xr
-import shapely
-import numpy as np
-import geopandas as gpd
 import json
 import os
 import sys
+
+import geopandas as gpd
+import numpy as np
+import shapely
+import xarray as xr
+from jsonschema import ValidationError, validate
+from pyproj import CRS, Transformer
 
 sys.path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -60,13 +61,14 @@ def transform_bounds(src_bounds, src_crs, dst_crs):
 
 def shapely_to_geojson(shapely_object, fpath="data.geojson"):
     geo_dict = {
-        "type":
-        "FeatureCollection",
-        "features": [{
-            "type": "Feature",
-            "properties": {},
-            "geometry": shapely.geometry.mapping(shapely_object),
-        }],
+        "type": "FeatureCollection",
+        "features": [
+            {
+                "type": "Feature",
+                "properties": {},
+                "geometry": shapely.geometry.mapping(shapely_object),
+            }
+        ],
     }
 
     with open(fpath, "w") as f:
@@ -91,10 +93,11 @@ def find_nearest(array, value):
     return array[idx]
 
 
-def name_of_adjusted_coord(coord_name: str, model: str, version_num: int,
-                           resolution: str):
+def name_of_adjusted_coord(
+    coord_name: str, model: str, version_num: int, resolution: str
+):
     """column name in station metadata of manually adjusted coordinate
-     based on model river network"""
+    based on model river network"""
     return f"{model.title()}{coord_name.title()}{version_num}_{resolution}"
 
 
@@ -114,8 +117,7 @@ def river_network_geometry(metadata, river_network, version=1):
     if river_network == "EPSG:4326":
         return metadata
 
-    lon_name, lat_name = name_of_adjusted_coords(river_network,
-                                                 version=version)
+    lon_name, lat_name = name_of_adjusted_coords(river_network, version=version)
 
     gdf = metadata.copy(deep=True)
     gdf["geometry"] = gpd.points_from_xy(gdf[lon_name], gdf[lat_name])
@@ -125,7 +127,7 @@ def river_network_geometry(metadata, river_network, version=1):
 
 def river_network_to_coord_names_mapping():
     """explicit mapping between river network name and coord names
-     (to handle inconsistent naming conventions)"""
+    (to handle inconsistent naming conventions)"""
 
     return {
         "station": ("StationLon", "StationLat"),
@@ -156,8 +158,7 @@ def river_network_to_coord_names(river_network: str = "") -> dict:
         x, y = river_network_to_coords[river_network]
         return {"x": x, "y": y}
     else:
-        print(
-            f"River network '{river_network}' not in: {valid_river_networks}")
+        print(f"River network '{river_network}' not in: {valid_river_networks}")
 
 
 def geojson_schema():
@@ -169,8 +170,7 @@ def geojson_schema():
         "type": "object",
         "properties": {
             "type": {
-                "type":
-                "string",
+                "type": "string",
                 "enum": [
                     "FeatureCollection",
                     "Feature",
@@ -187,45 +187,27 @@ def geojson_schema():
                 "type": "array",
                 "minItems": 4,
                 "maxItems": 6,
-                "items": {
-                    "type": "number"
-                },
+                "items": {"type": "number"},
             },
-            "id": {
-                "type": "string"
-            },
-            "geometry": {
-                "$ref": "#/definitions/geometry"
-            },
-            "properties": {
-                "type": "object"
-            },
+            "id": {"type": "string"},
+            "geometry": {"$ref": "#/definitions/geometry"},
+            "properties": {"type": "object"},
             "features": {
                 "type": "array",
                 "items": {
                     "type": "object",
                     "properties": {
-                        "type": {
-                            "const": "Feature"
-                        },
-                        "id": {
-                            "type": "string"
-                        },
-                        "geometry": {
-                            "$ref": "#/definitions/geometry"
-                        },
-                        "properties": {
-                            "type": "object"
-                        },
+                        "type": {"const": "Feature"},
+                        "id": {"type": "string"},
+                        "geometry": {"$ref": "#/definitions/geometry"},
+                        "properties": {"type": "object"},
                     },
                     "required": ["type", "properties", "geometry"],
                 },
             },
             "geometries": {
                 "type": "array",
-                "items": {
-                    "$ref": "#/definitions/geometry"
-                },
+                "items": {"$ref": "#/definitions/geometry"},
             },
         },
         "definitions": {
@@ -233,8 +215,7 @@ def geojson_schema():
                 "type": "object",
                 "properties": {
                     "type": {
-                        "type":
-                        "string",
+                        "type": "string",
                         "enum": [
                             "Point",
                             "MultiPoint",
@@ -247,32 +228,17 @@ def geojson_schema():
                     },
                     "coordinates": {
                         "oneOf": [
-                            {
-                                "$ref": "#/definitions/pointCoordinates"
-                            },
-                            {
-                                "$ref": "#/definitions/multiPointCoordinates"
-                            },
-                            {
-                                "$ref": "#/definitions/lineStringCoordinates"
-                            },
-                            {
-                                "$ref":
-                                "#/definitions/multiLineStringCoordinates"
-                            },
-                            {
-                                "$ref": "#/definitions/polygonCoordinates"
-                            },
-                            {
-                                "$ref": "#/definitions/multiPolygonCoordinates"
-                            },
+                            {"$ref": "#/definitions/pointCoordinates"},
+                            {"$ref": "#/definitions/multiPointCoordinates"},
+                            {"$ref": "#/definitions/lineStringCoordinates"},
+                            {"$ref": "#/definitions/multiLineStringCoordinates"},
+                            {"$ref": "#/definitions/polygonCoordinates"},
+                            {"$ref": "#/definitions/multiPolygonCoordinates"},
                         ]
                     },
                     "geometries": {
                         "type": "array",
-                        "items": {
-                            "$ref": "#/definitions/geometry"
-                        },
+                        "items": {"$ref": "#/definitions/geometry"},
                     },
                 },
                 "required": ["type"],
@@ -281,39 +247,27 @@ def geojson_schema():
                 "type": "array",
                 "minItems": 2,
                 "maxItems": 3,
-                "items": {
-                    "type": "number"
-                },
+                "items": {"type": "number"},
             },
             "multiPointCoordinates": {
                 "type": "array",
-                "items": {
-                    "$ref": "#/definitions/pointCoordinates"
-                },
+                "items": {"$ref": "#/definitions/pointCoordinates"},
             },
             "lineStringCoordinates": {
                 "type": "array",
-                "items": {
-                    "$ref": "#/definitions/pointCoordinates"
-                },
+                "items": {"$ref": "#/definitions/pointCoordinates"},
             },
             "multiLineStringCoordinates": {
                 "type": "array",
-                "items": {
-                    "$ref": "#/definitions/lineStringCoordinates"
-                },
+                "items": {"$ref": "#/definitions/lineStringCoordinates"},
             },
             "polygonCoordinates": {
                 "type": "array",
-                "items": {
-                    "$ref": "#/definitions/lineStringCoordinates"
-                },
+                "items": {"$ref": "#/definitions/lineStringCoordinates"},
             },
             "multiPolygonCoordinates": {
                 "type": "array",
-                "items": {
-                    "$ref": "#/definitions/polygonCoordinates"
-                },
+                "items": {"$ref": "#/definitions/polygonCoordinates"},
             },
         },
     }
@@ -354,10 +308,8 @@ def geopoints_to_array(gdf, array_coords) -> np.ndarray:
     point_ys = np.array([point.y for point in points])
 
     # nearest neighbour indices of the points in the array
-    x_indices = [(np.abs(array_coords["x"] - point_x)).argmin()
-                 for point_x in point_xs]
-    y_indices = [(np.abs(array_coords["y"] - point_y)).argmin()
-                 for point_y in point_ys]
+    x_indices = [(np.abs(array_coords["x"] - point_x)).argmin() for point_x in point_xs]
+    y_indices = [(np.abs(array_coords["y"] - point_y)).argmin() for point_y in point_ys]
 
     # create an empty boolean array
     shape = (len(array_coords["y"]), len(array_coords["x"]))
@@ -369,8 +321,7 @@ def geopoints_to_array(gdf, array_coords) -> np.ndarray:
     return arr
 
 
-def geopoints_from_csv(fpath: str, lat_name: str,
-                       lon_name: str) -> gpd.GeoDataFrame:
+def geopoints_from_csv(fpath: str, lat_name: str, lon_name: str) -> gpd.GeoDataFrame:
     """Load georeferenced points from file.
     Requires name of latitude and longitude columns"""
 

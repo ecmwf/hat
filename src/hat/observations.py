@@ -31,8 +31,9 @@ def add_geometry_column(gdf: gpd.GeoDataFrame, coord_names):
     gdf = gdf.dropna(subset=["x", "y"])
 
     # Filter rows that do not plot on Earth (e.g. -9999)
-    gdf = gdf[(gdf["x"] >= -180) & (gdf["x"] <= 180) & (gdf["y"] >= -90) &
-              (gdf["y"] <= 90)]
+    gdf = gdf[
+        (gdf["x"] >= -180) & (gdf["x"] <= 180) & (gdf["y"] >= -90) & (gdf["y"] <= 90)
+    ]
 
     # Create a geometry column
     gdf["geometry"] = gpd.points_from_xy(gdf[x_coord_name], gdf[y_coord_name])
@@ -40,9 +41,9 @@ def add_geometry_column(gdf: gpd.GeoDataFrame, coord_names):
     return gdf
 
 
-def read_station_metadata_file(fpath: str,
-                               coord_names: str,
-                               epsg: int = EPSG) -> gpd.GeoDataFrame:
+def read_station_metadata_file(
+    fpath: str, coord_names: str, epsg: int = EPSG
+) -> gpd.GeoDataFrame:
     """read hydrological stations from file. will cache as pickle object
     because .csv file used by the team takes 12 seconds to load"""
 
@@ -56,12 +57,11 @@ def read_station_metadata_file(fpath: str,
     return gdf
 
 
-def read_station_metadata(station_metadata_filepath,
-                          filters="",
-                          coord_names: str = RIVER_NETWORK_COORD_NAMES):
+def read_station_metadata(
+    station_metadata_filepath, filters="", coord_names: str = RIVER_NETWORK_COORD_NAMES
+):
     # read station metadata from file
-    stations = read_station_metadata_file(station_metadata_filepath,
-                                          coord_names)
+    stations = read_station_metadata_file(station_metadata_filepath, coord_names)
 
     # (optionally) filter the stations, e.g. 'Contintent == Europe'
     if filters:

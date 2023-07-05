@@ -1,8 +1,9 @@
-import os
-import json
-import pkg_resources
-from pathlib import Path
 import copy
+import json
+import os
+from pathlib import Path
+
+import pkg_resources
 
 from hat.cli import warning
 
@@ -12,8 +13,7 @@ def load_package_config(fname):
     resource_package = "hat"
     resource_path = os.path.join("config_json", fname)
 
-    config_string = pkg_resources.resource_string(resource_package,
-                                                  resource_path)
+    config_string = pkg_resources.resource_string(resource_package, resource_path)
     config = json.loads(config_string.decode())
 
     return config
@@ -71,8 +71,7 @@ def valid_custom_config(custom_config: dict = {}):
 
     # only keep keys that are in DEFAULT_CONFIG
     filtered_custom_config = {
-        k: v
-        for k, v in custom_config.items() if k in DEFAULT_CONFIG
+        k: v for k, v in custom_config.items() if k in DEFAULT_CONFIG
     }
 
     # overwrite default_config values with custom values
@@ -113,8 +112,9 @@ def read_config(custom_config_filepath: str):
     return config
 
 
-def timeseries_config(simulation_datadir: str, station_metadata: str,
-                      config_filepath: str):
+def timeseries_config(
+    simulation_datadir: str, station_metadata: str, config_filepath: str
+):
     """Manage configuration settings for timeseries extraction.
     Priority order:
       1) command line arguments
@@ -144,10 +144,11 @@ def timeseries_config(simulation_datadir: str, station_metadata: str,
 
     # check output filepath is valid before running timeseries extraction
     config["simulation_output_file_extension"] = config[
-        "simulation_output_filepath"].split(".")[-1]
+        "simulation_output_filepath"
+    ].split(".")[-1]
     if config["simulation_output_file_extension"] not in ["nc", "csv"]:
         raise ValueError(
-            "output_filepath must be .nc or .csv, please update config",
-            config_filepath)
+            "output_filepath must be .nc or .csv, please update config", config_filepath
+        )
 
     return config

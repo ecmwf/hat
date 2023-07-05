@@ -20,13 +20,11 @@ from hat.config import timeseries_config
 
 # hat modules
 from hat.data import find_files, save_dataset_to_netcdf
+from hat.extract_simulation_timeseries import DEFAULT_CONFIG, extract_timeseries
 from hat.observations import read_station_metadata
-from hat.extract_simulation_timeseries import DEFAULT_CONFIG
-from hat.extract_simulation_timeseries import extract_timeseries
 
 
-def print_overview(config: dict, station_metadata: gpd.GeoDataFrame,
-                   fpaths: List[str]):
+def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, fpaths: List[str]):
     """Print overview of relevant information for user"""
 
     title("Configuration", color="cyan")
@@ -41,7 +39,9 @@ def print_overview(config: dict, station_metadata: gpd.GeoDataFrame,
     print(f"number of stations = {len(station_metadata)}")
 
     title("Simulation", color="cyan")
-    print(f"number of simulation files = {len(fpaths)}\n", )
+    print(
+        f"number of simulation files = {len(fpaths)}\n",
+    )
 
 
 def print_default_config(DEFAULT_CONFIG):
@@ -74,10 +74,11 @@ def command_line_tool(
         help="Path to configuration file",
     ),
     show_default_config: bool = typer.Option(
-        False, help="Print default configuration and exit"),
+        False, help="Print default configuration and exit"
+    ),
 ):
     """Command line tool to extract simulation timeseries of river discharge
-     from gridded files (grib or netcdf)"""
+    from gridded files (grib or netcdf)"""
 
     # show default config and exit?
     if show_default_config:
@@ -86,8 +87,9 @@ def command_line_tool(
 
     title("STARTING TIME SERIES EXTRACTION")
 
-    config = timeseries_config(simulation_datadir, station_metadata_filepath,
-                               config_filepath)
+    config = timeseries_config(
+        simulation_datadir, station_metadata_filepath, config_filepath
+    )
     station_metadata = read_station_metadata(station_metadata_filepath)
     simulation_fpaths = find_files(
         config["simulation_datadir"],
@@ -97,15 +99,13 @@ def command_line_tool(
 
     print_overview(config, station_metadata, simulation_fpaths)
 
-    timeseries = extract_timeseries(station_metadata,
-                                    simulation_fpaths=simulation_fpaths)
+    timeseries = extract_timeseries(
+        station_metadata, simulation_fpaths=simulation_fpaths
+    )
 
     save_dataset_to_netcdf(timeseries, "./simulation_timeseries.nc")
 
-    title("TIMESERIES EXTRACTION COMPLETE",
-          color="white",
-          background="cyan",
-          bold=True)
+    title("TIMESERIES EXTRACTION COMPLETE", color="white", background="cyan", bold=True)
 
 
 def main():

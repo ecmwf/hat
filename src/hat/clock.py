@@ -14,8 +14,7 @@ def digital_clock(func):
         t0 = time.perf_counter()
         result = func(*args, **kwargs)
         elapsed = time.perf_counter() - t0
-        human_readable_time = humanize.naturaldelta(
-            datetime.timedelta(seconds=elapsed))
+        human_readable_time = humanize.naturaldelta(datetime.timedelta(seconds=elapsed))
 
         # name
         name = func.__name__
@@ -36,8 +35,7 @@ def clock(func):
         t0 = time.perf_counter()
         result = func(*args, **kwargs)
         elapsed = time.perf_counter() - t0
-        human_readable_time = humanize.naturaldelta(
-            datetime.timedelta(seconds=elapsed))
+        human_readable_time = humanize.naturaldelta(datetime.timedelta(seconds=elapsed))
 
         # name
         name = func.__name__

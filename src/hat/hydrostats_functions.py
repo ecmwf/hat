@@ -134,7 +134,7 @@ def kge(s, o):
     y = (np.std(s) / np.mean(s)) / (np.std(o) / np.mean(o))
     r = np.corrcoef(o, s)[0, 1]
 
-    return 1 - np.sqrt((r - 1)**2 + (B - 1)**2 + (y - 1)**2)
+    return 1 - np.sqrt((r - 1) ** 2 + (B - 1) ** 2 + (y - 1) ** 2)
 
 
 @hydrostat
@@ -147,8 +147,9 @@ def index_agreement(s, o):
     output:
         ia: index of agreement
     """
-    return 1 - (np.sum((o - s)**2)) / (np.sum(
-        (np.abs(s - np.mean(o)) + np.abs(o - np.mean(o)))**2))
+    return 1 - (np.sum((o - s) ** 2)) / (
+        np.sum((np.abs(s - np.mean(o)) + np.abs(o - np.mean(o))) ** 2)
+    )
 
 
 @hydrostat
@@ -174,7 +175,7 @@ def ns(s, o):
     output:
         NS: Nash-Sutcliffe efficient coefficient
     """
-    return 1 - sum((s - o)**2) / sum((o - np.mean(o))**2)
+    return 1 - sum((s - o) ** 2) / sum((o - np.mean(o)) ** 2)
 
 
 @hydrostat
@@ -189,7 +190,7 @@ def nslog(s, o):
     """
     s = np.log(s)
     o = np.log(o)
-    return 1 - sum((s - o)**2) / sum((o - np.mean(o))**2)
+    return 1 - sum((s - o) ** 2) / sum((o - np.mean(o)) ** 2)
 
 
 @hydrostat
@@ -228,7 +229,7 @@ def rmse(s, o):
     output:
         rmses: root mean squared error
     """
-    return np.sqrt(np.mean((s - o)**2))
+    return np.sqrt(np.mean((s - o) ** 2))
 
 
 @hydrostat
@@ -242,8 +243,8 @@ def rsr(s, o):
         RSR: RMSE-observations standard deviation ratio
     """
 
-    rmse = np.sqrt(np.sum((s - o)**2))
-    stdev_obs = np.sqrt(np.sum((o - np.mean(o))**2))
+    rmse = np.sqrt(np.sum((s - o) ** 2))
+    stdev_obs = np.sqrt(np.sum((o - np.mean(o)) ** 2))
     return rmse / stdev_obs
 
 

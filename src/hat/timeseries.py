@@ -5,6 +5,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
+
 """ NETCDF"""
 
 
@@ -15,9 +16,9 @@ def mask_array_np(arr, mask):
     return arr[..., mask]
 
 
-def extract_timeseries_using_mask(da: xr.DataArray,
-                                  mask: np.ndarray,
-                                  core_dims=["y", "x"]):
+def extract_timeseries_using_mask(
+    da: xr.DataArray, mask: np.ndarray, core_dims=["y", "x"]
+):
     """extract timeseries using a station mask with xarray.apply_ufunc()
 
     - input_core_dims
@@ -50,9 +51,7 @@ def extract_timeseries_using_mask(da: xr.DataArray,
         output_dtypes=[da.dtype],
         exclude_dims=set(core_dims),
         dask="parallelized",
-        dask_gufunc_kwargs={"output_sizes": {
-            "station": int(mask.sum())
-        }},
+        dask_gufunc_kwargs={"output_sizes": {"station": int(mask.sum())}},
     )
 
     # extract timeseries (i.e. compute graph)
@@ -73,13 +72,15 @@ def extract_timeseries_from_filepaths(fpaths: List[str], mask: np.ndarray):
 
     # timeseries extraction using masking algorithm
     timeseries = extract_timeseries_using_mask(
-        ds.dis, mask, core_dims=["latitude", "longitude"])
+        ds.dis, mask, core_dims=["latitude", "longitude"]
+    )
 
     return timeseries
 
 
-def station_timeseries_index(station: gpd.GeoDataFrame,
-                             lon_in_mask: np.ndarray, lat_in_mask: np.ndarray):
+def station_timeseries_index(
+    station: gpd.GeoDataFrame, lon_in_mask: np.ndarray, lat_in_mask: np.ndarray
+):
     """Get timeseries index for a given station, required because timeseries
     can be shared between stations that are close together"""
 
@@ -90,9 +91,9 @@ def station_timeseries_index(station: gpd.GeoDataFrame,
     return idx
 
 
-def all_timeseries(stations: gpd.GeoDataFrame, mask,
-                   masked_timeseries: xr.DataArray,
-                   coords: dict) -> pd.DataFrame:
+def all_timeseries(
+    stations: gpd.GeoDataFrame, mask, masked_timeseries: xr.DataArray, coords: dict
+) -> pd.DataFrame:
     """
     Fixed bug in timeseries extraction by mask where:
     stations can be dropped if too close together (or duplicates)
@@ -126,15 +127,13 @@ def all_timeseries(stations: gpd.GeoDataFrame, mask,
         station_id = station["station_id"]
 
         # timeseries index for a given station
-        timeseries_index = station_timeseries_index(station, lon_in_mask,
-                                                    lat_in_mask)
+        timeseries_index = station_timeseries_index(station, lon_in_mask, lat_in_mask)
 
         # timeseries values for a given station
         station_timeseries = masked_timeseries.sel(station=timeseries_index)
 
         # update complete station timeseries
-        complete_station_timeseries[
-            station_id] = station_timeseries.values.flatten()
+        complete_station_timeseries[station_id] = station_timeseries.values.flatten()
     """
     Finally, create a pandas dataframe with a datetime index
     """

@@ -19,19 +19,19 @@ def check_inputs(functions, sims, obs):
 
     if sims == "":
         raise UserError(
-            "Filepath to simulation timeseries is required, e.g. try --sims ")
+            "Filepath to simulation timeseries is required, e.g. try --sims "
+        )
 
     if obs == "":
         raise UserError(
-            "Filepath to observation timeseries is required, e.g. try --obs")
+            "Filepath to observation timeseries is required, e.g. try --obs"
+        )
 
     if not sims.endswith(".nc"):
-        raise UserError(
-            f"Simulation filepath must end with .nc was given: {sims}")
+        raise UserError(f"Simulation filepath must end with .nc was given: {sims}")
 
     if not obs.endswith(".nc"):
-        raise UserError(
-            f"Observation filepath must end with .nc was given: {obs}")
+        raise UserError(f"Observation filepath must end with .nc was given: {obs}")
 
     return True
 

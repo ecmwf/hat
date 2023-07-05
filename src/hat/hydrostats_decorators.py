@@ -28,8 +28,7 @@ def is_two_numpy_arrays(func):
         if len(args) != 2:
             raise TypeError("Not enough arguments. Expected 2 numpy arrays.")
 
-        if not (isinstance(args[0], np.ndarray)
-                and isinstance(args[1], np.ndarray)):
+        if not (isinstance(args[0], np.ndarray) and isinstance(args[1], np.ndarray)):
             raise TypeError(f"Both arguments to {func} must be numpy arrays.")
 
         return func(*args, **kwargs)

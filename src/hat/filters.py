@@ -3,10 +3,9 @@ import xarray as xr
 
 
 # @st.cache_data
-def temporal_filter(_metadata,
-                    _observations: pd.DataFrame,
-                    timeperiod,
-                    station_id_name="station_id"):
+def temporal_filter(
+    _metadata, _observations: pd.DataFrame, timeperiod, station_id_name="station_id"
+):
     """
     filter station metadata and timeseries by timeperiod
 
@@ -62,10 +61,12 @@ def drainage_area_filter(metadata, drainage_area):
 def apply_station_filters(metadata, timeseries, station_filters):
     """apply station filters in one go"""
 
-    metadata, timeseries = temporal_filter(metadata, timeseries,
-                                           station_filters["timeperiod"])
+    metadata, timeseries = temporal_filter(
+        metadata, timeseries, station_filters["timeperiod"]
+    )
     metadata = calibration_station_filter(
-        metadata, station_filters["calibration_stations"])
+        metadata, station_filters["calibration_stations"]
+    )
     metadata = quality_flag_filter(metadata, station_filters["quality_flag"])
     metadata = drainage_area_filter(metadata, station_filters["drainage_area"])
 
@@ -88,8 +89,7 @@ def stations_with_discharge(obs, timeperiod, metadata):
     return metadata, obsdis
 
 
-def apply_filter(df: pd.DataFrame, key: str, operator: str,
-                 value: str) -> pd.DataFrame:
+def apply_filter(df: pd.DataFrame, key: str, operator: str, value: str) -> pd.DataFrame:
     """
     Apply the filter on the DataFrame based on the provided
     key, operator, and value.
@@ -104,8 +104,7 @@ def apply_filter(df: pd.DataFrame, key: str, operator: str,
     }
 
     if key not in df.columns:
-        raise ValueError(
-            f"Key '{key}' does not exist as column name in dataframe")
+        raise ValueError(f"Key '{key}' does not exist as column name in dataframe")
 
     if operator not in operators:
         raise ValueError(f"Operator '{operator}' is not supported")
@@ -133,16 +132,14 @@ def filter_dataframe(df, filters: str):
     for filter_str in filters:
         parts = filter_str.split()
         if len(parts) != 3:
-            raise ValueError(
-                "Invalid filter format. Expected 'key operator value'.")
+            raise ValueError("Invalid filter format. Expected 'key operator value'.")
 
         key, operator, value = parts
 
         df = apply_filter(df, key, operator, value)
 
     if len(df) == 0:
-        raise ValueError(
-            "There are no remaining rows (try different filters?)")
+        raise ValueError("There are no remaining rows (try different filters?)")
 
     return df
 
@@ -160,7 +157,8 @@ def filter_timeseries(sims_ds: xr.Dataset, obs_ds: xr.Dataset, threshold=80):
     """
     # Only keep stations in both the observation and simulation datasets
     matching_stations = sorted(
-        set(sims_ds.station.values).intersection(obs_ds.station.values))
+        set(sims_ds.station.values).intersection(obs_ds.station.values)
+    )
     sims_ds = sims_ds.sel(station=matching_stations)
     obs_ds = obs_ds.sel(station=matching_stations)
 

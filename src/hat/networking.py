@@ -11,8 +11,9 @@ def get_host():
     hostname = socket.gethostname()
 
     # get the IP address(es) associated with the hostname
-    ip_addresses = socket.getaddrinfo(hostname, None, socket.AF_INET,
-                                      socket.SOCK_STREAM)
+    ip_addresses = socket.getaddrinfo(
+        hostname, None, socket.AF_INET, socket.SOCK_STREAM
+    )
 
     # return first valid address
     for ip_address in ip_addresses:

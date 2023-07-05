@@ -10,6 +10,7 @@ import geopandas as gpd
 import humanize
 import pandas as pd
 import xarray as xr
+
 """filepaths"""
 
 
@@ -38,8 +39,9 @@ def get_tmpdir():
     return tmpdir
 
 
-def get_tmp_filepath(filename_components: Union[List[str], str] = "file",
-                     extension=".txt") -> str:
+def get_tmp_filepath(
+    filename_components: Union[List[str], str] = "file", extension=".txt"
+) -> str:
     """HPC friendly temporary file path
 
     usage:
@@ -65,15 +67,12 @@ def get_tmp_filepath(filename_components: Union[List[str], str] = "file",
     return os.path.join(tmpdir, f"{fname}{extension}")
 
 
-def find_files(simulation_datadir,
-               file_extension: str = ".nc",
-               recursive=False):
+def find_files(simulation_datadir, file_extension: str = ".nc", recursive=False):
     """Find files in directory by file extension. Optionally recursive
     (i.e. search all subdirectory too)"""
 
     if not os.path.exists(simulation_datadir):
-        raise FileNotFoundError(
-            f"Directory does not exist: {simulation_datadir}")
+        raise FileNotFoundError(f"Directory does not exist: {simulation_datadir}")
 
     if recursive:
         search_string = f"**/*{file_extension}"
@@ -81,7 +80,8 @@ def find_files(simulation_datadir,
         search_string = f"*{file_extension}"
 
     fpaths = sorted(
-        [str(file) for file in Path(simulation_datadir).glob(search_string)])
+        [str(file) for file in Path(simulation_datadir).glob(search_string)]
+    )
 
     if not fpaths:
         raise FileNotFoundError(
@@ -120,8 +120,7 @@ def dirsize(simulation_datadir, bytesize=False):
     """given a root directory return total size of all files
     in a directory in human readable format"""
 
-    if not os.path.exists(simulation_datadir) or not os.path.isdir(
-            simulation_datadir):
+    if not os.path.exists(simulation_datadir) or not os.path.isdir(simulation_datadir):
         print("Not a directory", simulation_datadir)
         return
 
@@ -186,8 +185,7 @@ def raster_loader(fpath: str, epsg: int = 4326, engine=None):
     xarr.attrs["fname"] = os.path.basename(fpath)
     xarr.attrs["experiment_name"] = pathlib.Path(fpath).stem
     xarr.attrs["file_extension"] = pathlib.Path(fpath).suffix
-    xarr.attrs["river_network"] = river_network_from_filename(
-        xarr.attrs["fname"])
+    xarr.attrs["river_network"] = river_network_from_filename(xarr.attrs["fname"])
 
     return xarr
 

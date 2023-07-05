@@ -21,8 +21,7 @@ from hat.timeseries import all_timeseries, extract_timeseries_from_filepaths
 DEFAULT_CONFIG = load_package_config("timeseries.json")
 
 
-def geopandas_to_xarray(station_metadata: gpd.GeoDataFrame,
-                        timeseries: pd.DataFrame):
+def geopandas_to_xarray(station_metadata: gpd.GeoDataFrame, timeseries: pd.DataFrame):
     """Convert results from geopandas geodataframe to xarray dataset"""
 
     # NOTE we do not use this inbuilt method..
@@ -41,10 +40,9 @@ def geopandas_to_xarray(station_metadata: gpd.GeoDataFrame,
     }
 
     # xarray data array is essentially "just" a numpy array with labels
-    da = xr.DataArray(arr,
-                      dims=["time", "station"],
-                      coords=coords,
-                      name="simulation_timeseries")
+    da = xr.DataArray(
+        arr, dims=["time", "station"], coords=coords, name="simulation_timeseries"
+    )
 
     # parse point geometries data into lists
     lons = [point.x for point in station_metadata.geometry]
@@ -89,11 +87,13 @@ def extract_timeseries(
 
     # extract timeseries from files using mask
     timeseries_from_mask = extract_timeseries_from_filepaths(
-        simulation_fpaths, station_mask)
+        simulation_fpaths, station_mask
+    )
 
     # all timeseries (i.e. handle proximal and duplicate stations)
-    timeseries = all_timeseries(station_metadata, station_mask,
-                                timeseries_from_mask, coords)
+    timeseries = all_timeseries(
+        station_metadata, station_mask, timeseries_from_mask, coords
+    )
 
     # convert to xarray dataset
     timeseries = geopandas_to_xarray(station_metadata, timeseries)
