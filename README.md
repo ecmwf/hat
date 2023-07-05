@@ -52,5 +52,3 @@ To create your own configuration json file it is recommended to start with the d
         "station_metadata": "path/to/Qgis_World_outlet_20221102.csv",
         "input_file_extension": ".nc"
     }
-
-    
