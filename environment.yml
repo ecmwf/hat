@@ -1,0 +1,32 @@
+name: hat
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - eccodes
+  - cfgrib
+  - cftime
+  - geopandas
+  - xarray
+  - plotly
+  - matplotlib
+  - jupyterlab
+  - netCDF4
+  - tqdm
+  - ipywidgets
+  - typer
+  - rich
+  - humanize 
+  - folium
+  - typeguard
+  - nbstripout
+  - nbdime
+  - shellingham
+  - pip
+  - pytest
+  - mkdocs
+  - black
+  - flake8
+  - isort
+  - pip:
+     - earthkit.data
