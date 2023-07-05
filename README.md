@@ -1,6 +1,6 @@
 # Hydrological Analysis Tools (HAT)
 
-HAT is for working with hydrological data on the ECMWF High Performance Computer (HPC).
+HAT is a suite of tools to perform data analysis on hydrological datasets.
     
 ### Installation
 
