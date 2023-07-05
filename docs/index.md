@@ -14,7 +14,7 @@ HAT can be run at the command line tool or directly from python
 
 Start a hat conda environment
 
-$ hat
+$ conda activate hat
 
 Run a command line tool
 
