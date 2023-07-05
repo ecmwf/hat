@@ -1,4 +1,4 @@
-name: hat_archive
+name: hat
 channels:
   - conda-forge
 dependencies:
