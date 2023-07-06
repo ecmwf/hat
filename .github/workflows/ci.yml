@@ -30,7 +30,7 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           environment-file: environment.yml
-      - run: conda install .
+      - run: pip install .
 
 # test code
   test:
@@ -42,6 +42,7 @@ jobs:
         with:
           environment-file: environment.yml
           auto-activate-base: false
+      - run: pip install .
       - name: Conda check
         shell: bash -l {0}
         run: |
