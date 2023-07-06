@@ -15,17 +15,20 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           environment-file: environment.yml
-      - name: Conda check
+      - name: install hat package
+        shell: bash -l {0}
+        run: pip install .
+      - name: conda check
         shell: bash -l {0}
         run: |
           conda info
           conda list
-      - name: Quality assurance
+      - name: quality assurance
         shell: bash -l {0}
         run: |
           isort --check .
           black --check .
           flake8 .
-      - name: Run tests
+      - name: run tests
         shell: bash -l {0}
         run: pytest
