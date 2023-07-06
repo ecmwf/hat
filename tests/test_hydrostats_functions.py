@@ -31,9 +31,9 @@ def test_apb():
 
     s, o = ones()
 
-    assert funcs.apb(s, o) == 0
-    assert funcs.apb(s * 1.5, o) == 50
-    assert funcs.apb(s * 2, o) == 100
+    assert np.isclose(funcs.apb(s, o), 0)
+    assert np.isclose(funcs.apb(s * 1.5, o), 50)
+    assert np.isclose(funcs.apb(s * 2, o), 100)
 
 
 def test_apb2():
@@ -43,9 +43,9 @@ def test_apb2():
 
     s, o = ones()
 
-    assert funcs.apb2(s, o) == 0
-    assert funcs.apb2(s * 1.5, o) == 50
-    assert funcs.apb2(s * 2, o) == 100
+    assert np.isclose(funcs.apb2(s, o), 0)
+    assert np.isclose(funcs.apb2(s * 1.5, o), 50)
+    assert np.isclose(funcs.apb2(s * 2, o), 100)
 
 
 def test_bias():
@@ -55,8 +55,8 @@ def test_bias():
 
     s, o = ones()
 
-    assert funcs.bias(s, o) == 0
-    assert funcs.bias(s, o * 0) == 1
+    assert np.isclose(funcs.bias(s, o), 0)
+    assert np.isclose(funcs.bias(s, o * 0), 1)
 
 
 def test_br():
@@ -66,7 +66,7 @@ def test_br():
 
     s, o = ones()
 
-    assert funcs.br(s, o) == 1
+    assert np.isclose(funcs.br(s, o), 1)
 
 
 def test_correlation():
@@ -89,7 +89,7 @@ def test_kge():
 
     s, o = dummy_data()
 
-    assert funcs.kge(s, o) == -0.1180339887498949
+    assert np.isclose(funcs.kge(s, o), -0.1180339887498949)
 
 
 def test_index_agreement():
@@ -101,7 +101,7 @@ def test_index_agreement():
 
     funcs.index_agreement(s, o)
 
-    assert funcs.index_agreement(s, o) == 0.5544554455445545
+    assert np.isclose(funcs.index_agreement(s, o), 0.5544554455445545)
 
 
 def test_mae():
@@ -111,7 +111,7 @@ def test_mae():
 
     s, o = ones()
 
-    assert funcs.mae(s, o) == 0
+    assert np.isclose(funcs.mae(s, o), 0)
 
 
 def test_ns():
@@ -121,7 +121,7 @@ def test_ns():
 
     s, o = dummy_data()
 
-    assert funcs.ns(s, o) == -3.5
+    assert np.isclose(funcs.ns(s, o), -3.5)
 
 
 def test_nslog():
@@ -131,7 +131,7 @@ def test_nslog():
 
     s, o = dummy_data()
 
-    assert funcs.nslog(s, o) == -11.59036828886655
+    assert np.isclose(funcs.nslog(s, o), -11.59036828886655)
 
 
 def test_pc_bias():
@@ -141,7 +141,7 @@ def test_pc_bias():
 
     s, o = dummy_data()
 
-    assert funcs.pc_bias(s, o) == -50.0
+    assert np.isclose(funcs.pc_bias(s, o), -50.0)
 
 
 def test_pc_bias2():
@@ -151,7 +151,7 @@ def test_pc_bias2():
 
     s, o = dummy_data()
 
-    assert funcs.pc_bias2(s, o) == -50
+    assert np.isclose(funcs.pc_bias2(s, o), -50)
 
 
 def test_rmse():
@@ -161,7 +161,7 @@ def test_rmse():
 
     s, o = ones()
 
-    assert funcs.rmse(s, o) == 0
+    assert np.isclose(funcs.rmse(s, o), 0)
 
 
 def test_rsr():
@@ -171,7 +171,7 @@ def test_rsr():
 
     s, o = dummy_data()
 
-    assert funcs.rsr(s, o) == 2.1213203435596424
+    assert np.isclose(funcs.rsr(s, o), 2.1213203435596424)
 
 
 def test_vr():
@@ -181,4 +181,4 @@ def test_vr():
 
     s, o = dummy_data()
 
-    assert funcs.vr(s, o) == 0
+    assert np.isclose(funcs.vr(s, o), 0)
