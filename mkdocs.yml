@@ -1,4 +1,5 @@
 site_name: Hydrological Analysis Tools
+site_url: https://ecmwf.github.io/hat/
 
 nav:
     - Welcome: index.md
