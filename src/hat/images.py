@@ -1,8 +1,7 @@
 import matplotlib
+
 import numpy as np
 from quicklook import quicklook
-
-
 def arr_to_image(arr: np.array) -> np.array:
     """modify array so that it is optimized for viewing"""
 
