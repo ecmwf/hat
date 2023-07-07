@@ -1,9 +1,9 @@
 site_name: Hydrological Analysis Tools
 
 nav:
-    - Home: index.md
+    - Welcome: index.md
     - Installation: installation.md
-    - Command_Line_Tools: command_line_tools.md
-    - Python_API: python_api.md
+    - Usage: usage.md
+    - Reference: reference.md
 
 theme: readthedocs
