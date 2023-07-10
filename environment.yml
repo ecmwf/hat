@@ -16,7 +16,7 @@ dependencies:
   - ipywidgets
   - typer
   - rich
-  - humanize 
+  - humanize
   - folium
   - typeguard
   - nbstripout
@@ -28,5 +28,6 @@ dependencies:
   - black
   - flake8
   - isort
+  - pre-commit
   - pip:
      - earthkit.data

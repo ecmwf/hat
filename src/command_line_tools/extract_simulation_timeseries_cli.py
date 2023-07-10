@@ -105,7 +105,7 @@ def command_line_tool(
 
     save_dataset_to_netcdf(timeseries, "./simulation_timeseries.nc")
 
-    title("TIMESERIES EXTRACTION COMPLETE", color="white", background="cyan", bold=True)
+    title("TIMESERIES EXTRACTION COMPLETE", background="cyan", bold=True)
 
 
 def main():

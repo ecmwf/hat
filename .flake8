@@ -1,0 +1,3 @@
+# required for flake8 and black to play nicely
+[flake8]
+max-line-length = 88
