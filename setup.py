@@ -14,7 +14,7 @@ setup(
     # command line tool name to function mapping
     entry_points={
         "console_scripts": [
-            "extract_simulations = "
+            "extract_simulation_timeseries = "
             "command_line_tools.extract_simulation_timeseries_cli:main",
             "river_networks = "
             "command_line_tools.river_network_coordinate_names:main",

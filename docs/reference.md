@@ -2,30 +2,28 @@
 
 ### Command Line Tools
 
-#### `extract_timeseries`
+#### `extract_simulation_timeseries`
 
-Extract timeseries from a collection of gridded raster files. Timeseries extraction requires two variables 
+Extract timeseries from a collection of simulation raster files. Timeseries extraction requires two variables
 
-1. simulation data directory 
+1. simulation data directory
 2. station metadata filepath
 
 They can be defined at the command line using `--simulation-datadir` and `--station-metadata`
 
-    $ extract_timeseries --simulation-datadir $GRIB_DATADIR --station-metadata $STATION_METADATA_FILEPATH
+    $ extract_simulation_timeseries --simulation-datadir $GRIB_DATADIR --station-metadata $STATION_METADATA_FILEPATH
 
 This will use the default configuration, which you can show using `--show-default-config`
 
-    $ extract_timeseries --show-default-config
+    $ extract_simulation_timeseries --show-default-config
 
 To use a custom configuration there is `--config`
 
-    $ extract_timeseries --config $CUSTOM_CONFIG
+    $ extract_simulation_timeseries --config $CUSTOM_CONFIG
 
-💡 PRO TIP
+To create your own configuration json file you might want to start with the default configuration as a template. Default values will be used where possible if not defined in the custom figuration file. Here is an example custom configuration file.
 
-To create your own configuration json file you could start with the default configuration as a template. If your custom figuration file is missing any values then default values will be used in their place. For example, you could create a configuration file to specify netcdf, rather than grib, as the input file format.
-    
-    # example of a short custom configuration .json file
+    # example custom configuration .json file
     {
         "simulation_datadir": "/path/to/simulation_datadir",
         "station_metadata": "path/to/Qgis_World_outlet_20221102.csv",
