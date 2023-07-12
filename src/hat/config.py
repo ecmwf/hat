@@ -49,9 +49,8 @@ def booleanify(config, key):
     if not config:
         return
 
-    if config[key].lower() not in ["true", "false"]:
-        warning(f'"{key}" configuration variable must be "True" or "False"')
-        return
+    if str(config[key]).lower() not in ["true", "false"]:
+        raise ValueError(f'"{key}" configuration variable must be "True" or "False"')
 
     if config[key].lower() == "true":
         config[key] = True
