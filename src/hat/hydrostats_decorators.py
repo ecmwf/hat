@@ -63,7 +63,7 @@ def hydrostat(func):
     """
 
     @is_two_numpy_arrays
-    @to_float
+    # @to_float
     @filter_nan
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
