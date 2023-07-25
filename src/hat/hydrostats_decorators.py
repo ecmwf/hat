@@ -4,7 +4,7 @@ HYDROSTATS DECORATORS
 Decorators to run checks on hydrological functions
 
 NOTE consider adding the "hydrostat" decorators to new custom functions
-to get extract checks and safe guards for free
+to get checks and safe guards for free
 
 e.g.
 
@@ -21,60 +21,38 @@ import numpy as np
 
 
 def is_two_numpy_arrays(func):
-    """decorator to check the arguments are two numpy arrays"""
-
+    # checks the args are two numpy arrays
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        if len(args) != 2:
-            raise TypeError("Not enough arguments. Expected 2 numpy arrays.")
+    def wrapper(arr1, arr2, *args, **kwargs):
+        if not (isinstance(arr1, np.ndarray) and isinstance(arr2, np.ndarray)):
+            raise TypeError("Both inputs must be numpy arrays")
+        if args or kwargs:
+            raise TypeError("Only two inputs are allowed")
+        return func(arr1, arr2)
 
-        if not (isinstance(args[0], np.ndarray) and isinstance(args[1], np.ndarray)):
-            raise TypeError(f"Both arguments to {func} must be numpy arrays.")
+    return wrapper
 
-        return func(*args, **kwargs)
 
-    # this variable is used to test if all (including new future)
-    # analytical functions have this decorator
-    wrapper._is_two_numpy_arrays = True
+def to_float(func):
+    # force floating point numpy arrays
+    @functools.wraps(func)
+    def wrapper(arr1: np.ndarray, arr2: np.ndarray):
+        return func(arr1.astype(float), arr2.astype(float))
+
     return wrapper
 
 
 def filter_nan(func):
-    """decorator to filter not a number (NaN) from arrays"""
-
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        s, o = args[:2]
+    def wrapper(arr1: np.ndarray, arr2: np.ndarray):
+        nan_mask1 = np.isnan(arr1)
+        nan_mask2 = np.isnan(arr2)
+        filtered_mask = ~(nan_mask1 | nan_mask2)
+        if not np.any(filtered_mask):
+            raise ValueError("All elements are NaN")
+        return func(arr1[filtered_mask], arr2[filtered_mask])
 
-        data = np.array([s.flatten(), o.flatten()])
-        data = np.transpose(data)
-        data = data[~np.isnan(data).any(1)]
-
-        # TODO document this behaviour..
-        # NOTE don't raise if all nans? or return empty dataset
-
-        s, o = data[:, 0], data[:, 1]
-
-        return func(s, o, **kwargs)
-
-    wrapper._filtered_nan = True
     return wrapper
-
-
-# def handle_divide_by_zero_error(func):
-#     """decorator to return NaN if dividing by zero"""
-#     @functools.wraps(func)
-#     def wrapper(*args, **kwargs):
-
-#         s, o = args[:2]
-
-#         try:
-#             func(s,o, **kwargs)
-#         except ZeroDivisionError:
-#             return 0
-
-#     wrapper._handle_zero_errors = True
-#     return wrapper
 
 
 def hydrostat(func):
@@ -85,8 +63,8 @@ def hydrostat(func):
     """
 
     @is_two_numpy_arrays
+    # @to_float
     @filter_nan
-    # @handle_divide_by_zero_error
     def wrapper(*args, **kwargs):
         return func(*args, **kwargs)
 
