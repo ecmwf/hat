@@ -1,0 +1,34 @@
+name: ci
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  setup_and_test:
+    name: setup_and_test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: environment.yml
+      - name: install hat package
+        shell: bash -l {0}
+        run: pip install .
+      - name: conda check
+        shell: bash -l {0}
+        run: |
+          conda info
+          conda list
+      - name: quality assurance
+        shell: bash -l {0}
+        run: |
+          isort --check .
+          black --check .
+          flake8 .
+      - name: run tests
+        shell: bash -l {0}
+        run: pytest

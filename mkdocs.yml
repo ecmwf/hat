@@ -1,0 +1,10 @@
+site_name: Hydrological Analysis Tools
+site_url: https://ecmwf.github.io/hat/
+
+nav:
+    - Welcome: index.md
+    - Installation: installation.md
+    - Usage: usage.md
+    - Reference: reference.md
+
+theme: readthedocs
