@@ -86,7 +86,7 @@ def hydrostats_cli(
     obs_ds = xr.open_dataset(obs)
 
     # clean timeseries
-    sims_ds, obs = filter_timeseries(sims_ds, obs_ds, threshold=70)
+    sims_ds, obs = filter_timeseries(sims_ds, obs_ds, threshold=obs_threshold)
 
     # calculate statistics
     statistics_ds = run_analysis(functions, sims_ds, obs_ds)
