@@ -1,4 +1,4 @@
-# Hydrological Analysis Tools (HAT)
+# Hydrological Analysis Toolkit (HAT)
 
 HAT is a suite of tools to perform data analysis on hydrological datasets.
     
