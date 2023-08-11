@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: pip install -r docs/requirements.txt
-      - run: mkdocs serve
+      - run: mkdocs build
   
   setup_and_test:
     name: setup_and_test
