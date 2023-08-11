@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: pip install docs/requirements.txt
+      - run: pip install -r docs/requirements.txt
       - run: mkdocs serve
   
   setup_and_test:
