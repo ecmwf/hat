@@ -34,9 +34,7 @@ Run a command line tool
 
 ### Contributing
 
-The main repository is hosted on GitHub, testing, bug reports and contributions are highly welcomed and appreciated:
-
-https://github.com/ecmwf/hat
+The main repository is hosted on [GitHub](https://github.com/ecmwf/hat), testing, bug reports and contributions are highly welcomed and appreciated.
 
 Please report [bug](https://github.com/ecmwf/hat/issues) reports or [pull-requests](https://github.com/ecmwf/hat/pulls) on [GitHub](https://github.com/ecmwf/hat)
 
