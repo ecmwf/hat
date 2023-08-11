@@ -7,6 +7,24 @@ on:
     branches: [ "main", "develop" ]
 
 jobs:
+  
+  quality_assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: pip install black flake8 isort
+      - run: isort --check .
+      - run: black --check .
+      - run: flake8 .
+  
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: conda-incubator/setup-miniconda@v2
+      - run: pip install docs/requirements.txt
+      - run: mkdocs serve
+  
   setup_and_test:
     name: setup_and_test
     runs-on: ubuntu-latest
