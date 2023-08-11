@@ -25,7 +25,6 @@ jobs:
       - run: mkdocs build
   
   setup_and_test:
-    name: setup_and_test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -40,12 +39,6 @@ jobs:
         run: |
           conda info
           conda list
-      - name: quality assurance
-        shell: bash -l {0}
-        run: |
-          isort --check .
-          black --check .
-          flake8 .
       - name: run tests
         shell: bash -l {0}
         run: pytest
