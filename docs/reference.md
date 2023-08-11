@@ -2,7 +2,7 @@
 
 ### Command Line Tools
 
-#### `extract_simulation_timeseries`
+#### `hat-extract-timeseries`
 
 Extract timeseries from a collection of simulation raster files. Timeseries extraction requires two variables
 
@@ -11,7 +11,7 @@ Extract timeseries from a collection of simulation raster files. Timeseries extr
 
 They can be defined at the command line using `--simulation-datadir` and `--station-metadata`
 
-    $ extract_simulation_timeseries --simulation-datadir $GRIB_DATADIR --station-metadata $STATION_METADATA_FILEPATH
+    $ hat-extract-timeseries --simulation-datadir $GRIB_DATADIR --station-metadata $STATION_METADATA_FILEPATH
 
 This will use the default configuration, which you can show using `--show-default-config`
 
@@ -19,7 +19,7 @@ This will use the default configuration, which you can show using `--show-defaul
 
 To use a custom configuration there is `--config`
 
-    $ extract_simulation_timeseries --config $CUSTOM_CONFIG
+    $ hat-extract-timeseries --config $CUSTOM_CONFIG
 
 To create your own configuration json file you might want to start with the default configuration as a template. Default values will be used where possible if not defined in the custom figuration file. Here is an example custom configuration file.
 
@@ -30,7 +30,7 @@ To create your own configuration json file you might want to start with the defa
         "input_file_extension": ".nc"
     }
 
-#### `hydrostats`
+#### `hat-hydrostats`
 
 Calculate hydrological statistics on timeseries. To run this analysis the following are required:
 
@@ -62,8 +62,8 @@ These are the currently supported functions:
 
 You can calculate more than one function at once using commas with the `--functions` option
 
-`hydrostats --functions kge, rmse, mae, correlation --sims $SIMS --obs $OBS`
+`hat-hydrostats --functions kge, rmse, mae, correlation --sims $SIMS --obs $OBS`
 
 (Optionally) define the minimum percentage of observations required for timeseries to be valid using the `--obs_threshold` option (default is 80%)
 
-`hydrostats --functions kge --sims $SIMS --obs $OBS --obs_threshold 70`
+`hat-hydrostats --functions kge --sims $SIMS --obs $OBS --obs_threshold 70`
