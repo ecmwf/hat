@@ -7,28 +7,42 @@ on:
     branches: [ "main", "develop" ]
 
 jobs:
+  
+  quality_assurance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: pip install black flake8 isort
+      - run: isort --check .
+      - run: black --check .
+      - run: flake8 .
+  
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: pip install -r docs/requirements.txt
+      - run: mkdocs build
+  
   setup_and_test:
-    name: setup_and_test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
+          activate-environment: test
           environment-file: environment.yml
-      - name: install hat package
-        shell: bash -l {0}
-        run: pip install .
+          auto-activate-base: false
       - name: conda check
         shell: bash -l {0}
         run: |
           conda info
           conda list
-      - name: quality assurance
+      - name: install hat package
         shell: bash -l {0}
-        run: |
-          isort --check .
-          black --check .
-          flake8 .
+        run: pip install .
       - name: run tests
         shell: bash -l {0}
-        run: pytest
+        run: |
+          pip install pytest
+          pytest

@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.10
+  - netCDF4
   - eccodes
   - cfgrib
   - cftime
@@ -11,23 +12,17 @@ dependencies:
   - plotly
   - matplotlib
   - jupyterlab
-  - netCDF4
   - tqdm
-  - ipywidgets
   - typer
-  - rich
   - humanize
   - folium
-  - typeguard
-  - nbstripout
-  - nbdime
-  - shellingham
+  - typer
   - pip
-  - pytest
-  - mkdocs
-  - black
-  - flake8
-  - isort
-  - pre-commit
+  # - pytest
+  # - mkdocs
+  # - black
+  # - flake8
+  # - isort
+  # - pre-commit
   - pip:
      - earthkit.data
