@@ -30,15 +30,17 @@ jobs:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
+          activate-environment: test
           environment-file: environment.yml
-      - name: install hat package
-        shell: bash -l {0}
-        run: pip install .
+          auto-activate-base: false
       - name: conda check
         shell: bash -l {0}
         run: |
           conda info
           conda list
+      - name: install hat package
+        shell: bash -l {0}
+        run: pip install .
       - name: run tests
         shell: bash -l {0}
         run: |
