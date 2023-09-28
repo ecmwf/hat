@@ -7,17 +7,113 @@ import plotly.graph_objs as go
 import numpy as np
 import ipywidgets as widgets
 from ipywidgets import HTML
-from ipyleaflet import Map, Marker, GeoJSON, Popup
+from ipyleaflet import Map, Marker, GeoJSON, Popup, Heatmap, Rectangle
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import shape, Point
 from IPython.display import display
+import xarray as xr
+from functools import partial
 
 
-def initialize_map(center_lat, center_lon):
-    """Initialize a leaflet map centered at the provided coordinates."""
-    m = Map(center=[center_lat, center_lon], zoom=10, layout=widgets.Layout(width='50%'))
-    return m
+
+class GeoMap:
+    def __init__(self, center_lat, center_lon):
+        """Initialize a leaflet map centered at the provided coordinates."""
+        self.map = Map(center=[center_lat, center_lon], zoom=4, layout=widgets.Layout(width='50%'))
+    
+    def add_marker(self, lat, lon, on_click_callback):
+        """Add a marker to the map."""
+        marker = Marker(location=[lat, lon], draggable=False)
+        marker.on_click(on_click_callback)
+        self.map.add_layer(marker)
+    
+    def add_rectangle(self, bounds, on_click_callback):
+        """Add a rectangle to the map."""
+        rectangle = Rectangle(bounds=bounds, color="blue", fill_opacity=0.01, opacity=0.5, weight=1)
+        rectangle.on_click(on_click_callback)
+        self.map.add_layer(rectangle)
+    
+    def add_geojson_layer(self, geojson_content, style_callback, on_click_callback):
+        """Add a GeoJSON layer to the map."""
+        geojson_layer = GeoJSON(data=geojson_content, style_callback=style_callback)
+        geojson_layer.on_click(on_click_callback)
+        self.map.add_layer(geojson_layer)
+    
+    def display(self):
+        """Display the map."""
+        display(self.map)
+
+    @staticmethod
+    def initialize_plot():
+        """Initialize a plotly figure widget."""
+        f = go.FigureWidget(
+            layout=go.Layout(
+                width=600,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                )
+            )
+        )
+        return f
+    
+
+    def handle_geojson_click(self, feature, **kwargs):
+        """
+        Handle click events on a GeoJSON layer in an ipyleaflet map.
+
+        Parameters:
+        - feature: The clicked feature from the GeoJSON layer.
+        """
+        properties = feature['properties']
+        if not properties:
+            return
+
+        excluded_keys = ['style']
+        description_items = [(k, v) for k, v in properties.items() if v and k not in excluded_keys]
+        description = '<br>'.join(f"<b>{k}</b>: {v}" for k, v in description_items)
+
+        geom = shape(feature['geometry'])
+        centroid = geom.centroid
+
+        if isinstance(centroid, Point):
+            popup_location = (centroid.y, centroid.x)
+        else:
+            popup_location = self.map.center
+
+        popup = Popup(location=popup_location, child=HTML(value=description), close_button=True, auto_close=True)
+        self.map.add_layer(popup)
+    
+
+    def add_vector_to_map(self, vector_file_path, fill_color="#F00", line_color="#000", opacity=0.2, line_weight=1):
+        """
+        Add vector data (from a Shapefile or GeoJSON) to an ipyleaflet map.
+        """
+        file_type = vector_file_path.split('.')[-1].lower()
+
+        if file_type == 'shp':
+            gdf = gpd.read_file(vector_file_path)
+            geojson_content = json.loads(gdf.to_json())
+        elif file_type == 'geojson':
+            gdf = gpd.read_file(vector_file_path)
+            geojson_content = json.loads(gdf.to_json(default=handle_timestamp))
+
+        def geojson_style(feature):
+            return {
+                'fillColor': fill_color,
+                'color': line_color,
+                'weight': line_weight,
+                'fillOpacity': opacity
+            }
+
+        geojson_layer = GeoJSON(data=geojson_content, style_callback=geojson_style)
+        geojson_layer.on_click(lambda feature, **kwargs: self.handle_geojson_click(feature, **kwargs))
+        self.map.add_layer(geojson_layer)  
+
 
 
 def initialize_plot():
@@ -59,6 +155,32 @@ def update_plot(f, station_data, station_name):
     # Updated to use the passed station_name
     f.layout.title = f"Time Series for : {station_name}"
 
+def update_plots(f, station_data, station_name):
+    # Avoid resetting f.data to keep existing plot data
+    # f.data = []
+    
+    # Dynamically detect variables from the provided station data
+    detected_variables = list(station_data.keys())
+    
+    # Loop through detected variables and plot
+    for var in detected_variables:
+        y_data = station_data.get(var, [])
+        if isinstance(y_data, np.ndarray):
+            data_exists = y_data.size > 0
+        elif isinstance(y_data, (list, tuple, pd.Series)):
+            data_exists = len(y_data) > 0
+        else:
+            data_exists = False
+
+        if data_exists:
+            # Append a new scatter plot to f.data
+            new_scatter = go.Scatter(y=y_data, mode='lines+markers', name=f"{station_name}: {var}")
+            f.add_trace(new_scatter)
+
+    # Updated to use the passed station_name
+    f.layout.title = f"Time Series for Multiple Locations"
+
+
 
 
 def compute_center_coordinates(stations):
@@ -71,29 +193,23 @@ def compute_center_coordinates(stations):
 
 
 def display_geospatial(stations):
-    """Display markers on a map for each station and show associated data in a plot."""
-
     center_lat, center_lon = compute_center_coordinates(stations)
-    m = initialize_map(center_lat, center_lon)
-    f = initialize_plot()
-
+    geo_map = GeoMap(center_lat, center_lon)
+    f = GeoMap.initialize_plot()  # Changed from initialize_plot() to GeoMap.initialize_plot()
+    
     def handle_click(station_id, lat, lon, **kwargs):
-        # Passing station_id as station_name to update_plot
         update_plot(f, stations[station_id], station_id)
-        m.center = [lat, lon]
+        geo_map.map.center = [lat, lon]
 
     for station_id, data in stations.items():
-        marker = Marker(location=[data['lat'], data['lon']], draggable=False)
-
         def callback(*args, station_id=station_id, lat=data['lat'], lon=data['lon'], **kwargs):
             handle_click(station_id, lat, lon, **kwargs)
 
-        marker.on_click(callback)
-        m.add_layer(marker)
+        geo_map.add_marker(data['lat'], data['lon'], callback)
 
-    layout = widgets.HBox([m, f])
+    layout = widgets.HBox([geo_map.map, f])
     display(layout)
-    return m
+    return geo_map.map
 
     
 def handle_timestamp(obj):
@@ -105,68 +221,135 @@ def handle_timestamp(obj):
     raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
 
-def handle_geojson_click(map_object, feature, **kwargs):
-    """
-    Handle click events on a GeoJSON layer in an ipyleaflet map.
-    
+
+def display_geospatial_nc(ds, subsample_factor=10):
+    """Display grid points on a map for each location in the NetCDF and show associated data in a plot.
+
     Parameters:
-    - map_object: The ipyleaflet map object to which the GeoJSON layer is added.
-    - feature: The clicked feature from the GeoJSON layer.
+    - ds: The xarray dataset.
+    - subsample_factor: Factor by which to subsample the grid for visualization.
     """
-    properties = feature['properties']
-    if not properties:
-        return
 
-    # Exclude 'style' and any other undesired keys from the properties
-    excluded_keys = ['style']
-    description_items = [(k, v) for k, v in properties.items() if v and k not in excluded_keys]
-    description = '<br>'.join(f"<b>{k}</b>: {v}" for k, v in description_items)
+    # Use the mean of latitudes and longitudes as the center for initialization
+    center_lat, center_lon = ds['lat'].mean().item(), ds['lon'].mean().item()
 
-    # Compute the centroid of the clicked feature
-    geom = shape(feature['geometry'])
-    centroid = geom.centroid
+    geo_map = GeoMap(center_lat, center_lon)
+    f = initialize_plot()
 
-    if isinstance(centroid, Point):
-        popup_location = (centroid.y, centroid.x)
-    else:
-        # If the feature has a complex geometry (e.g., MultiPolygon) and does not have a Point centroid, default to map center
-        popup_location = map_object.center
+    # Determine the resolution of the NetCDF data
+    lat_resolution = np.mean(np.diff(ds['lat'].values)) * subsample_factor
+    lon_resolution = np.mean(np.diff(ds['lon'].values)) * subsample_factor
 
-    # Create a popup with the properties and add it to the map at the computed centroid location
-    popup = Popup(location=popup_location, child=HTML(value=description), close_button=True, auto_close=True)
-    map_object.add_layer(popup)
+    def handle_click(lat, lon, **kwargs):
+        time_series_data = ds.sel(lat=lat, lon=lon)['dis'].values
+        update_plot(f, {"Discharge": time_series_data}, f"Location ({lat}, {lon})")
 
+    for lat in ds['lat'].values[::subsample_factor]:
+        for lon in ds['lon'].values[::subsample_factor]:
+            # Determine bounds for the rectangle
+            bounds = [(lat - lat_resolution, lon - lon_resolution), (lat + lat_resolution, lon + lon_resolution)]
 
+            def callback(*args, lat=lat, lon=lon, **kwargs):
+                handle_click(lat, lon, **kwargs)
 
-def add_vector_to_map(map_object, vector_file_path, fill_color="#F00", line_color="#000", opacity=0.2, line_weight = 1, ):
+            geo_map.add_rectangle(bounds, callback)
+
+    layout = widgets.HBox([geo_map.map, f])
+    display(layout)
+    return geo_map.map
+
+def display_geospatial_ncs(datasets, subsample_factor=10):
     """
-    Add vector data (from a Shapefile or GeoJSON) to an ipyleaflet map.
+    Display grid points on a map for each location in the NetCDF and show associated data in a plot.
+
+    Parameters:
+    - datasets: List of xarray datasets.
+    - subsample_factor: Factor by which to subsample the grid for visualization.
     """
-    # Determine the file type from its extension
-    file_type = vector_file_path.split('.')[-1].lower()
     
-    if file_type == 'shp':
-        gdf = gpd.read_file(vector_file_path)
-        geojson_content = json.loads(gdf.to_json())
-
-    elif file_type == 'geojson':
-        gdf = gpd.read_file(vector_file_path)
-        geojson_content = json.loads(gdf.to_json(default=handle_timestamp))
+    # Assuming all datasets have similar latitude and longitude ranges
+    center_lat, center_lon = datasets[0]['lat'].mean().item(), datasets[0]['lon'].mean().item()
     
-    # Style function
-    def geojson_style(feature):
-        return {
-            'fillColor': fill_color,
-            'color': line_color,
-            'weight': line_weight,
-            'fillOpacity': opacity
-        }
+    geo_map = GeoMap(center_lat, center_lon)
+    f = GeoMap.initialize_plot()
+
+    for ds in datasets:
+        # Determine the resolution of the NetCDF data
+        lat_resolution = np.mean(np.diff(ds['lat'].values)) * subsample_factor
+        lon_resolution = np.mean(np.diff(ds['lon'].values)) * subsample_factor
+
+        def handle_click(lat, lon, ds, **kwargs):
+            time_series_data = ds.sel(lat=lat, lon=lon)['dis'].values
+            update_plots(f, {"Discharge": time_series_data}, f"Location ({lat}, {lon})")
+
+        for lat in ds['lat'].values[::subsample_factor]:
+            for lon in ds['lon'].values[::subsample_factor]:
+                # Determine bounds for the rectangle
+                bounds = [(lat - lat_resolution, lon - lon_resolution), (lat + lat_resolution, lon + lon_resolution)]
+
+                def callback(*args, lat=lat, lon=lon, ds=ds, **kwargs):
+                    handle_click(lat, lon, ds, **kwargs)
+
+                geo_map.add_rectangle(bounds, callback)
+
+    layout = widgets.HBox([geo_map.map, f])
+    display(layout)
+    return geo_map.map
+
+def update_plot2(f, station_data, station_name, lat, lon):
+    # Check existing trace names
+    existing_traces = [trace.name for trace in f.data]
     
-    geojson_layer = GeoJSON(data=geojson_content, style_callback=geojson_style)
+    # Dynamically detect variables from the provided station data
+    detected_variables = list(station_data.keys())
+    
+    # Loop through detected variables and plot
+    for var in detected_variables:
+        y_data = station_data.get(var, [])
+        if isinstance(y_data, np.ndarray):
+            data_exists = y_data.size > 0
+        elif isinstance(y_data, (list, tuple, pd.Series)):
+            data_exists = len(y_data) > 0
+        else:
+            data_exists = False
 
-    # Pass the map_object to handle_geojson_click using a lambda function
-    geojson_layer.on_click(lambda feature, **kwargs: handle_geojson_click(map_object, feature, **kwargs))
+        trace_name = f"{station_name} - {var}"
+        if data_exists and trace_name not in existing_traces:
+            f.add_scatter(y=y_data, mode='lines+markers', name=trace_name)
 
-    map_object.add_layer(geojson_layer)
+    # Update the title to include the latitude and longitude
+    f.layout.title = f"Time Series for Location: {lat:.3f}, {lon:.3f}"
+
+
+def display_geospatial_nc2(datasets, subsample_factor=10):
+    center_lat, center_lon = datasets[0][1]['lat'].mean().item(), datasets[0][1]['lon'].mean().item()
+    geo_map = GeoMap(center_lat, center_lon)
+    f = GeoMap.initialize_plot()  # Create only one plot for all datasets
+
+    lat_resolution = np.mean(np.diff(datasets[0][1]['lat'].values)) * subsample_factor
+    lon_resolution = np.mean(np.diff(datasets[0][1]['lon'].values)) * subsample_factor
+
+    def handle_click(lat, lon, **kwargs):
+        f.data = []
+        for ds_label, ds in datasets:
+            try:
+                time_series_data = ds.sel(lat=lat, lon=lon)['dis'].values
+                update_plot2(f, {"Discharge": time_series_data}, ds_label, lat, lon)
+            except KeyError:
+                # Handle the case where the dataset does not have data for the clicked coordinates
+                pass
+
+    for lat in datasets[0][1]['lat'].values[::subsample_factor]:
+        for lon in datasets[0][1]['lon'].values[::subsample_factor]:
+            bounds = [(lat - lat_resolution, lon - lon_resolution), (lat + lat_resolution, lon + lon_resolution)]
+
+            def callback(*args, lat=lat, lon=lon, **kwargs):
+                handle_click(lat, lon, **kwargs)
+
+            geo_map.add_rectangle(bounds, callback)
+
+    layout = widgets.HBox([geo_map.map, f])
+    display(layout)
+    return geo_map.map
 
 
