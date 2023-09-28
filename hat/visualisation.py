@@ -16,7 +16,6 @@ import xarray as xr
 from functools import partial
 
 
-
 class GeoMap:
     def __init__(self, center_lat, center_lon):
         """Initialize a leaflet map centered at the provided coordinates."""
@@ -221,7 +220,6 @@ def handle_timestamp(obj):
     raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
 
-
 def display_geospatial_nc(ds, subsample_factor=10):
     """Display grid points on a map for each location in the NetCDF and show associated data in a plot.
 
@@ -256,7 +254,8 @@ def display_geospatial_nc(ds, subsample_factor=10):
 
     layout = widgets.HBox([geo_map.map, f])
     display(layout)
-    return geo_map.map
+    return geo_map
+
 
 def display_geospatial_ncs(datasets, subsample_factor=10):
     """
@@ -294,7 +293,8 @@ def display_geospatial_ncs(datasets, subsample_factor=10):
 
     layout = widgets.HBox([geo_map.map, f])
     display(layout)
-    return geo_map.map
+    return geo_map
+
 
 def update_plot2(f, station_data, station_name, lat, lon):
     # Check existing trace names
@@ -350,6 +350,4 @@ def display_geospatial_nc2(datasets, subsample_factor=10):
 
     layout = widgets.HBox([geo_map.map, f])
     display(layout)
-    return geo_map.map
-
-
+    return geo_map
