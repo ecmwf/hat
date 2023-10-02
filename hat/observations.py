@@ -5,15 +5,6 @@ from hat.config import load_package_config
 from hat.data import is_csv, read_csv_and_cache
 from hat.filters import filter_dataframe
 
-# Read configutation files
-# NOTE config files are installed as part of hat package using setup.py
-# (just updating the .json files will not necessarily work
-# (i.e. would require pip install -e .)
-COORD_NAMES = load_package_config("river_network_coordinate_names.json")
-DEFAULT_CONFIG = load_package_config("timeseries.json")
-RIVER_NETWORK_COORD_NAMES = COORD_NAMES[DEFAULT_CONFIG["river_network_name"]]
-EPSG = DEFAULT_CONFIG["station_epsg"]
-
 
 def add_geometry_column(gdf: gpd.GeoDataFrame, coord_names):
     """add geometry column to stations geodataframe. station must have valid
@@ -42,7 +33,10 @@ def add_geometry_column(gdf: gpd.GeoDataFrame, coord_names):
 
 
 def read_station_metadata_file(
-    fpath: str, coord_names: str, epsg: int = EPSG
+    fpath: str, 
+    coord_names: str, 
+    epsg: int,
+    filters: str = None
 ) -> gpd.GeoDataFrame:
     """read hydrological stations from file. will cache as pickle object
     because .csv file used by the team takes 12 seconds to load"""
@@ -54,17 +48,8 @@ def read_station_metadata_file(
     else:
         gdf = gpd.read_file(fpath)
 
+    # (optionally) filter the stations, e.g. 'Contintent == Europe'
+    if filters is not None:
+        gdf = filter_dataframe(gdf, filters)
     return gdf
 
-
-def read_station_metadata(
-    station_metadata_filepath, filters="", coord_names: str = RIVER_NETWORK_COORD_NAMES
-):
-    # read station metadata from file
-    stations = read_station_metadata_file(station_metadata_filepath, coord_names)
-
-    # (optionally) filter the stations, e.g. 'Contintent == Europe'
-    if filters:
-        stations = filter_dataframe(stations, filters)
-
-    return stations
