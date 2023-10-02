@@ -1,7 +1,7 @@
 import pytest
 
-from command_line_tools.hydrostats_cli import check_inputs, parse_functions
 from hat.exceptions import UserError
+from hat.tools.hydrostats_cli import check_inputs, parse_functions
 
 
 def test_check_inputs():

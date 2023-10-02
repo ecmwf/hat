@@ -1,54 +1,48 @@
-# name of this github action
-name: ci-hat
+name: ci
 
-# event listeners
 on:
   push:
     branches: [ "main", "develop" ]
   pull_request:
     branches: [ "main", "develop" ]
 
-# quality assurance (i.e. black, flake8 and isort)
 jobs:
-  qa:
-    name: qa
+  
+  quality_assurance:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
       - run: pip install black flake8 isort
       - run: isort --check .
       - run: black --check .
       - run: flake8 .
-
-# setup environment
-  setup:
-    name: setup
+  
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: pip install -r docs/requirements.txt
+      - run: mkdocs build
+  
+  setup_and_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          environment-file: environment.yml
-      - run: pip install .
-
-# test code
-  test:
-    name: pytest
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
+          activate-environment: test
           environment-file: environment.yml
           auto-activate-base: false
-      - run: pip install .
-      - name: Conda check
+      - name: conda check
         shell: bash -l {0}
         run: |
           conda info
           conda list
-      - name: Run tests
+      - name: install hat package
+        shell: bash -l {0}
+        run: pip install .
+      - name: run tests
         shell: bash -l {0}
         run: |
+          pip install pytest
           pytest

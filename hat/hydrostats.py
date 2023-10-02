@@ -1,3 +1,4 @@
+"""high level python api for hydrological statistics"""
 from typing import List
 
 import folium
