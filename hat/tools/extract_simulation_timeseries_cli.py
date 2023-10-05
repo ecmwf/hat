@@ -19,12 +19,13 @@ from hat.cli import prettyprint, title
 from hat.config import timeseries_config
 
 # hat modules
-from hat.data import find_files, save_dataset_to_netcdf
+from hat.data import save_dataset_to_netcdf, read_simulation_as_xarray
 from hat.extract_simulation_timeseries import DEFAULT_CONFIG, extract_timeseries
 from hat.observations import read_station_metadata_file
 
 
-def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, fpaths: List[str]):
+
+def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, simulation):
     """Print overview of relevant information for user"""
 
     title("Configuration", color="cyan")
@@ -39,9 +40,7 @@ def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, fpaths: Lis
     print(f"number of stations = {len(station_metadata)}")
 
     title("Simulation", color="cyan")
-    print(
-        f"number of simulation files = {len(fpaths)}\n",
-    )
+    print(simulation)
 
 
 def print_default_config(DEFAULT_CONFIG):
@@ -61,14 +60,6 @@ def print_default_config(DEFAULT_CONFIG):
 
 
 def command_line_tool(
-    simulation_files: str = typer.Option(
-        None,
-        help="List of simulation files",
-    ),
-    station_metadata_filepath: str = typer.Option(
-        None,
-        help="Path to station metadata file",
-    ),
     config_filepath: str = typer.Option(
         "",
         help="Path to configuration file",
@@ -87,32 +78,27 @@ def command_line_tool(
 
     title("STARTING TIME SERIES EXTRACTION")
 
-    config = timeseries_config(
-        simulation_files, station_metadata_filepath, config_filepath
-    )
+    config = timeseries_config(config_filepath)
 
     # read station file
-    station_metadata = read_station_metadata_file(
+    stations = read_station_metadata_file(
         config["station_metadata_filepath"],
         config['station_coordinates'],
         config['station_epsg'],
         config["station_filters"]
     )
 
-    # find station files
-    simulation_fpaths = find_files(
-        config["simulation_files"],
-    )
+    # read simulated data
+    simulation = read_simulation_as_xarray(config['simulation'])
 
-    print_overview(config, station_metadata, simulation_fpaths)
+    print_overview(config, stations, simulation)
 
     # Extract time series
-    timeseries = extract_timeseries(
-        station_metadata, simulation_fpaths=simulation_fpaths
-    )
+    timeseries = extract_timeseries(stations, simulation)
+    title("Timeseries extracted")
     print(timeseries)
 
-    save_dataset_to_netcdf(timeseries, "./simulation_timeseries.nc")
+    save_dataset_to_netcdf(timeseries, config["simulation_output_filepath"])
 
     title("TIMESERIES EXTRACTION COMPLETE", background="cyan", bold=True)
 

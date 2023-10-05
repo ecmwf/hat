@@ -347,14 +347,12 @@ def get_latlon_keys(ds):
     return lat_key, lon_key
 
 
-def latlon_coords(fpath):
+def latlon_coords(ds):
     """Latitude and longitude coordinates of an xarray"""
 
-    with xr.open_dataset(fpath) as ds:
-        lat_key, lon_key = get_latlon_keys(ds)
-        lat_coords = ds.coords.get(lat_key).data
-        lon_coords = ds.coords.get(lon_key).data
-        coords = {"x": lon_coords, "y": lat_coords}
-        del ds
+    lat_key, lon_key = get_latlon_keys(ds)
+    lat_coords = ds.coords.get(lat_key).data
+    lon_coords = ds.coords.get(lon_key).data
+    coords = {"x": lon_coords, "y": lat_coords}
 
     return coords

@@ -1,6 +1,9 @@
 {
     "station_metadata_filepath": "",
-    "simulation_files": "*.nc",
+    "simulation": {
+        "type": "file",
+        "files": "*.nc"
+    },
     "simulation_output_filepath": "./simulation_timeseries.nc",
     "station_epsg": 4326,
     "station_id_column_name": "station_id",

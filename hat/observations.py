@@ -54,9 +54,7 @@ def read_station_metadata_file(
     except Exception:
         raise Exception(f"Could not open file {fpath}")
 
-
     # (optionally) filter the stations, e.g. 'Contintent == Europe'
     if filters is not None:
         gdf = filter_dataframe(gdf, filters)
     return gdf
-

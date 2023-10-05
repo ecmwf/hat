@@ -112,35 +112,15 @@ def read_config(custom_config_filepath: str):
 
 
 def timeseries_config(
-    simulation_files: str,
-    station_metadata: str,
     config_filepath: str
 ):
     """Manage configuration settings for timeseries extraction.
     Priority order:
       1) command line arguments
       2) custom config file
-      3) default config"""
+    """
 
     # custom or default configutation file
-    if not config_filepath:
-        config = DEFAULT_CONFIG
-    else:
-        config = read_config(config_filepath)
-
-    # root directory for search of input files
-    if simulation_files is None and not config["simulation_files"]:
-        raise ValueError(
-            """Please provide a list of grib or netcdf
-            simulation files for timeseries extraction"""
-        )
-    elif simulation_files is not None:
-        config["simulation_datadir"] = simulation_files
-
-    # station metadata filepath
-    if station_metadata is None and not config["station_metadata_filepath"]:
-        raise ValueError("Please provide a station metadata filepath")
-    elif station_metadata is not None:
-        config["station_metadata_filepath"] = station_metadata
+    config = read_config(config_filepath)
 
     return config
