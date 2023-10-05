@@ -41,12 +41,19 @@ def read_station_metadata_file(
     """read hydrological stations from file. will cache as pickle object
     because .csv file used by the team takes 12 seconds to load"""
 
-    if is_csv(fpath):
-        gdf = read_csv_and_cache(fpath)
-        gdf = add_geometry_column(gdf, coord_names)
-        gdf = gdf.set_crs(epsg=epsg)
-    else:
-        gdf = gpd.read_file(fpath)
+    print('station file')
+    print(fpath)
+    
+    try:
+        if is_csv(fpath):
+            gdf = read_csv_and_cache(fpath)
+            gdf = add_geometry_column(gdf, coord_names)
+            gdf = gdf.set_crs(epsg=epsg)
+        else:
+            gdf = gpd.read_file(fpath)
+    except Exception:
+        raise Exception(f"Could not open file {fpath}")
+
 
     # (optionally) filter the stations, e.g. 'Contintent == Europe'
     if filters is not None:

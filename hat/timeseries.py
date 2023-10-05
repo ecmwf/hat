@@ -5,8 +5,9 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
+from dask.diagnostics import ProgressBar
 
-""" NETCDF"""
+from hat.geo import get_latlon_keys
 
 
 def mask_array_np(arr, mask):
@@ -17,7 +18,10 @@ def mask_array_np(arr, mask):
 
 
 def extract_timeseries_using_mask(
-    da: xr.DataArray, mask: np.ndarray, core_dims=["y", "x"]
+    da: xr.DataArray,
+    mask: np.ndarray,
+    core_dims=["y", "x"],
+    station_dim = "station"
 ):
     """extract timeseries using a station mask with xarray.apply_ufunc()
 
@@ -47,15 +51,16 @@ def extract_timeseries_using_mask(
         da,
         mask,
         input_core_dims=[core_dims, core_dims],
-        output_core_dims=[["station"]],
+        output_core_dims=[[station_dim]],
         output_dtypes=[da.dtype],
         exclude_dims=set(core_dims),
         dask="parallelized",
-        dask_gufunc_kwargs={"output_sizes": {"station": int(mask.sum())}},
+        dask_gufunc_kwargs={"output_sizes": {station_dim: int(mask.sum())}},
     )
 
     # extract timeseries (i.e. compute graph)
-    timeseries = task.compute()
+    with ProgressBar(dt=10):
+        timeseries = task.compute()
 
     return timeseries
 
@@ -67,12 +72,19 @@ def extract_timeseries_from_filepaths(fpaths: List[str], mask: np.ndarray):
     # earthkit data file source
     fs = earthkit.data.from_source("file", fpaths)
 
+    xarray_kwargs = {}
+    if isinstance(fs, earthkit.data.readers.netcdf.NetCDFFieldListReader):
+        xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {'time': 'auto'}}
+
     # xarray dataset
-    ds = fs.to_xarray()
+    ds = fs.to_xarray(**xarray_kwargs)
+    print(ds)
+
+    core_dims = get_latlon_keys(ds)
 
     # timeseries extraction using masking algorithm
     timeseries = extract_timeseries_using_mask(
-        ds.dis, mask, core_dims=["latitude", "longitude"]
+        ds.dis, mask, core_dims=core_dims
     )
 
     return timeseries

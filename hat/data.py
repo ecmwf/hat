@@ -2,6 +2,7 @@ import json
 import os
 import pathlib
 import sys
+import glob
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List, Union
@@ -67,27 +68,16 @@ def get_tmp_filepath(
     return os.path.join(tmpdir, f"{fname}{extension}")
 
 
-def find_files(simulation_datadir, file_extension: str = ".nc", recursive=False):
-    """Find files in directory by file extension. Optionally recursive
-    (i.e. search all subdirectory too)"""
+def find_files(simulation_files):
+    """Find files matching regex"""
 
-    if not os.path.exists(simulation_datadir):
-        raise FileNotFoundError(f"Directory does not exist: {simulation_datadir}")
-
-    if recursive:
-        search_string = f"**/*{file_extension}"
-    else:
-        search_string = f"*{file_extension}"
-
-    fpaths = sorted(
-        [str(file) for file in Path(simulation_datadir).glob(search_string)]
-    )
+    fpaths = glob.glob(simulation_files)
 
     if not fpaths:
-        raise FileNotFoundError(
-            f"""No {file_extension} files found,
-            with recursive search as {recursive}, in: {simulation_datadir}"""
-        )
+        raise Exception(f"Could not find any file from regex {simulation_files}")
+    else:
+        print("Found following simulation files:")
+        print(*fpaths, sep="\n")
 
     return fpaths
 

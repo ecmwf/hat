@@ -112,7 +112,9 @@ def read_config(custom_config_filepath: str):
 
 
 def timeseries_config(
-    simulation_datadir: str, station_metadata: str, config_filepath: str
+    simulation_files: str,
+    station_metadata: str,
+    config_filepath: str
 ):
     """Manage configuration settings for timeseries extraction.
     Priority order:
@@ -127,27 +129,18 @@ def timeseries_config(
         config = read_config(config_filepath)
 
     # root directory for search of input files
-    if not simulation_datadir and not config["simulation_datadir"]:
+    if simulation_files is None and not config["simulation_files"]:
         raise ValueError(
-            """Please provide a data directory of grib or netcdf
+            """Please provide a list of grib or netcdf
             simulation files for timeseries extraction"""
         )
-    elif simulation_datadir:
-        config["simulation_datadir"] = simulation_datadir
+    elif simulation_files is not None:
+        config["simulation_datadir"] = simulation_files
 
     # station metadata filepath
-    if not station_metadata and not config["station_metadata_filepath"]:
+    if station_metadata is None and not config["station_metadata_filepath"]:
         raise ValueError("Please provide a station metadata filepath")
-    elif station_metadata:
+    elif station_metadata is not None:
         config["station_metadata_filepath"] = station_metadata
-
-    # check output filepath is valid before running timeseries extraction
-    config["simulation_output_file_extension"] = config[
-        "simulation_output_filepath"
-    ].split(".")[-1]
-    if config["simulation_output_file_extension"] not in ["nc", "csv"]:
-        raise ValueError(
-            "output_filepath must be .nc or .csv, please update config", config_filepath
-        )
 
     return config

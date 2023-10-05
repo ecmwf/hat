@@ -60,23 +60,15 @@ def geopandas_to_xarray(station_metadata: gpd.GeoDataFrame, timeseries: pd.DataF
 
 def extract_timeseries(
     station_metadata: gpd.GeoDataFrame,
-    simulation_datadir: str = "",
-    simulation_fpaths: List = [],
+    simulation_fpaths: List,
     config: dict = DEFAULT_CONFIG,
 ):
     config = valid_custom_config(config)
 
-    if not simulation_datadir and not simulation_fpaths:
+    if not simulation_fpaths:
         raise TypeError(
             """extract_timeseries() missing 1 required variable:
-            'simulation_datadir' or 'simulation_fpaths' """
-        )
-
-    if not simulation_fpaths:
-        simulation_fpaths = find_files(
-            simulation_datadir,
-            file_extension=config["simulation_input_file_extension"],
-            recursive=config["recursive_search"],
+            'simulation_fpaths' """
         )
 
     # infer coordinates for all grids from first the grid

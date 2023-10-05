@@ -331,12 +331,29 @@ def geopoints_from_csv(fpath: str, lat_name: str, lon_name: str) -> gpd.GeoDataF
     return gdf
 
 
+def get_latlon_keys(ds):
+
+    lat_key = None
+    lon_key = None
+    if 'lat' in ds.coords and 'lon' in ds.coords:
+        lat_key = 'lat'
+        lon_key = 'lon'
+    elif 'latitude' in ds.coords and 'longitude' in ds.coords:
+        lat_key = 'latitude'
+        lon_key = 'longitude'
+    else:
+        raise Exception(f"Lat/lon coordinates could not be detected in dataset with coords {ds.coords}")
+
+    return lat_key, lon_key
+
+
 def latlon_coords(fpath):
     """Latitude and longitude coordinates of an xarray"""
 
     with xr.open_dataset(fpath) as ds:
-        lat_coords = ds.coords.get("latitude").data
-        lon_coords = ds.coords.get("longitude").data
+        lat_key, lon_key = get_latlon_keys(ds)
+        lat_coords = ds.coords.get(lat_key).data
+        lon_coords = ds.coords.get(lon_key).data
         coords = {"x": lon_coords, "y": lat_coords}
         del ds
 

@@ -21,7 +21,7 @@ from hat.config import timeseries_config
 # hat modules
 from hat.data import find_files, save_dataset_to_netcdf
 from hat.extract_simulation_timeseries import DEFAULT_CONFIG, extract_timeseries
-from hat.observations import read_station_metadata
+from hat.observations import read_station_metadata_file
 
 
 def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, fpaths: List[str]):
@@ -61,12 +61,12 @@ def print_default_config(DEFAULT_CONFIG):
 
 
 def command_line_tool(
-    simulation_datadir: str = typer.Option(
-        "",
-        help="Directory of simulation files",
+    simulation_files: str = typer.Option(
+        None,
+        help="List of simulation files",
     ),
     station_metadata_filepath: str = typer.Option(
-        "",
+        None,
         help="Path to station metadata file",
     ),
     config_filepath: str = typer.Option(
@@ -88,20 +88,29 @@ def command_line_tool(
     title("STARTING TIME SERIES EXTRACTION")
 
     config = timeseries_config(
-        simulation_datadir, station_metadata_filepath, config_filepath
+        simulation_files, station_metadata_filepath, config_filepath
     )
-    station_metadata = read_station_metadata(station_metadata_filepath)
+
+    # read station file
+    station_metadata = read_station_metadata_file(
+        config["station_metadata_filepath"],
+        config['station_coordinates'],
+        config['station_epsg'],
+        config["station_filters"]
+    )
+
+    # find station files
     simulation_fpaths = find_files(
-        config["simulation_datadir"],
-        file_extension=config["simulation_input_file_extension"],
-        recursive=config["recursive_search"],
+        config["simulation_files"],
     )
 
     print_overview(config, station_metadata, simulation_fpaths)
 
+    # Extract time series
     timeseries = extract_timeseries(
         station_metadata, simulation_fpaths=simulation_fpaths
     )
+    print(timeseries)
 
     save_dataset_to_netcdf(timeseries, "./simulation_timeseries.nc")
 
