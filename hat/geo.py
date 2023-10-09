@@ -331,7 +331,6 @@ def geopoints_from_csv(fpath: str, lat_name: str, lon_name: str) -> gpd.GeoDataF
 
 
 def get_latlon_keys(ds):
-
     lat_key = None
     lon_key = None
     if "lat" in ds.coords and "lon" in ds.coords:

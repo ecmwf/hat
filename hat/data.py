@@ -269,7 +269,6 @@ def find_main_var(ds):
 
 
 def read_simulation_as_xarray(options):
-
     if options["type"] == "file":
         type = "file"
         # find station files

@@ -67,7 +67,7 @@ def station_timeseries_index(
 
     dx = station.geometry.x - lon_in_mask
     dy = station.geometry.y - lat_in_mask
-    idx = (dx ** 2 + dy ** 2).argmin()
+    idx = (dx**2 + dy**2).argmin()
 
     return idx
 
