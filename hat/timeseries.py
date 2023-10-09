@@ -1,12 +1,11 @@
-from typing import List
-
-import earthkit.data
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
+from dask.diagnostics import ProgressBar
+from tqdm import tqdm
 
-""" NETCDF"""
+from hat.geo import get_latlon_keys
 
 
 def mask_array_np(arr, mask):
@@ -17,13 +16,10 @@ def mask_array_np(arr, mask):
 
 
 def extract_timeseries_using_mask(
-    da: xr.DataArray, mask: np.ndarray, core_dims=["y", "x"]
+    da: xr.DataArray, mask: np.ndarray, station_dim="station"
 ):
     """extract timeseries using a station mask with xarray.apply_ufunc()
 
-    - input_core_dims
-      list of core dimensions on each input argument
-      (needs to be same length as number of input arguments)
     - output_core_dims
       list of core dimensions on each output
       (needs to be same length as number of output variables)
@@ -41,39 +37,24 @@ def extract_timeseries_using_mask(
 
     """
 
+    core_dims = get_latlon_keys(da)
+
     # dask computational graph (i.e. lazy)
     task = xr.apply_ufunc(
         mask_array_np,
         da,
         mask,
         input_core_dims=[core_dims, core_dims],
-        output_core_dims=[["station"]],
+        output_core_dims=[[station_dim]],
         output_dtypes=[da.dtype],
         exclude_dims=set(core_dims),
         dask="parallelized",
-        dask_gufunc_kwargs={"output_sizes": {"station": int(mask.sum())}},
+        dask_gufunc_kwargs={"output_sizes": {station_dim: int(mask.sum())}},
     )
 
     # extract timeseries (i.e. compute graph)
-    timeseries = task.compute()
-
-    return timeseries
-
-
-def extract_timeseries_from_filepaths(fpaths: List[str], mask: np.ndarray):
-    """extract timeseries from a collection of files and given a boolean mask
-    to represent point locations"""
-
-    # earthkit data file source
-    fs = earthkit.data.from_source("file", fpaths)
-
-    # xarray dataset
-    ds = fs.to_xarray()
-
-    # timeseries extraction using masking algorithm
-    timeseries = extract_timeseries_using_mask(
-        ds.dis, mask, core_dims=["latitude", "longitude"]
-    )
+    with ProgressBar(dt=10):
+        timeseries = task.compute()
 
     return timeseries
 
@@ -91,8 +72,12 @@ def station_timeseries_index(
     return idx
 
 
-def all_timeseries(
-    stations: gpd.GeoDataFrame, mask, masked_timeseries: xr.DataArray, coords: dict
+def assign_stations(
+    stations: gpd.GeoDataFrame,
+    mask: np.ndarray,
+    da_stations: xr.DataArray,
+    coords: dict,
+    station_dim: str,
 ) -> pd.DataFrame:
     """
     Fixed bug in timeseries extraction by mask where:
@@ -107,42 +92,32 @@ def all_timeseries(
     The idea is to ensure we preserve ordering so that we
     can re-map station_ids to latlon coordinates
     """
-
     # broadcast the coord arrays to same shape as mask
     lon2d, lat2d = np.meshgrid(coords["x"], coords["y"])
 
     # get lats and lons of True values in mask
     lat_in_mask = lat2d[mask]
     lon_in_mask = lon2d[mask]
+
     """
     We can now get the complete collection of timeseries
     (even where there are duplicates of proximal stations)
     """
-
-    # table of all station timeseries
-    complete_station_timeseries = {}
-
-    for _, station in stations.iterrows():
+    da_with_duplicate = None
+    stations_list = []
+    stations_id = []
+    for _, station in tqdm(stations.iterrows(), total=stations.shape[0]):
         # station id
-        station_id = station["station_id"]
+        station_id = station[station_dim]
 
         # timeseries index for a given station
         timeseries_index = station_timeseries_index(station, lon_in_mask, lat_in_mask)
 
-        # timeseries values for a given station
-        station_timeseries = masked_timeseries.sel(station=timeseries_index)
+        # add to the list
+        stations_id += [station_id]
+        stations_list += [timeseries_index]
 
-        # update complete station timeseries
-        complete_station_timeseries[station_id] = station_timeseries.values.flatten()
-    """
-    Finally, create a pandas dataframe with a datetime index
-    """
+    da_with_duplicate = da_stations.sel(station=stations_list)
+    da_with_duplicate = da_with_duplicate.assign_coords(station=stations_id)
 
-    # stationIDs and discharge values
-    df = pd.DataFrame(complete_station_timeseries)
-
-    # datetime index
-    df["datetime"] = pd.to_datetime(station_timeseries.time.values)
-    df = df.set_index("datetime")
-
-    return df
+    return da_with_duplicate

@@ -8,13 +8,7 @@ import pytest
 # See https://setuptools.pypa.io/en/latest/pkg_resources.html
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from hat.config import (
-        DEFAULT_CONFIG,
-        booleanify,
-        read_config,
-        timeseries_config,
-        valid_custom_config,
-    )
+    from hat.config import DEFAULT_CONFIG, booleanify, read_config, valid_custom_config
 
 
 def test_DEFAULT_CONFIG():
@@ -56,10 +50,3 @@ def test_read_config():
 
     with pytest.raises(ValueError):
         _ = read_config(filepath_exists_but_is_not_json)
-
-
-def test_timeseries_config():
-    empty_path = ""
-
-    with pytest.raises(ValueError):
-        _ = timeseries_config(empty_path, empty_path, empty_path)
