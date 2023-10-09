@@ -109,16 +109,3 @@ def read_config(custom_config_filepath: str):
     config = valid_custom_config(custom_config)
 
     return config
-
-
-def timeseries_config(config_filepath: str):
-    """Manage configuration settings for timeseries extraction.
-    Priority order:
-      1) command line arguments
-      2) custom config file
-    """
-
-    # custom or default configutation file
-    config = read_config(config_filepath)
-
-    return config

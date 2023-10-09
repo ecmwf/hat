@@ -15,7 +15,7 @@ import geopandas as gpd
 import typer
 
 from hat.cli import prettyprint, title
-from hat.config import timeseries_config
+from hat.config import read_config
 
 # hat modules
 from hat.data import read_simulation_as_xarray, save_dataset_to_netcdf
@@ -76,7 +76,7 @@ def command_line_tool(
 
     title("STARTING TIME SERIES EXTRACTION")
 
-    cfg = timeseries_config(config)
+    cfg = read_config(config)
 
     # read station file
     stations = read_station_metadata_file(
