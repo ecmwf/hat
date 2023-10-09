@@ -10,21 +10,20 @@ Usage
 
 import json
 import os
-from typing import List
 
 import geopandas as gpd
 import typer
 
 from hat.cli import prettyprint, title
-from hat.config import timeseries_config
+from hat.config import read_config
 
 # hat modules
-from hat.data import find_files, save_dataset_to_netcdf
+from hat.data import read_simulation_as_xarray, save_dataset_to_netcdf
 from hat.extract_simulation_timeseries import DEFAULT_CONFIG, extract_timeseries
-from hat.observations import read_station_metadata
+from hat.observations import read_station_metadata_file
 
 
-def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, fpaths: List[str]):
+def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, simulation):
     """Print overview of relevant information for user"""
 
     title("Configuration", color="cyan")
@@ -39,9 +38,7 @@ def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, fpaths: Lis
     print(f"number of stations = {len(station_metadata)}")
 
     title("Simulation", color="cyan")
-    print(
-        f"number of simulation files = {len(fpaths)}\n",
-    )
+    print(simulation)
 
 
 def print_default_config(DEFAULT_CONFIG):
@@ -61,15 +58,7 @@ def print_default_config(DEFAULT_CONFIG):
 
 
 def command_line_tool(
-    simulation_datadir: str = typer.Option(
-        "",
-        help="Directory of simulation files",
-    ),
-    station_metadata_filepath: str = typer.Option(
-        "",
-        help="Path to station metadata file",
-    ),
-    config_filepath: str = typer.Option(
+    config: str = typer.Option(
         "",
         help="Path to configuration file",
     ),
@@ -87,23 +76,27 @@ def command_line_tool(
 
     title("STARTING TIME SERIES EXTRACTION")
 
-    config = timeseries_config(
-        simulation_datadir, station_metadata_filepath, config_filepath
-    )
-    station_metadata = read_station_metadata(station_metadata_filepath)
-    simulation_fpaths = find_files(
-        config["simulation_datadir"],
-        file_extension=config["simulation_input_file_extension"],
-        recursive=config["recursive_search"],
-    )
+    cfg = read_config(config)
 
-    print_overview(config, station_metadata, simulation_fpaths)
-
-    timeseries = extract_timeseries(
-        station_metadata, simulation_fpaths=simulation_fpaths
+    # read station file
+    stations = read_station_metadata_file(
+        cfg["station_metadata_filepath"],
+        cfg["station_coordinates"],
+        cfg["station_epsg"],
+        cfg["station_filters"],
     )
 
-    save_dataset_to_netcdf(timeseries, "./simulation_timeseries.nc")
+    # read simulated data
+    simulation = read_simulation_as_xarray(cfg["simulation"])
+
+    print_overview(cfg, stations, simulation)
+
+    # Extract time series
+    timeseries = extract_timeseries(stations, simulation)
+    title("Timeseries extracted")
+    print(timeseries)
+
+    save_dataset_to_netcdf(timeseries, cfg["simulation_output_filepath"])
 
     title("TIMESERIES EXTRACTION COMPLETE", background="cyan", bold=True)
 

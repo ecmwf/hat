@@ -1,11 +1,12 @@
+import glob
 import json
 import os
 import pathlib
 import sys
-from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List, Union
 
+import earthkit.data
 import geopandas as gpd
 import humanize
 import pandas as pd
@@ -67,27 +68,16 @@ def get_tmp_filepath(
     return os.path.join(tmpdir, f"{fname}{extension}")
 
 
-def find_files(simulation_datadir, file_extension: str = ".nc", recursive=False):
-    """Find files in directory by file extension. Optionally recursive
-    (i.e. search all subdirectory too)"""
+def find_files(simulation_files):
+    """Find files matching regex"""
 
-    if not os.path.exists(simulation_datadir):
-        raise FileNotFoundError(f"Directory does not exist: {simulation_datadir}")
-
-    if recursive:
-        search_string = f"**/*{file_extension}"
-    else:
-        search_string = f"*{file_extension}"
-
-    fpaths = sorted(
-        [str(file) for file in Path(simulation_datadir).glob(search_string)]
-    )
+    fpaths = glob.glob(simulation_files)
 
     if not fpaths:
-        raise FileNotFoundError(
-            f"""No {file_extension} files found,
-            with recursive search as {recursive}, in: {simulation_datadir}"""
-        )
+        raise Exception(f"Could not find any file from regex {simulation_files}")
+    else:
+        print("Found following simulation files:")
+        print(*fpaths, sep="\n")
 
     return fpaths
 
@@ -265,3 +255,48 @@ def save_dataset_to_netcdf(ds: xr.Dataset, fpath: str):
         os.remove(fpath)
 
     ds.to_netcdf(fpath)
+
+
+def find_main_var(ds):
+    variable_names = [k for k in ds.variables if len(ds.variables[k].dims) >= 3]
+    if len(variable_names) > 1:
+        raise Exception("More than one variable in dataset")
+    elif len(variable_names) == 0:
+        raise Exception("Could not find a valid variable in dataset")
+    else:
+        var_name = variable_names[0]
+    return var_name
+
+
+def read_simulation_as_xarray(options):
+    if options["type"] == "file":
+        type = "file"
+        # find station files
+        files = find_files(
+            options["files"],
+        )
+        args = [files]
+    elif options["type"] in ["mars", "fdb"]:
+        type = options["type"]
+        args = [options["request"]]
+    else:
+        raise Exception(
+            f"Simulation type {options['type']} not supported. Currently supported: file, mars, fdb"  # noqa: E501
+        )
+
+    # earthkit data file source
+    fs = earthkit.data.from_source(type, *args)
+
+    xarray_kwargs = {}
+    if isinstance(fs, earthkit.data.readers.netcdf.NetCDFFieldListReader):
+        xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {"time": "auto"}}
+    else:
+        xarray_kwargs["xarray_open_dataset_kwargs"] = {"chunks": {"time": "auto"}}
+
+    # xarray dataset
+    ds = fs.to_xarray(**xarray_kwargs)
+
+    var = find_main_var(ds)
+
+    da = ds[var]
+    return da

@@ -1,11 +1,12 @@
 {
     "station_metadata_filepath": "",
-    "simulation_datadir": "",
-    "simulation_input_file_extension": ".grb",
+    "simulation": {
+        "type": "file",
+        "files": "*.nc"
+    },
     "simulation_output_filepath": "./simulation_timeseries.nc",
-    "recursive_search": "False",
-    "river_network_name": "cama_3min",
     "station_epsg": 4326,
     "station_id_column_name": "station_id",
-    "station_filters":""
+    "station_filters":"",
+    "station_coordinates": ["LisfloodX", "LisfloodY"]
 }

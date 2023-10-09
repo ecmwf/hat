@@ -4,30 +4,28 @@
 
 #### `hat-extract-timeseries`
 
-Extract timeseries from a collection of simulation raster files. Timeseries extraction requires two variables
+Extract timeseries from a collection of simulation raster files. Timeseries extraction requires a json configuration file, which can be provided on the command line using `--config`
 
-1. simulation data directory
-2. station metadata filepath
+    $ hat-extract-timeseries --config timeseries.json
 
-They can be defined at the command line using `--simulation-datadir` and `--station-metadata`
-
-    $ hat-extract-timeseries --simulation-datadir $GRIB_DATADIR --station-metadata $STATION_METADATA_FILEPATH
-
-This will use the default configuration, which you can show using `--show-default-config`
+You can show an example of config file using `--show-default-config`
 
     $ extract_simulation_timeseries --show-default-config
-
-To use a custom configuration there is `--config`
-
-    $ hat-extract-timeseries --config $CUSTOM_CONFIG
 
 To create your own configuration json file you might want to start with the default configuration as a template. Default values will be used where possible if not defined in the custom figuration file. Here is an example custom configuration file.
 
     # example custom configuration .json file
     {
-        "simulation_datadir": "/path/to/simulation_datadir",
-        "station_metadata": "path/to/Qgis_World_outlet_20221102.csv",
-        "input_file_extension": ".nc"
+        "station_metadata_filepath": "/path/to/stations.csv",
+        "simulation": {
+            "type": "file",
+            "files": "*.nc"
+        },
+        "simulation_output_filepath": "./simulation_timeseries.nc",
+        "station_epsg": 4326,
+        "station_id_column_name": "obsid",
+        "station_filters":"",
+        "station_coordinates": ["Lon", "Lat"]
     }
 
 #### `hat-hydrostats`

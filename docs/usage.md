@@ -10,7 +10,7 @@ If you have already [installed](installation.md) hat then
 
 Run a command line tool, for example
 
-    $ extract_simulation_timeseries --help
+    $ hat-extract-timeseries --help
 
 For more information on individual command line tools, use the `--help` option at the command line or read the [reference](reference.md) documentation
 
