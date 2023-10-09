@@ -58,7 +58,7 @@ def print_default_config(DEFAULT_CONFIG):
 
 
 def command_line_tool(
-    config_filepath: str = typer.Option(
+    config: str = typer.Option(
         "",
         help="Path to configuration file",
     ),
@@ -76,27 +76,27 @@ def command_line_tool(
 
     title("STARTING TIME SERIES EXTRACTION")
 
-    config = timeseries_config(config_filepath)
+    cfg = timeseries_config(config)
 
     # read station file
     stations = read_station_metadata_file(
-        config["station_metadata_filepath"],
-        config["station_coordinates"],
-        config["station_epsg"],
-        config["station_filters"],
+        cfg["station_metadata_filepath"],
+        cfg["station_coordinates"],
+        cfg["station_epsg"],
+        cfg["station_filters"],
     )
 
     # read simulated data
-    simulation = read_simulation_as_xarray(config["simulation"])
+    simulation = read_simulation_as_xarray(cfg["simulation"])
 
-    print_overview(config, stations, simulation)
+    print_overview(cfg, stations, simulation)
 
     # Extract time series
     timeseries = extract_timeseries(stations, simulation)
     title("Timeseries extracted")
     print(timeseries)
 
-    save_dataset_to_netcdf(timeseries, config["simulation_output_filepath"])
+    save_dataset_to_netcdf(timeseries, cfg["simulation_output_filepath"])
 
     title("TIMESERIES EXTRACTION COMPLETE", background="cyan", bold=True)
 
