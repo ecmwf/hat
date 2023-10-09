@@ -1,9 +1,8 @@
+import glob
 import json
 import os
 import pathlib
 import sys
-import glob
-from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import List, Union
 
@@ -261,16 +260,16 @@ def save_dataset_to_netcdf(ds: xr.Dataset, fpath: str):
 def find_main_var(ds):
     variable_names = [k for k in ds.variables if len(ds.variables[k].dims) >= 3]
     if len(variable_names) > 1:
-        raise Exception('More than one variable in dataset')
+        raise Exception("More than one variable in dataset")
     elif len(variable_names) == 0:
-        raise Exception('Could not find a valid variable in dataset')
+        raise Exception("Could not find a valid variable in dataset")
     else:
         var_name = variable_names[0]
     return var_name
 
 
 def read_simulation_as_xarray(options):
-    
+
     if options["type"] == "file":
         type = "file"
         # find station files
@@ -278,20 +277,22 @@ def read_simulation_as_xarray(options):
             options["files"],
         )
         args = [files]
-    elif options["type"] in ["mars", 'fdb']:
+    elif options["type"] in ["mars", "fdb"]:
         type = options["type"]
         args = [options["request"]]
     else:
-        raise Exception(f"Simulation type {options['type']} not supported. Currently supported: file, mars, fdb")
+        raise Exception(
+            f"Simulation type {options['type']} not supported. Currently supported: file, mars, fdb"  # noqa: E501
+        )
 
     # earthkit data file source
     fs = earthkit.data.from_source(type, *args)
 
     xarray_kwargs = {}
     if isinstance(fs, earthkit.data.readers.netcdf.NetCDFFieldListReader):
-        xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {'time': 'auto'}}
+        xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {"time": "auto"}}
     else:
-        xarray_kwargs["xarray_open_dataset_kwargs"] = {"chunks": {'time': 'auto'}}
+        xarray_kwargs["xarray_open_dataset_kwargs"] = {"chunks": {"time": "auto"}}
 
     # xarray dataset
     ds = fs.to_xarray(**xarray_kwargs)

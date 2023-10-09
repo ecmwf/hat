@@ -6,7 +6,6 @@ import sys
 import geopandas as gpd
 import numpy as np
 import shapely
-import xarray as xr
 from jsonschema import ValidationError, validate
 from pyproj import CRS, Transformer
 
@@ -335,14 +334,16 @@ def get_latlon_keys(ds):
 
     lat_key = None
     lon_key = None
-    if 'lat' in ds.coords and 'lon' in ds.coords:
-        lat_key = 'lat'
-        lon_key = 'lon'
-    elif 'latitude' in ds.coords and 'longitude' in ds.coords:
-        lat_key = 'latitude'
-        lon_key = 'longitude'
+    if "lat" in ds.coords and "lon" in ds.coords:
+        lat_key = "lat"
+        lon_key = "lon"
+    elif "latitude" in ds.coords and "longitude" in ds.coords:
+        lat_key = "latitude"
+        lon_key = "longitude"
     else:
-        raise Exception(f"Lat/lon coordinates could not be detected in dataset with coords {ds.coords}")
+        raise Exception(
+            f"Lat/lon coordinates could not be detected in dataset with coords {ds.coords}"  # noqa: E501
+        )
 
     return lat_key, lon_key
 

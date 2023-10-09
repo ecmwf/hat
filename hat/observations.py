@@ -1,7 +1,6 @@
 import geopandas as gpd
 import pandas as pd
 
-from hat.config import load_package_config
 from hat.data import is_csv, read_csv_and_cache
 from hat.filters import filter_dataframe
 
@@ -33,17 +32,14 @@ def add_geometry_column(gdf: gpd.GeoDataFrame, coord_names):
 
 
 def read_station_metadata_file(
-    fpath: str, 
-    coord_names: str, 
-    epsg: int,
-    filters: str = None
+    fpath: str, coord_names: str, epsg: int, filters: str = None
 ) -> gpd.GeoDataFrame:
     """read hydrological stations from file. will cache as pickle object
     because .csv file used by the team takes 12 seconds to load"""
 
-    print('station file')
+    print("station file")
     print(fpath)
-    
+
     try:
         if is_csv(fpath):
             gdf = read_csv_and_cache(fpath)

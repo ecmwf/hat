@@ -1,11 +1,9 @@
-from typing import List
-
-from tqdm import tqdm
 import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
 from dask.diagnostics import ProgressBar
+from tqdm import tqdm
 
 from hat.geo import get_latlon_keys
 
@@ -18,9 +16,7 @@ def mask_array_np(arr, mask):
 
 
 def extract_timeseries_using_mask(
-    da: xr.DataArray,
-    mask: np.ndarray,
-    station_dim = "station"
+    da: xr.DataArray, mask: np.ndarray, station_dim="station"
 ):
     """extract timeseries using a station mask with xarray.apply_ufunc()
 
@@ -71,15 +67,15 @@ def station_timeseries_index(
 
     dx = station.geometry.x - lon_in_mask
     dy = station.geometry.y - lat_in_mask
-    idx = (dx**2 + dy**2).argmin()
+    idx = (dx ** 2 + dy ** 2).argmin()
 
     return idx
 
 
 def assign_stations(
     stations: gpd.GeoDataFrame,
-    mask: np.ndarray, 
-    da_stations: xr.DataArray, 
+    mask: np.ndarray,
+    da_stations: xr.DataArray,
     coords: dict,
     station_dim: str,
 ) -> pd.DataFrame:

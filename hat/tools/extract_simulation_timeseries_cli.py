@@ -10,7 +10,6 @@ Usage
 
 import json
 import os
-from typing import List
 
 import geopandas as gpd
 import typer
@@ -19,10 +18,9 @@ from hat.cli import prettyprint, title
 from hat.config import timeseries_config
 
 # hat modules
-from hat.data import save_dataset_to_netcdf, read_simulation_as_xarray
+from hat.data import read_simulation_as_xarray, save_dataset_to_netcdf
 from hat.extract_simulation_timeseries import DEFAULT_CONFIG, extract_timeseries
 from hat.observations import read_station_metadata_file
-
 
 
 def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, simulation):
@@ -83,13 +81,13 @@ def command_line_tool(
     # read station file
     stations = read_station_metadata_file(
         config["station_metadata_filepath"],
-        config['station_coordinates'],
-        config['station_epsg'],
-        config["station_filters"]
+        config["station_coordinates"],
+        config["station_epsg"],
+        config["station_filters"],
     )
 
     # read simulated data
-    simulation = read_simulation_as_xarray(config['simulation'])
+    simulation = read_simulation_as_xarray(config["simulation"])
 
     print_overview(config, stations, simulation)
 

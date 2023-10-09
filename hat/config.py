@@ -111,9 +111,7 @@ def read_config(custom_config_filepath: str):
     return config
 
 
-def timeseries_config(
-    config_filepath: str
-):
+def timeseries_config(config_filepath: str):
     """Manage configuration settings for timeseries extraction.
     Priority order:
       1) command line arguments
