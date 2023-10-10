@@ -144,7 +144,7 @@ def filter_dataframe(df, filters: str):
     return df
 
 
-def filter_timeseries(sims_ds: xr.Dataset, obs_ds: xr.Dataset, threshold=80):
+def filter_timeseries(sims_ds: xr.DataArray, obs_ds: xr.DataArray, threshold=80):
     """Clean the simulation and observation timeseries
 
     Only keep..
@@ -159,35 +159,36 @@ def filter_timeseries(sims_ds: xr.Dataset, obs_ds: xr.Dataset, threshold=80):
     matching_stations = sorted(
         set(sims_ds.station.values).intersection(obs_ds.station.values)
     )
-    print(matching_stations)
+    print(len(matching_stations))
     sims_ds = sims_ds.sel(station=matching_stations)
     obs_ds = obs_ds.sel(station=matching_stations)
+    obs_ds = obs_ds.sel(time=sims_ds.time)
+
+    obs_ds = obs_ds.dropna(dim='station', how='all')
+    sims_ds = sims_ds.sel(station=obs_ds.station)
 
     # Only keep observations in the same time period as the simulations
-    obs_ds = obs_ds.where(sims_ds.time == obs_ds.time, drop=True)
+    # obs_ds = obs_ds.where(sims_ds.time == obs_ds.time, drop=True)
 
     # Only keep obsevations with enough valid data in this timeperiod
 
     # discharge data
-    dis = obs_ds.obsdis
     print(sims_ds)
-    print(dis)
-    import numpy as np
-    print(dis.values[np.isfinite(dis.values)])
+    print(obs_ds)
 
     # Replace negative values with NaN
-    dis = dis.where(dis >= 0)
+    # dis = dis.where(dis >= 0)
 
-    # Percentage of valid discharge data at each point in time
-    valid_percent = dis.notnull().mean(dim="time") * 100
+    # # Percentage of valid discharge data at each point in time
+    # valid_percent = dis.notnull().mean(dim="time") * 100
 
-    # Boolean index of where there is enough valid data
-    enough_observation_data = valid_percent > threshold
+    # # Boolean index of where there is enough valid data
+    # enough_observation_data = valid_percent > threshold
 
-    # keep where there is enough observation data
-    obs_ds = obs_ds.where(enough_observation_data, drop=True)
+    # # keep where there is enough observation data
+    # obs_ds = obs_ds.where(enough_observation_data, drop=True)
 
-    # keep simulation that match remaining observations
-    sims_ds = sims_ds.where(enough_observation_data, drop=True)
+    # # keep simulation that match remaining observations
+    # sims_ds = sims_ds.where(enough_observation_data, drop=True)
 
     return (sims_ds, obs_ds)

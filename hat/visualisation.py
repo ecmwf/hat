@@ -29,9 +29,9 @@ from ipyleaflet_legend import Legend
 class IPyLeaflet:
     """Visualization class for interactive map with IPyLeaflet and Plotly."""
     
-    def __init__(self, center_lat: float, center_lon: float):
+    def __init__(self):
         # Initialize the map widget
-        self.map = Map(center=[center_lat, center_lon], zoom=5, layout=Layout(width='500px', height='500px'))
+        self.map = Map(zoom=5, layout=Layout(width='500px', height='500px'))
               
         pd.set_option('display.max_colwidth', None)
         
@@ -107,8 +107,16 @@ class NotebookMap:
         self.sim_ds = self.prepare_simulations_data(simulations)
         print(self.sim_ds)
         self.obs_ds = self.prepare_observations_data()
+
+        self.statistics = {}
+        if stats:
+            for name, path in stats.items():
+                self.statistics[name] = xr.open_dataset(path)
+
+        assert self.statistics.keys() == self.sim_ds.keys()
+
         common_id = self.find_common_station()
-        print(common_id)
+        print(len(common_id))
         self.stations_metadata = self.stations_metadata.loc[self.stations_metadata[self.station_index].isin(common_id)]
         self.obs_ds =  self.obs_ds.sel(station = common_id)
         for sim, ds in  self.sim_ds.items():
@@ -118,12 +126,6 @@ class NotebookMap:
         print(self.obs_ds)
         print(self.sim_ds)
 
-        self.obs_ds =  self.obs_ds.sel(station=common_id)
-        self.stats = stats
-        self.threshold = config['stats_threshold'] #to be opt
-        self.statistics = None
-        if self.stats:
-            self.statistics = self.calculate_statistics()
         self.statistics_output = Output()
 
     def prepare_simulations_data(self, simulations):
@@ -184,12 +186,13 @@ class NotebookMap:
         obs_ds = obs_ds.sel(time=time_values)
         return obs_ds
 
-
     def find_common_station(self):
         ids = []
         ids += [list(self.obs_ds['station'].values)]
         ids += [list(ds['station'].values) for ds in self.sim_ds.values()]
         ids += [self.stations_metadata[self.station_index]]
+        if self.statistics:
+            ids += [list(ds['station'].values) for ds in self.statistics.values()]
 
         common_ids = None
         for id  in ids:
@@ -203,7 +206,9 @@ class NotebookMap:
         statistics = {}
         # Dictionary of simulation datasets
         for exp, ds in self.sim_ds.items():
-            sim_ds_f, obs_ds_f = filter_timeseries(ds.dis, self.obs_ds, self.threshold)
+            sim_ds_f, obs_ds_f = filter_timeseries(ds.dis, self.obs_ds.obsdis, self.threshold)
+            print(sim_ds_f)
+            print(obs_ds_f)
             statistics[exp] = run_analysis(self.stats, sim_ds_f, obs_ds_f)
         return statistics
 
@@ -309,28 +314,24 @@ class NotebookMap:
 
         
     def mapplot(self, colorby='kge', sim='exp1'):
-        # Utilize the already prepared datasets
-        if isinstance(self.sim_ds, dict):  # If there are multiple experiments
-            self.ds_list = list(self.sim_ds.values())
-        else:  # If there's only one dataset
-            self.ds_list = [self.sim_ds]
-
-        # Utilize the obs_ds to convert it to a dataframe (if needed elsewhere in the method)
-        self.obs_df = self.obs_ds.to_dataframe().reset_index()
 
         self.statistics_output.clear_output()
 
         # Assume all datasets have the same coordinates for simplicity
         # Determine center coordinates using the first dataset in the list
-        center_lat, center_lon = self.ds_list[0]['latitude'].mean().item(), self.ds_list[0]['longitude'].mean().item()
+        # lon = self.stations_metadata[self.config['station_coordinates'][0]]
+        # lat = self.stations_metadata[self.config['station_coordinates'][1]]
+        # center_lat, center_lon = lon.mean().item(), lat.mean().item()
 
         # Create a GeoMap centered on the mean coordinates
-        self.geo_map = IPyLeaflet(center_lat, center_lon)
+        print('Initialising ipyleaflet')
+        self.geo_map = IPyLeaflet()
 
+        print('Initialising plotly')
         self.f = self.geo_map.initialize_plot()  # Initialize a plotly figure widget for the time series
 
         # Convert ds 'time' to datetime format for alignment with external_df
-        self.ds_time = self.ds_list[0]['time'].values.astype('datetime64[D]')
+        self.ds_time = self.obs_ds['time'].values.astype('datetime64[D]')
 
         # Create a label to indicate loading
         self.loading_label = Label(value="")
@@ -350,7 +351,7 @@ class NotebookMap:
             raise ValueError(f"Statistic '{colorby}' not found in computed statistics for simulation '{sim}'.")
         
         # Retrieve the desired data
-        stat_data = self.statistics[sim][colorby].values
+        stat_data = self.statistics[sim][colorby]
 
         # Define a colormap (you can choose any other colormap that you like)
         colormap = plt.cm.viridis
@@ -358,23 +359,17 @@ class NotebookMap:
         # Normalize the data for coloring
         norm = plt.Normalize(stat_data.min(), stat_data.max())
 
+        print('Creating stations markers')
         # Create a GeoJSON structure from the stations_metadata DataFrame
-        
         for _, row in self.stations_metadata.iterrows():
             lat, lon = row['StationLat'], row['StationLon']
-            station_id = row['ObsID']
-            
-            # Get the index of the station in the statistics data
-            station_indices = np.where(self.ds_list[0]['station'].values.astype(str) == str(station_id))[0]
-            
-            if len(station_indices) == 0:
-                color = 'gray'
+            station_id = row[self.config['station_id_column_name']]
+            print(station_id)
+                        
+            if station_id in list(stat_data.station):
+                color = matplotlib.colors.rgb2hex(colormap(norm(stat_data.sel(station=station_id).values)))
             else:
-                if station_indices[0] >= len(stat_data) or np.isnan(stat_data[station_indices[0]]):
-                    color = 'gray'
-                else:
-                    color = matplotlib.colors.rgb2hex(colormap(norm(stat_data[station_indices[0]])))
-                    print(f"Station {station_id} has color {color} based on statistic value {stat_data[station_indices[0]]}")
+                color = 'gray'
 
             circle_marker = CircleMarker(location=(lat, lon), radius=5, color=color, fill_opacity=0.8)
             circle_marker.on_click(partial(self.handle_marker_click, row=row))
@@ -450,7 +445,9 @@ class NotebookMap:
     
         for exp_name, stats in self.statistics.items():
             print("Loop initiated for experiment:", exp_name)
-            if str(station_id) in stats['station'].values:
+            print(station_id)
+            print(stats['station'].values)
+            if station_id in stats['station'].values:
                 print("Available station IDs in stats:", stats['station'].values)
                 row = [exp_name] + [stats[var].sel(station=station_id).values for var in stats.data_vars if var not in ['longitude', 'latitude']]
                 data.append(row)
@@ -458,8 +455,6 @@ class NotebookMap:
 
         # Convert the data to a DataFrame for display
         columns = ['Exp. name'] + list(stats.data_vars.keys())
-        columns.remove('longitude')
-        columns.remove('latitude')
         statistics_df = pd.DataFrame(data, columns=columns)
 
         # Check if the dataframe has been generated correctly
