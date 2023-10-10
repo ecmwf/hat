@@ -89,7 +89,7 @@ class ThrottledClick:
 class NotebookMap:
     """Main class for visualization in Jupyter Notebook."""
 
-    def __init__(self, config: Dict, stations_metadata: str, observations: str, simulations: Union[Dict, str], stats=None):
+    def __init__(self, config: Dict, stations_metadata: str, observations: str, simulations: Dict, stats=None):
         self.config = config
         self.stations_metadata = read_station_metadata_file(
             fpath=stations_metadata,
@@ -97,21 +97,24 @@ class NotebookMap:
             epsg=config['station_epsg'],
             filters=config['station_filters']
         )
+        self.station_index = config["station_id_column_name"]
         self.station_file_name = os.path.basename(stations_metadata)  # Derive the file name here
-        self.stations_metadata['ObsID'] = self.stations_metadata['ObsID'].astype(str)
+        self.stations_metadata[self.station_index] = self.stations_metadata[self.station_index].astype(str)
         self.observations = observations
         # Ensure simulations is always a dictionary
-        if isinstance(simulations, str):
-            simulations = {"default": simulations}
-        elif not isinstance(simulations, dict):
-            raise ValueError("Simulations input should be either a string or a dictionary.")
+        
         self.simulations = simulations
         # Prepare sim_ds and obs_ds for statistics
         self.sim_ds = self.prepare_simulations_data()
         self.obs_ds = self.prepare_observations_data()
-
+        self.common_id = self.find_common_station()
+        self.stations_metadata = self.stations_metadata.sel(station_id=self.common_id)
+        self.obs_ds =  self.obs_ds.sel(station = self.common_id)
+        for sim, ds in  self.sim_ds.items():
+            self.sim_ds[sim] = ds.sel(station=self.common_id)
+        self.obs_ds =  self.obs_ds.sel(station = self.common_id)
         self.stats = stats
-        self.threshold = 70
+        self.threshold = 70 #to be opt
         self.statistics = None
         if self.stats:
             self.calculate_statistics()
@@ -185,7 +188,22 @@ class NotebookMap:
 
         obs_ds = obs_ds.sel(time=time_values)
         return obs_ds
-      
+
+
+    def find_common_station(self):
+        ids = []
+        ids += [list(self.obs_ds['station'].values)]
+        ids += [list(ds['station'].values) for ds in self.sim_ds.values()]
+        ids += [self.station_index]
+
+        common_ids = None
+        for id  in ids:
+            if common_ids is None:
+                common_ids = set(id)
+            else:
+                common_ids = set(id) & common_ids
+
+        return list(common_ids)      
     
     def calculate_statistics(self):
         statistics = {}
@@ -199,6 +217,8 @@ class NotebookMap:
                 sim_ds_f, obs_ds_f = filter_timeseries(ds, self.obs_ds, self.threshold)
                 statistics[exp] = run_analysis(self.stats, sim_ds_f, obs_ds_f)
         self.statistics = statistics
+
+
     
    
     
