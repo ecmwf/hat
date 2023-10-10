@@ -185,9 +185,7 @@ class NotebookMap:
 
         obs_ds = obs_ds.sel(time=time_values)
         return obs_ds
-
-
-           
+      
     
     def calculate_statistics(self):
         statistics = {}
@@ -300,6 +298,10 @@ class NotebookMap:
             print(f"Error encountered: {e}")
             self.loading_label.value = "Error encountered. Check the printed message."
 
+        with self.geo_map.output_widget:
+            clear_output(wait=True)  # Clear any previous plots or messages
+            display(self.f)
+
         
     def mapplot(self, colorby='kge', sim='exp1'):
         # Utilize the already prepared datasets
@@ -320,7 +322,7 @@ class NotebookMap:
         # Create a GeoMap centered on the mean coordinates
         self.geo_map = IPyLeaflet(center_lat, center_lon)
 
-        self.f = IPyLeaflet.initialize_plot()  # Initialize a plotly figure widget for the time series
+        self.f = self.geo_map.initialize_plot()  # Initialize a plotly figure widget for the time series
 
         # Convert ds 'time' to datetime format for alignment with external_df
         self.ds_time = self.ds_list[0]['time'].values.astype('datetime64[D]')
@@ -375,18 +377,20 @@ class NotebookMap:
 
         # Add legend to your map
         
-        legend_dict = self.colormap_to_legend(stat_data, colormap)
+        # legend_dict = self.colormap_to_legend(stat_data, colormap)
         # print("Legend Dict:", legend_dict)
-        my_legend = Legend(legend_dict, name=colorby)
-        self.geo_map.map.add_control(my_legend)
+        # my_legend = Legend(legend_dict, name=colorby)
+        # self.geo_map.map.add_control(my_legend)
         self.statistics_output = Output()
 
         # Initialize the layout only once
         # Create a new VBox for the plotly figure and the statistics output
-        plot_with_stats = VBox([self.f, self.statistics_output])
+        # plot_with_stats = VBox([self.f, self.statistics_output])
 
         # Modify the main layout to use the new VBox
-        self.layout = VBox([HBox([self.geo_map.map, plot_with_stats, self.geo_map.df_output]), self.loading_label])
+    
+        # self.layout = VBox([HBox([self.geo_map.map, self.geo_map.df_output]), self.loading_label])
+        self.layout = VBox([HBox([self.geo_map.map, self.f]), self.geo_map.df_output])
         # self.layout = VBox([HBox([self.geo_map.map, self.f, self.statistics_output]), self.geo_map.df_output, self.loading_label])
         display(self.layout)
 
