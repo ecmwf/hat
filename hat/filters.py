@@ -159,6 +159,7 @@ def filter_timeseries(sims_ds: xr.Dataset, obs_ds: xr.Dataset, threshold=80):
     matching_stations = sorted(
         set(sims_ds.station.values).intersection(obs_ds.station.values)
     )
+    print(matching_stations)
     sims_ds = sims_ds.sel(station=matching_stations)
     obs_ds = obs_ds.sel(station=matching_stations)
 
@@ -169,6 +170,10 @@ def filter_timeseries(sims_ds: xr.Dataset, obs_ds: xr.Dataset, threshold=80):
 
     # discharge data
     dis = obs_ds.obsdis
+    print(sims_ds)
+    print(dis)
+    import numpy as np
+    print(dis.values[np.isfinite(dis.values)])
 
     # Replace negative values with NaN
     dis = dis.where(dis >= 0)

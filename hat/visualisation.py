@@ -103,35 +103,34 @@ class NotebookMap:
         self.observations = observations
         # Ensure simulations is always a dictionary
         
-        self.simulations = simulations
         # Prepare sim_ds and obs_ds for statistics
-        self.sim_ds = self.prepare_simulations_data()
+        self.sim_ds = self.prepare_simulations_data(simulations)
+        print(self.sim_ds)
         self.obs_ds = self.prepare_observations_data()
-        self.common_id = self.find_common_station()
-        print(self.common_id)
-        self.stations_metadata = self.stations_metadata.loc[self.stations_metadata[self.station_index] == self.common_id]
-        self.obs_ds =  self.obs_ds.sel(station = self.common_id)
+        common_id = self.find_common_station()
+        print(common_id)
+        self.stations_metadata = self.stations_metadata.loc[self.stations_metadata[self.station_index].isin(common_id)]
+        self.obs_ds =  self.obs_ds.sel(station = common_id)
         for sim, ds in  self.sim_ds.items():
-            self.sim_ds[sim] = ds.sel(station=self.common_id)
+            self.sim_ds[sim] = ds.sel(station=common_id)
 
+        print(self.stations_metadata)
+        print(self.obs_ds)
+        print(self.sim_ds)
 
-        self.obs_ds =  self.obs_ds.sel(station = self.common_id)
+        self.obs_ds =  self.obs_ds.sel(station=common_id)
         self.stats = stats
-        self.threshold = 70 #to be opt
+        self.threshold = config['stats_threshold'] #to be opt
         self.statistics = None
         if self.stats:
-            self.calculate_statistics()
+            self.statistics = self.calculate_statistics()
         self.statistics_output = Output()
 
-    def prepare_simulations_data(self):
-        # If simulations is a string, assume it's a file path
-        if isinstance(self.simulations, str):
-            return xr.open_dataset(self.simulations)
+    def prepare_simulations_data(self, simulations):
         
         # If simulations is a dictionary, load data for each experiment
-        elif isinstance(self.simulations, dict):
-            datasets = {}
-        for exp, path in self.simulations.items():
+        datasets = {}
+        for exp, path in simulations.items():
             # Expanding the tilde
             expanded_path = os.path.expanduser(path)
             
@@ -145,12 +144,8 @@ class NotebookMap:
             else:
                 raise ValueError(f"Invalid path: {expanded_path}")
             datasets[exp] = ds
-                
-            return datasets
         
-        else:
-            raise TypeError("Invalid type for simulations. Expected str or dict.")
-        
+        return datasets
 
     def prepare_observations_data(self):
         file_extension = os.path.splitext(self.observations)[-1].lower()
@@ -166,15 +161,12 @@ class NotebookMap:
         elif file_extension == '.nc':
             obs_ds = xr.open_dataset(self.observations)
             
-            # Check if the necessary attributes are present
-            if 'obsdis' not in obs_ds or 'time' not in obs_ds.coords:
-                raise ValueError("The NetCDF file does not have the expected variables or coordinates.")
+            # # Check if the necessary attributes are present
+            # if 'obsdis' not in obs_ds or 'time' not in obs_ds.coords:
+            #     raise ValueError("The NetCDF file does not have the expected variables or coordinates.")
             
-            # Convert the 'station' coordinate to a multi-index of 'latitude' and 'longitude'
-            lats = obs_ds['lat'].values
-            lons = obs_ds['lon'].values
-            multi_index = pd.MultiIndex.from_tuples(list(zip(lats, lons)), names=['lat', 'lon'])
-            obs_ds['station'] = ('station', multi_index)
+            # multi_index = pd.MultiIndex.from_tuples(list(zip(lats, lons)), names=['lat', 'lon'])
+            # obs_ds['station'] = ('station', multi_index)
         
         else:
             raise ValueError("Unsupported file format for observations.")
@@ -196,42 +188,25 @@ class NotebookMap:
     def find_common_station(self):
         ids = []
         ids += [list(self.obs_ds['station'].values)]
-        print(self.obs_ds.station_id)
         ids += [list(ds['station'].values) for ds in self.sim_ds.values()]
-        print(self.sim_ds)
         ids += [self.stations_metadata[self.station_index]]
-
 
         common_ids = None
         for id  in ids:
-            print(id)
-
             if common_ids is None:
                 common_ids = set(id)
             else:
                 common_ids = set(id) & common_ids
-            
-            print(common_ids)
-
         return list(common_ids)      
     
     def calculate_statistics(self):
         statistics = {}
-        if isinstance(self.sim_ds, xr.Dataset):
-            # Single simulation dataset
-            sim_ds_f, obs_ds_f = filter_timeseries(self.sim_ds, self.obs_ds, self.threshold)
-            statistics["single"] = run_analysis(self.stats, sim_ds_f, obs_ds_f)
-        elif isinstance(self.sim_ds, dict):
-            # Dictionary of simulation datasets
-            for exp, ds in self.sim_ds.items():
-                sim_ds_f, obs_ds_f = filter_timeseries(ds, self.obs_ds, self.threshold)
-                statistics[exp] = run_analysis(self.stats, sim_ds_f, obs_ds_f)
-        self.statistics = statistics
+        # Dictionary of simulation datasets
+        for exp, ds in self.sim_ds.items():
+            sim_ds_f, obs_ds_f = filter_timeseries(ds.dis, self.obs_ds, self.threshold)
+            statistics[exp] = run_analysis(self.stats, sim_ds_f, obs_ds_f)
+        return statistics
 
-
-    
-   
-    
     def display_dataframe_with_scroll(self, df, title=""):
         with self.geo_map.df_output:
             clear_output(wait=True)
