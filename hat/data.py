@@ -37,6 +37,9 @@ def get_tmpdir():
     else:
         tmpdir = TemporaryDirectory().name
 
+    # Ensure the directory exists
+    os.makedirs(tmpdir, exist_ok=True)
+
     return tmpdir
 
 
