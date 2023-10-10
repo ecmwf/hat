@@ -108,10 +108,13 @@ class NotebookMap:
         self.sim_ds = self.prepare_simulations_data()
         self.obs_ds = self.prepare_observations_data()
         self.common_id = self.find_common_station()
-        self.stations_metadata = self.stations_metadata.sel(station_id=self.common_id)
+        print(self.common_id)
+        self.stations_metadata = self.stations_metadata.loc[self.stations_metadata[self.station_index] == self.common_id]
         self.obs_ds =  self.obs_ds.sel(station = self.common_id)
         for sim, ds in  self.sim_ds.items():
             self.sim_ds[sim] = ds.sel(station=self.common_id)
+
+
         self.obs_ds =  self.obs_ds.sel(station = self.common_id)
         self.stats = stats
         self.threshold = 70 #to be opt
@@ -193,15 +196,22 @@ class NotebookMap:
     def find_common_station(self):
         ids = []
         ids += [list(self.obs_ds['station'].values)]
+        print(self.obs_ds.station_id)
         ids += [list(ds['station'].values) for ds in self.sim_ds.values()]
-        ids += [self.station_index]
+        print(self.sim_ds)
+        ids += [self.stations_metadata[self.station_index]]
+
 
         common_ids = None
         for id  in ids:
+            print(id)
+
             if common_ids is None:
                 common_ids = set(id)
             else:
                 common_ids = set(id) & common_ids
+            
+            print(common_ids)
 
         return list(common_ids)      
     
