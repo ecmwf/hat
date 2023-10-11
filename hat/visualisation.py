@@ -126,28 +126,26 @@ class NotebookMap:
 
         # Prepare sim_ds and obs_ds for statistics
         self.sim_ds = self.prepare_simulations_data(simulations)
-        print(self.sim_ds)
         self.obs_ds = self.prepare_observations_data()
 
         self.statistics = {}
         if stats:
             for name, path in stats.items():
-                self.statistics[name] = xr.open_dataset(path).isel(station=range(100))
+                self.statistics[name] = xr.open_dataset(path)
 
         assert self.statistics.keys() == self.sim_ds.keys()
 
         common_id = self.find_common_station()
-        print(len(common_id))
+        print(f"Found {len(common_id)} common stations")
         self.stations_metadata = self.stations_metadata.loc[
             self.stations_metadata[self.station_index].isin(common_id)
         ]
         self.obs_ds = self.obs_ds.sel(station=common_id)
         for sim, ds in self.sim_ds.items():
             self.sim_ds[sim] = ds.sel(station=common_id)
-
-        print(self.stations_metadata)
-        print(self.obs_ds)
-        print(self.sim_ds)
+        # print(self.stations_metadata)
+        # print(self.obs_ds)
+        # print(self.sim_ds)
 
     def prepare_simulations_data(self, simulations):
         # If simulations is a dictionary, load data for each experiment
@@ -418,7 +416,7 @@ class NotebookMap:
             circle_marker = CircleMarker(
                 location=(lat, lon),
                 radius=5,
-                color="black",
+                color="gray",
                 fill_color=color,
                 fill_opacity=0.8,
             )
