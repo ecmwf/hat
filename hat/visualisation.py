@@ -42,7 +42,7 @@ class IPyLeaflet:
 
     def __init__(self):
         # Initialize the map widget
-        self.map = Map(zoom=5, layout=Layout(width="500px", height="500px"))
+        self.map = Map(zoom=5, layout=Layout(width="1000px", height="500px"))
 
         pd.set_option("display.max_colwidth", None)
 
@@ -57,9 +57,9 @@ class IPyLeaflet:
         )
 
         # Main layout: map and output widget on top, properties table at the bottom
-        self.layout = VBox(
-            [HBox([self.map, self.output_widget]), self.df_stats, self.df_output]
-        )
+        # self.layout = VBox(
+        #     [HBox([self.map, self.output_widget]), self.df_stats, self.df_output]
+        # )
 
     def add_marker(self, lat: float, lon: float, on_click_callback):
         """Add a marker to the map."""
@@ -67,15 +67,12 @@ class IPyLeaflet:
         marker.on_click(on_click_callback)
         self.map.add_layer(marker)
 
-    def display(self):
-        display(self.vbox)
-
     @staticmethod
     def initialize_plot():
         """Initialize a plotly figure widget."""
         f = go.FigureWidget(
             layout=go.Layout(
-                width=600,
+                width=1000,
                 legend=dict(
                     orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
                 ),
@@ -241,8 +238,8 @@ class NotebookMap:
             statistics[exp] = run_analysis(self.stats, sim_ds_f, obs_ds_f)
         return statistics
 
-    def display_dataframe_with_scroll(self, df, title=""):
-        with self.geo_map.df_stats:
+    def display_dataframe_with_scroll(self, df, output, title=""):
+        with output:
             clear_output(wait=True)
 
             # Define styles directly within the HTML content
@@ -250,7 +247,7 @@ class NotebookMap:
             <style>
                 .custom-table-container {
                     text-align: center;
-                    margin: 0 auto;
+                    margin: 0;
                 }
                 .custom-table {
                     max-width: 1000px;
@@ -260,6 +257,7 @@ class NotebookMap:
                     border: 2px solid grey;
                     border-collapse: collapse;
                     width: 100%;
+                    margin: 0
                 }
                 .custom-table th, .custom-table td {
                     border: 1px solid #ddd;
@@ -339,9 +337,11 @@ class NotebookMap:
         self.f.layout.yaxis.title = "Discharge [m3/s]"
 
         # Generate and display the statistics table for the clicked station
-        with self.statistics_output:
+        if self.statistics:
             df_stats = self.generate_statistics_table(station_id)
-            self.display_dataframe_with_scroll(df_stats, title="Statistics Overview")
+            self.display_dataframe_with_scroll(
+                df_stats, self.geo_map.df_stats, title="Statistics Overview"
+            )
 
         self.loading_label.value = ""  # Clear the loading message
 
@@ -416,7 +416,11 @@ class NotebookMap:
                 color = "gray"
 
             circle_marker = CircleMarker(
-                location=(lat, lon), radius=5, color=color, fill_opacity=0.8
+                location=(lat, lon),
+                radius=5,
+                color="black",
+                fill_color=color,
+                fill_opacity=0.8,
             )
             circle_marker.on_click(partial(self.handle_marker_click, row=row))
             self.geo_map.map.add_layer(circle_marker)
@@ -435,14 +439,21 @@ class NotebookMap:
         # Modify the main layout to use the new VBox
 
         # self.layout = VBox([HBox([self.geo_map.map, self.geo_map.df_output]), self.loading_label])
-        self.layout = VBox(
+
+        # station_frames = VBox([self.geo_map.map, self.geo_map.df_output])
+        point_frames = HBox([self.f, self.geo_map.df_stats])
+        # layout = HBox([station_frames, point_frames])
+        layout = VBox(
             [
-                HBox([self.geo_map.map, self.f]),
-                HBox([self.geo_map.df_output, self.geo_map.df_stats]),
+                self.geo_map.map,
+                self.f,
+                self.geo_map.df_stats,
+                self.geo_map.df_output,
             ]
         )
+
         # self.layout = VBox([HBox([self.geo_map.map, self.f, self.statistics_output]), self.geo_map.df_output, self.loading_label])
-        display(self.layout)
+        display(layout)
 
     def colormap_to_legend(self, stat_data, colormap, n_labels=5):
         """
@@ -467,16 +478,18 @@ class NotebookMap:
 
         self.handle_click(station_id)
 
-        # Convert the station metadata to a DataFrame for display
-        df = pd.DataFrame([row])
-
         title_plot = f"Time Series for Station ID: {station_id}, {station_name}"
+        self.f.update_layout(title_x=0.5)  # Centre title
         self.f.layout.title.text = title_plot  # Set title for the time series plot
-        print("hello")
 
         # Display the DataFrame in the df_output widget
+        df = pd.DataFrame(
+            [row]
+        )  # Convert the station metadata to a DataFrame for display
         title_table = f"Station property from metadata: {self.station_file_name}"
-        self.display_dataframe_with_scroll(df, title=title_table)
+        self.display_dataframe_with_scroll(
+            df, self.geo_map.df_output, title=title_table
+        )
 
     def handle_geojson_click(self, feature, **kwargs):
         # Extract properties directly from the feature
@@ -554,7 +567,7 @@ class NotebookMap:
             df = properties_to_dataframe(properties)
 
             # Display the DataFrame in the df_output widget using the modified method
-            self.display_dataframe_with_scroll(df, title=title)
+            # self.display_dataframe_with_scroll(df, title=title)
 
         # Bind the callback to the layer
         geojson_layer.on_click(on_feature_click)
