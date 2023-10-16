@@ -40,9 +40,20 @@ from hat.observations import read_station_metadata_file
 class IPyLeaflet:
     """Visualization class for interactive map with IPyLeaflet and Plotly."""
 
-    def __init__(self):
-        # Initialize the map widget
-        self.map = Map(zoom=5, layout=Layout(width="1000px", height="500px"))
+    def __init__(self, bounds):
+        # Calculate the center of the map from the bounds
+        center_lat = (bounds[0][0] + bounds[1][0]) / 2
+        center_lon = (bounds[0][1] + bounds[1][1]) / 2
+
+        # Initialize the map widget with the calculated center
+        self.map = Map(
+            center=(center_lat, center_lon),
+            zoom=5,
+            layout=Layout(width="500px", height="600px")
+        )
+
+        # Fit the map to the provided bounds
+        self.map.fit_bounds(bounds)
 
         pd.set_option("display.max_colwidth", None)
 
@@ -56,10 +67,6 @@ class IPyLeaflet:
             "", layout=Layout(font_weight="bold", margin="10px 0")
         )
 
-        # Main layout: map and output widget on top, properties table at the bottom
-        # self.layout = VBox(
-        #     [HBox([self.map, self.output_widget]), self.df_stats, self.df_output]
-        # )
 
     def add_marker(self, lat: float, lon: float, on_click_callback):
         """Add a marker to the map."""
@@ -72,13 +79,30 @@ class IPyLeaflet:
         """Initialize a plotly figure widget."""
         f = go.FigureWidget(
             layout=go.Layout(
-                width=1000,
+                width=600,
                 legend=dict(
                     orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
                 ),
             )
         )
         return f
+    
+    # def initialize_dataframes(self):
+    #     """Initialize the empty dataframe widgets with empty dataframes."""
+    #     empty_df = pd.DataFrame()
+
+    #     # Displaying the dataframe within the specified output widget
+    #     with self.df_output:
+    #         clear_output(wait=True)
+    #         display(HTML('<h3>' + "Station property" + '</h3>'))
+    #         display(empty_df)
+
+    #     with self.df_stats:
+    #         clear_output(wait=True)
+    #         display(HTML('<h3>' + "Statistics Overview" + '</h3>'))
+    #         display(empty_df)
+
+       
 
 
 class ThrottledClick:
@@ -114,20 +138,24 @@ class NotebookMap:
             epsg=config["station_epsg"],
             filters=config["station_filters"],
         )
+        
+        self.station_file_name = os.path.basename(stations_metadata)  # station metadata file name here
+        
+        # set station index
         self.station_index = config["station_id_column_name"]
-        self.station_file_name = os.path.basename(
-            stations_metadata
-        )  # Derive the file name here
         self.stations_metadata[self.station_index] = self.stations_metadata[
             self.station_index
         ].astype(str)
-        self.observations = observations
-        # Ensure simulations is always a dictionary
+          
 
-        # Prepare sim_ds and obs_ds for statistics
-        self.sim_ds = self.prepare_simulations_data(simulations)
+        # Prepare sim_ds and obs_ds for statistics, simuation is a directory dict {<sim name>:<directory">}
+        self.observations = observations
+        self.obs_var_name = config["obs_var_name"]
+        self.simulations = simulations 
+        self.sim_ds = self.prepare_simulations_data()
         self.obs_ds = self.prepare_observations_data()
 
+        # retrieve statistics from the statistics netcdf input
         self.statistics = {}
         if stats:
             for name, path in stats.items():
@@ -135,22 +163,33 @@ class NotebookMap:
 
         assert self.statistics.keys() == self.sim_ds.keys()
 
-        common_id = self.find_common_station()
-        print(f"Found {len(common_id)} common stations")
-        self.stations_metadata = self.stations_metadata.loc[
-            self.stations_metadata[self.station_index].isin(common_id)
-        ]
-        self.obs_ds = self.obs_ds.sel(station=common_id)
-        for sim, ds in self.sim_ds.items():
-            self.sim_ds[sim] = ds.sel(station=common_id)
-        # print(self.stations_metadata)
-        # print(self.obs_ds)
-        # print(self.sim_ds)
 
-    def prepare_simulations_data(self, simulations):
+        # find common station ids between metadata, observation and simulations
+        self.common_id = self.find_common_station()
+        print(f"Found {len(self.common_id)} common stations")
+        self.stations_metadata = self.stations_metadata.loc[
+            self.stations_metadata[self.station_index].isin(self.common_id)
+        ]
+        self.obs_ds = self.obs_ds.sel(station=self.common_id)
+        for sim, ds in self.sim_ds.items():
+            self.sim_ds[sim] = ds.sel(station=self.common_id)
+
+
+        # Calculate the bounding extent to display map (min/max latitudes and longitudes)
+        common_stations_df = self.stations_metadata[self.stations_metadata['station_id'].isin(self.common_id)]
+        min_lat = common_stations_df['y'].min()
+        max_lat = common_stations_df['y'].max()
+        min_lon = common_stations_df['x'].min()
+        max_lon = common_stations_df['x'].max()
+        self.bounds = ((min_lat, min_lon), (max_lat, max_lon))
+
+        
+    def prepare_simulations_data(self):
+        """process simulations raw datasets to a standard dataframe"""
+
         # If simulations is a dictionary, load data for each experiment
-        datasets = {}
-        for exp, path in simulations.items():
+        sim_ds = {}
+        for exp, path in self.simulations.items():
             # Expanding the tilde
             expanded_path = os.path.expanduser(path)
 
@@ -165,17 +204,18 @@ class NotebookMap:
                 )
             else:
                 raise ValueError(f"Invalid path: {expanded_path}")
-            datasets[exp] = ds
+            sim_ds[exp] = ds
 
-        return datasets
+        return sim_ds
 
     def prepare_observations_data(self):
+        """process observation raw dataset to a standard dataframe"""
         file_extension = os.path.splitext(self.observations)[-1].lower()
 
         if file_extension == ".csv":
             obs_df = pd.read_csv(self.observations, parse_dates=["Timestamp"])
             obs_melted = obs_df.melt(
-                id_vars="Timestamp", var_name="station", value_name="obsdis"
+                id_vars="Timestamp", var_name="station", value_name=self.obs_var_name
             )
 
             # Convert the melted DataFrame to xarray Dataset
@@ -184,13 +224,6 @@ class NotebookMap:
 
         elif file_extension == ".nc":
             obs_ds = xr.open_dataset(self.observations)
-
-            # # Check if the necessary attributes are present
-            # if 'obsdis' not in obs_ds or 'time' not in obs_ds.coords:
-            #     raise ValueError("The NetCDF file does not have the expected variables or coordinates.")
-
-            # multi_index = pd.MultiIndex.from_tuples(list(zip(lats, lons)), names=['lat', 'lon'])
-            # obs_ds['station'] = ('station', multi_index)
 
         else:
             raise ValueError("Unsupported file format for observations.")
@@ -209,6 +242,7 @@ class NotebookMap:
         return obs_ds
 
     def find_common_station(self):
+        """find common station between observation and simulation and station metadata"""
         ids = []
         ids += [list(self.obs_ds["station"].values)]
         ids += [list(ds["station"].values) for ds in self.sim_ds.values()]
@@ -225,6 +259,9 @@ class NotebookMap:
         return list(common_ids)
 
     def calculate_statistics(self):
+        """in progress: to calculate statistics using the run_analysis tools -- 
+        takes a long time more recommended to load the statistic file"""
+
         statistics = {}
         # Dictionary of simulation datasets
         for exp, ds in self.sim_ds.items():
@@ -237,6 +274,7 @@ class NotebookMap:
         return statistics
 
     def display_dataframe_with_scroll(self, df, output, title=""):
+        """to display the dataframe as a html table with a horizontal scroll bar"""
         with output:
             clear_output(wait=True)
 
@@ -275,8 +313,10 @@ class NotebookMap:
 
             display(HTML(content))
 
-    # Define a callback to handle marker clicks
+    
     def handle_click(self, station_id):
+        '''Define a callback to handle marker clicks
+        it adds the plot figure'''
         # Use the throttler to determine if we should process the click
         if not self.throttler.should_process():
             return
@@ -292,7 +332,7 @@ class NotebookMap:
         # Convert ds_time to a list of string formatted dates for reindexing
         ds_time_str = [dt.isoformat() for dt in pd.to_datetime(self.ds_time)]
 
-        # Loop over all datasets to plot them
+        # Loop over all simulation datasets to plot them
         for name, ds in self.sim_ds.items():
             if station_id in ds["station"].values:
                 ds_time_series_data = ds["dis"].sel(station=station_id).values
@@ -343,29 +383,26 @@ class NotebookMap:
 
         self.loading_label.value = ""  # Clear the loading message
 
-        # except Exception as e:
-        #     print(f"Error encountered: {e}")
-        #     self.loading_label.value = "Error encountered. Check the printed message."
-
         with self.geo_map.output_widget:
             clear_output(wait=True)  # Clear any previous plots or messages
             display(self.f)
 
-    def mapplot(self, colorby="kge", sim="exp1"):
-        # Assume all datasets have the same coordinates for simplicity
-        # Determine center coordinates using the first dataset in the list
-        # lon = self.stations_metadata[self.config['station_coordinates'][0]]
-        # lat = self.stations_metadata[self.config['station_coordinates'][1]]
-        # center_lat, center_lon = lon.mean().item(), lat.mean().item()
+    def mapplot(self, colorby="kge", sim = None):
 
-        # Create a GeoMap centered on the mean coordinates
-        print("Initialising ipyleaflet")
-        self.geo_map = IPyLeaflet()
+        #If sim / experiement name is not provided, by default it takes the first one in the dictionary of simulation list
+        if sim is None: 
+            sim = list(self.simulations.keys())[0]
+
+        # Create an instance of IPyLeaflet with the calculated bounds
+        self.geo_map = IPyLeaflet(bounds=self.bounds)
 
         print("Initialising plotly")
         self.f = (
             self.geo_map.initialize_plot()
         )  # Initialize a plotly figure widget for the time series
+
+        # # Initialize the dataframe widgets with empty dataframes
+        # self.geo_map.initialize_dataframes()
 
         # Convert ds 'time' to datetime format for alignment with external_df
         self.ds_time = self.obs_ds["time"].values.astype("datetime64[D]")
@@ -400,7 +437,7 @@ class NotebookMap:
         # Normalize the data for coloring
         norm = plt.Normalize(stat_data.min(), stat_data.max())
 
-        print("Creating stations markers")
+    
         # Create a GeoJSON structure from the stations_metadata DataFrame
         for _, row in self.stations_metadata.iterrows():
             lat, lon = row["StationLat"], row["StationLon"]
@@ -423,32 +460,12 @@ class NotebookMap:
             circle_marker.on_click(partial(self.handle_marker_click, row=row))
             self.geo_map.map.add_layer(circle_marker)
 
-        # Add legend to your map
 
-        # legend_dict = self.colormap_to_legend(stat_data, colormap)
-        # print("Legend Dict:", legend_dict)
-        # my_legend = Legend(legend_dict, name=colorby)
-        # self.geo_map.map.add_control(my_legend)
+        center_layout = Layout(align_items='center')
+        top_right_frame = VBox([self.f, self.geo_map.df_stats],layout=center_layout )
+        main_top_frame = HBox([self.geo_map.map, top_right_frame],layout=center_layout )
+        layout = VBox([main_top_frame, self.geo_map.df_output],layout=center_layout )
 
-        # Initialize the layout only once
-        # Create a new VBox for the plotly figure and the statistics output
-        # plot_with_stats = VBox([self.f, self.statistics_output])
-
-        # Modify the main layout to use the new VBox
-
-        # self.layout = VBox([HBox([self.geo_map.map, self.geo_map.df_output]), self.loading_label])
-
-        # station_frames = VBox([self.geo_map.map, self.geo_map.df_output])
-        point_frames = HBox([self.f, self.geo_map.df_stats])
-        # layout = HBox([station_frames, point_frames])
-        layout = VBox(
-            [
-                self.geo_map.map,
-                self.f,
-                self.geo_map.df_stats,
-                self.geo_map.df_output,
-            ]
-        )
 
         # self.layout = VBox([HBox([self.geo_map.map, self.f, self.statistics_output]), self.geo_map.df_output, self.loading_label])
         display(layout)
@@ -456,10 +473,6 @@ class NotebookMap:
     def colormap_to_legend(self, stat_data, colormap, n_labels=5):
         """
         Convert a matplotlib colormap to a dictionary suitable for ipyleaflet-legend.
-
-        Parameters:
-        - colormap: A matplotlib colormap instance
-        - n_labels: Number of labels/colors in the legend
         """
         values = np.linspace(0, 1, n_labels)
         colors = [matplotlib.colors.rgb2hex(colormap(value)) for value in values]
@@ -472,7 +485,6 @@ class NotebookMap:
     def handle_marker_click(self, row, **kwargs):
         station_id = row[self.config["station_id_column_name"]]
         station_name = row["StationName"]
-        print(station_id)
 
         self.handle_click(station_id)
 
@@ -502,28 +514,29 @@ class NotebookMap:
         self.display_dataframe_with_scroll(df_station, title=title_table)
 
     def generate_statistics_table(self, station_id):
-        # print(f"Generating statistics table for station: {station_id}")
 
         data = []
         # Loop through each simulation and get the statistics for the given station_id
 
         for exp_name, stats in self.statistics.items():
-            print("Loop initiated for experiment:", exp_name)
-            print(station_id)
-            print(stats["station"].values)
+
             if station_id in stats["station"].values:
-                print("Available station IDs in stats:", stats["station"].values)
+                # print("Available station IDs in stats:", stats["station"].values)
                 row = [exp_name] + [
-                    stats[var].sel(station=station_id).values
+                    round(stats[var].sel(station=station_id).values.item(), 2)
                     for var in stats.data_vars
                     if var not in ["longitude", "latitude"]
                 ]
+
                 data.append(row)
-            print("Data after processing:", data)
 
         # Convert the data to a DataFrame for display
         columns = ["Exp. name"] + list(stats.data_vars.keys())
         statistics_df = pd.DataFrame(data, columns=columns)
+
+        # Round the numerical columns to 2 decimal places
+        numerical_columns = [col for col in statistics_df.columns if col != "Exp. name"]
+        statistics_df[numerical_columns] = statistics_df[numerical_columns].round(2)
 
         # Check if the dataframe has been generated correctly
         if statistics_df.empty:
@@ -557,15 +570,13 @@ class NotebookMap:
         # Update the title label
         vector_name = os.path.basename(vector_data)
 
-        # Define the callback to handle feature clicks
-        def on_feature_click(event, feature, **kwargs):
-            title = f"Feature property of the external vector: {vector_name}"
+        # # Define the callback to handle feature clicks
+        # def on_feature_click(event, feature, **kwargs):
+        #     title = f"Feature property of the external vector: {vector_name}"
 
-            properties = feature["properties"]
-            df = properties_to_dataframe(properties)
+        #     properties = feature["properties"]
+        #     df = properties_to_dataframe(properties)
 
-            # Display the DataFrame in the df_output widget using the modified method
-            # self.display_dataframe_with_scroll(df, title=title)
 
         # Bind the callback to the layer
         geojson_layer.on_click(on_feature_click)
