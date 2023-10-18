@@ -37,15 +37,10 @@ class IPyLeaflet:
     """Visualization class for interactive map with IPyLeaflet and Plotly."""
 
     def __init__(self, bounds):
-        # Calculate the center of the map from the bounds
-        center_lat = (bounds[0][0] + bounds[1][0]) / 2
-        center_lon = (bounds[0][1] + bounds[1][1]) / 2
 
         # Initialize the map widget with the calculated center
         self.map = Map(
-            center=(center_lat, center_lon),
-            zoom=5,
-            layout=Layout(width="400px", height="600px")
+            layout=Layout(width= "100%", height="600px")
         )
 
         # Fit the map to the provided bounds
@@ -75,9 +70,7 @@ class IPyLeaflet:
         """Initialize a plotly figure widget."""
         f = go.FigureWidget(
             layout=go.Layout(
-                width=600,
-                height =350,
-                margin=dict(t=100, b=10, l=10, r=10),  # Adjust margin
+                height=350,
                 legend=dict(
                     orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
                 ),
@@ -90,7 +83,7 @@ class IPyLeaflet:
     #     columns = ["Exp. name", "...", "..."]  # Add the required columns
     #     data = [["", "", ""]]  # Empty values
     #     df = pd.DataFrame(data, columns=columns)
-    #     self.display_dataframe_with_scroll(df, self.df_stats, title="Statistics Overview")
+    #     self.display_dataframe_with_scroll(df, self.df_stats, title="")
 
     # def initialize_station_property_table(self):
     #     # Create a placeholder dataframe for station property with blank header and one blank row
@@ -373,6 +366,7 @@ class NotebookMap:
         self.f.layout.xaxis.tickformat = "%d-%m-%Y"
         self.f.layout.yaxis.title = "Discharge [m3/s]"
 
+
         # Generate and display the statistics table for the clicked station
         if self.statistics:
             df_stats = self.generate_statistics_table(station_id)
@@ -479,18 +473,20 @@ class NotebookMap:
         colormap = plt.cm.YlGnBu
         legend_widget = self.generate_html_legend(colormap, min_val, max_val)
     
-        # Create marker from stations_metadata
+        # Create marker from stations_metadata 
         for _, row in self.stations_metadata.iterrows():
             lat, lon = row["StationLat"], row["StationLon"]
             station_id = row[self.config["station_id_column_name"]]
 
             if station_id in list(stat_data.station):
+                #TODO should be in IpyLeaflet
                 color = matplotlib.colors.rgb2hex(
                     colormap(norm(stat_data.sel(station=station_id).values))
                 )
             else:
                 color = "gray"
 
+            #TODO should be in IpyLeaflet
             circle_marker = CircleMarker(
                 location=(lat, lon),
                 radius=7,
@@ -517,18 +513,20 @@ class NotebookMap:
                         )
         date_label = Label("Please select the date to accurately change the date axis of the plot")
 
-        center_layout = Layout(justify_content='center',align_items='center',spacing='2px' )
-        date_picker_box = HBox([self.start_date_picker, self.end_date_picker],layout=center_layout)
-        top_right_frame = VBox([self.f, date_label, date_picker_box, self.geo_map.df_stats],layout=center_layout)
-        top_left_frame = VBox([self.geo_map.map, legend_widget],layout=center_layout)
-        main_top_frame = HBox([top_left_frame, top_right_frame],layout=center_layout )
-        layout = VBox([title_label, self.loading_label, main_top_frame, self.geo_map.df_output],layout=center_layout)
-
+        main_layout = Layout(justify_content='space-around',align_items='stretch',spacing='2px', width= '1000px' )
+        left_layout = Layout(justify_content='space-around', align_items='center',spacing='2px', width = '40%')
+        right_layout = Layout(justify_content='center',align_items='center',spacing='2px', width = '60%')
+        date_picker_box = HBox([self.start_date_picker, self.end_date_picker])
+        top_right_frame = VBox([self.f, date_label, date_picker_box, self.geo_map.df_stats],layout=right_layout )
+        top_left_frame = VBox([self.geo_map.map, legend_widget],layout=left_layout )
+        main_top_frame = HBox([top_left_frame, top_right_frame])
+        layout = VBox([title_label, self.loading_label, main_top_frame, self.geo_map.df_output],layout=main_layout)
+        #TODO list all object e.g. geomap (all in a dict or list), 
         
         display(layout)
 
     
-    def handle_marker_click(self, row, **kwargs):
+    def handle_marker_click(self, row, **kwargs): #TODO Interactive map class
         station_id = row[self.config["station_id_column_name"]]
         station_name = row["StationName"]
 
@@ -617,15 +615,15 @@ class NotebookMap:
     #     # Create the GeoJSON layer
     #     geojson_layer = GeoJSON(data=vector, style=style)
 
-    #     # Update the title label
-    #     # vector_name = os.path.basename(vector_data)
+    #     Update the title label
+    #     vector_name = os.path.basename(vector_data)
 
-    #     # # Define the callback to handle feature clicks
-    #     # def on_feature_click(event, feature, **kwargs):
-    #     #     title = f"Feature property of the external vector: {vector_name}"
+    #     # Define the callback to handle feature clicks
+    #     def on_feature_click(event, feature, **kwargs):
+    #         title = f"Feature property of the external vector: {vector_name}"
 
-    #     #     properties = feature["properties"]
-    #     #     df = properties_to_dataframe(properties)
+    #         properties = feature["properties"]
+    #         df = properties_to_dataframe(properties)
 
 
     #     # Bind the callback to the layer
