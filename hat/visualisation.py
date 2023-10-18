@@ -7,7 +7,7 @@ import json
 import os
 import time
 from functools import partial
-from typing import Dict, Union
+from typing import Dict
 
 import geopandas as gpd
 import matplotlib
@@ -17,19 +17,15 @@ import pandas as pd
 import plotly.graph_objs as go
 import xarray as xr
 from ipyleaflet import (
-    AwesomeIcon,
+    ImageOverlay,
     CircleMarker,
-    GeoJSON,
-    LegendControl,
     Map,
     Marker,
-    Popup,
-    Rectangle,
 )
-from ipyleaflet_legend import Legend
+
 from IPython.core.display import display
 from IPython.display import clear_output
-from ipywidgets import HTML, HBox, Label, Layout, Output, VBox
+from ipywidgets import HTML, HBox, Label, Layout, Output, VBox, DatePicker
 from shapely.geometry import Point
 
 from hat.filters import filter_timeseries
@@ -49,7 +45,7 @@ class IPyLeaflet:
         self.map = Map(
             center=(center_lat, center_lon),
             zoom=5,
-            layout=Layout(width="500px", height="600px")
+            layout=Layout(width="400px", height="600px")
         )
 
         # Fit the map to the provided bounds
@@ -80,29 +76,28 @@ class IPyLeaflet:
         f = go.FigureWidget(
             layout=go.Layout(
                 width=600,
+                height =350,
+                margin=dict(t=100, b=10, l=10, r=10),  # Adjust margin
                 legend=dict(
                     orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
                 ),
             )
         )
-        return f
-    
-    # def initialize_dataframes(self):
-    #     """Initialize the empty dataframe widgets with empty dataframes."""
-    #     empty_df = pd.DataFrame()
+        return f 
 
-    #     # Displaying the dataframe within the specified output widget
-    #     with self.df_output:
-    #         clear_output(wait=True)
-    #         display(HTML('<h3>' + "Station property" + '</h3>'))
-    #         display(empty_df)
+    # def initialize_statistics_table(self):
+    #     # Create a placeholder dataframe with no values but with the title, header, and "Exp. name"
+    #     columns = ["Exp. name", "...", "..."]  # Add the required columns
+    #     data = [["", "", ""]]  # Empty values
+    #     df = pd.DataFrame(data, columns=columns)
+    #     self.display_dataframe_with_scroll(df, self.df_stats, title="Statistics Overview")
 
-    #     with self.df_stats:
-    #         clear_output(wait=True)
-    #         display(HTML('<h3>' + "Statistics Overview" + '</h3>'))
-    #         display(empty_df)
-
-       
+    # def initialize_station_property_table(self):
+    #     # Create a placeholder dataframe for station property with blank header and one blank row
+    #     columns = ["...", "...", "..."]  # Add the required columns
+    #     data = [["", "", ""]]  # Empty values
+    #     df = pd.DataFrame(data, columns=columns)
+    #     self.display_dataframe_with_scroll(df, self.df_output, title="Station Property")     
 
 
 class ThrottledClick:
@@ -296,8 +291,10 @@ class NotebookMap:
                     margin: 0
                 }
                 .custom-table th, .custom-table td {
-                    border: 1px solid #ddd;
+                    border: 1px solid #9E9E9E;
                     padding: 8px;
+                    border-right: 2px solid black;
+                    border-left: 2px solid black;
                 }
                 .custom-table th {
                     background-color: #f2f2f2;
@@ -308,8 +305,10 @@ class NotebookMap:
                 }
             </style>
             """
+
+            title_style = "style='font-size: 18px; font-weight: bold; text-align: center;'"
             table_html = df.to_html(classes="custom-table")
-            content = f"{table_style}<div class='custom-table-container'><h3>{title}</h3>{table_html}</div>"
+            content = f"{table_style}<div class='custom-table-container'><h3 {title_style}>{title}</h3>{table_html}</div>"
 
             display(HTML(content))
 
@@ -344,7 +343,7 @@ class NotebookMap:
 
                 self.f.add_trace(
                     go.Scatter(
-                        x=valid_dates_ds, y=valid_data_ds, mode="lines", name=name
+                        x=valid_dates_ds, y=valid_data_ds, mode="lines", name="Simulation: "+name
                     )
                 )
             else:
@@ -387,22 +386,59 @@ class NotebookMap:
             clear_output(wait=True)  # Clear any previous plots or messages
             display(self.f)
 
-    def mapplot(self, colorby="kge", sim = None):
+    def update_plot_based_on_date(self, change):
+        """Update the x-axis range of the plot based on selected dates."""
+        start_date = self.start_date_picker.value.strftime('%Y-%m-%d')
+        end_date = self.end_date_picker.value.strftime('%Y-%m-%d')
+        
+        # Update the x-axis range of the plotly figure
+        self.f.update_layout(xaxis_range=[start_date, end_date])
+    
+    def generate_html_legend(self, colormap, min_val, max_val):
+        # Convert the colormap to a list of RGB values
+        rgb_values = [matplotlib.colors.rgb2hex(colormap(i)) for i in np.linspace(0, 1, 256)]
+        
+        # Create a gradient style using the RGB values
+        gradient_style = ', '.join(rgb_values)
+        gradient_html = f"""
+        <div style="
+            background: linear-gradient(to right, {gradient_style});
+            height: 30px;
+            width: 200px;
+            border: 1px solid black;
+        "></div>
+        """
+        
+        # Create labels
+        labels_html = f"""
+        <div style="display: flex; justify-content: space-between;">
+            <span>Low: {min_val:.1f}</span>
+            <span>High: {max_val:.1f}</span>
+        </div>
+        """
+        
+        # Combine gradient and labels
+        legend_html = gradient_html + labels_html
+        
+        return HTML(legend_html)
+
+
+    def mapplot(self, colorby="kge", sim = None, range = None):
 
         #If sim / experiement name is not provided, by default it takes the first one in the dictionary of simulation list
         if sim is None: 
             sim = list(self.simulations.keys())[0]
-
+        
         # Create an instance of IPyLeaflet with the calculated bounds
         self.geo_map = IPyLeaflet(bounds=self.bounds)
 
-        print("Initialising plotly")
+        # Initialize a plotly figure widget for the time series
         self.f = (
             self.geo_map.initialize_plot()
-        )  # Initialize a plotly figure widget for the time series
+        )  
 
-        # # Initialize the dataframe widgets with empty dataframes
-        # self.geo_map.initialize_dataframes()
+        # self.geo_map.initialize_statistics_table()
+        # self.geo_map.initialize_station_property_table()
 
         # Convert ds 'time' to datetime format for alignment with external_df
         self.ds_time = self.obs_ds["time"].values.astype("datetime64[D]")
@@ -428,17 +464,22 @@ class NotebookMap:
                 f"Statistic '{colorby}' not found in computed statistics for simulation '{sim}'."
             )
 
-        # Retrieve the desired data
+        # Retrieve the statistics data of simulation choice/ by default
         stat_data = self.statistics[sim][colorby]
 
-        # Define a colormap (you can choose any other colormap that you like)
-        colormap = plt.cm.viridis
-
         # Normalize the data for coloring
-        norm = plt.Normalize(stat_data.min(), stat_data.max())
-
+        if range is None:
+            min_val, max_val = stat_data.values.min(), stat_data.values.max()
+        else:
+            min_val, max_val = range[0], range[1]
+                   
+        norm = plt.Normalize(min_val, max_val)
+        
+        #create legend widget
+        colormap = plt.cm.YlGnBu
+        legend_widget = self.generate_html_legend(colormap, min_val, max_val)
     
-        # Create a GeoJSON structure from the stations_metadata DataFrame
+        # Create marker from stations_metadata
         for _, row in self.stations_metadata.iterrows():
             lat, lon = row["StationLat"], row["StationLon"]
             station_id = row[self.config["station_id_column_name"]]
@@ -452,45 +493,54 @@ class NotebookMap:
 
             circle_marker = CircleMarker(
                 location=(lat, lon),
-                radius=5,
+                radius=7,
                 color="gray",
                 fill_color=color,
                 fill_opacity=0.8,
+                weight = 1
             )
             circle_marker.on_click(partial(self.handle_marker_click, row=row))
             self.geo_map.map.add_layer(circle_marker)
 
+        # Add date pickers for start and end dates
+        self.start_date_picker = DatePicker(description='Start Date')
+        self.end_date_picker = DatePicker(description='End Date')
 
-        center_layout = Layout(align_items='center')
-        top_right_frame = VBox([self.f, self.geo_map.df_stats],layout=center_layout )
-        main_top_frame = HBox([self.geo_map.map, top_right_frame],layout=center_layout )
-        layout = VBox([main_top_frame, self.geo_map.df_output],layout=center_layout )
+        # Observe changes in the date pickers to update the plot
+        self.start_date_picker.observe(self.update_plot_based_on_date, names='value')
+        self.end_date_picker.observe(self.update_plot_based_on_date, names='value')
 
+        title_label = Label(
+                        "Interactive Map Visualisation for Hydrological Model Performance", 
+                        layout=Layout(justify_content='center'),
+                        style={'font_weight': 'bold', 'font_size': '24px', 'font_family': 'Arial'}
+                        )
+        date_label = Label("Please select the date to accurately change the date axis of the plot")
 
-        # self.layout = VBox([HBox([self.geo_map.map, self.f, self.statistics_output]), self.geo_map.df_output, self.loading_label])
+        center_layout = Layout(justify_content='center',align_items='center',spacing='2px' )
+        date_picker_box = HBox([self.start_date_picker, self.end_date_picker],layout=center_layout)
+        top_right_frame = VBox([self.f, date_label, date_picker_box, self.geo_map.df_stats],layout=center_layout)
+        top_left_frame = VBox([self.geo_map.map, legend_widget],layout=center_layout)
+        main_top_frame = HBox([top_left_frame, top_right_frame],layout=center_layout )
+        layout = VBox([title_label, self.loading_label, main_top_frame, self.geo_map.df_output],layout=center_layout)
+
+        
         display(layout)
 
-    def colormap_to_legend(self, stat_data, colormap, n_labels=5):
-        """
-        Convert a matplotlib colormap to a dictionary suitable for ipyleaflet-legend.
-        """
-        values = np.linspace(0, 1, n_labels)
-        colors = [matplotlib.colors.rgb2hex(colormap(value)) for value in values]
-        labels = [
-            f"{value:.2f}"
-            for value in np.linspace(stat_data.min(), stat_data.max(), n_labels)
-        ]
-        return dict(zip(labels, colors))
-
+    
     def handle_marker_click(self, row, **kwargs):
         station_id = row[self.config["station_id_column_name"]]
         station_name = row["StationName"]
 
         self.handle_click(station_id)
 
-        title_plot = f"Time Series for Station ID: {station_id}, {station_name}"
-        self.f.update_layout(title_x=0.5)  # Centre title
-        self.f.layout.title.text = title_plot  # Set title for the time series plot
+        title_plot = f"<b>Time Series for the selected station:<br>ID: {station_id}, name: {station_name}"
+        self.f.update_layout(
+        title_text=title_plot,
+        title_font=dict(size=18, family="Arial", color="black"),
+        title_x=0.5,
+        title_y=0.96  # Adjust as needed to position the title appropriately
+    )
 
         # Display the DataFrame in the df_output widget
         df = pd.DataFrame(
@@ -545,46 +595,46 @@ class NotebookMap:
 
         return statistics_df
 
-    def overlay_external_vector(
-        self, vector_data: str, style=None, fill_color=None, line_color=None
-    ):
-        """Add vector data to the map."""
-        if style is None:
-            style = {
-                "stroke": True,
-                "color": line_color if line_color else "#FF0000",
-                "weight": 2,
-                "opacity": 1,
-                "fill": True,
-                "fillColor": fill_color if fill_color else "#03f",
-                "fillOpacity": 0.3,
-            }
+    # def overlay_external_vector(
+    #     self, vector_data: str, style=None, fill_color=None, line_color=None
+    # ):
+    #     """Add vector data to the map."""
+    #     if style is None:
+    #         style = {
+    #             "stroke": True,
+    #             "color": line_color if line_color else "#FF0000",
+    #             "weight": 2,
+    #             "opacity": 1,
+    #             "fill": True,
+    #             "fillColor": fill_color if fill_color else "#03f",
+    #             "fillOpacity": 0.3,
+    #         }
 
-        # Load the GeoJSON data from the file
-        with open(vector_data, "r") as f:
-            vector = json.load(f)
+    #     # Load the GeoJSON data from the file
+    #     with open(vector_data, "r") as f:
+    #         vector = json.load(f)
 
-        # Create the GeoJSON layer
-        geojson_layer = GeoJSON(data=vector, style=style)
+    #     # Create the GeoJSON layer
+    #     geojson_layer = GeoJSON(data=vector, style=style)
 
-        # Update the title label
-        vector_name = os.path.basename(vector_data)
+    #     # Update the title label
+    #     # vector_name = os.path.basename(vector_data)
 
-        # # Define the callback to handle feature clicks
-        # def on_feature_click(event, feature, **kwargs):
-        #     title = f"Feature property of the external vector: {vector_name}"
+    #     # # Define the callback to handle feature clicks
+    #     # def on_feature_click(event, feature, **kwargs):
+    #     #     title = f"Feature property of the external vector: {vector_name}"
 
-        #     properties = feature["properties"]
-        #     df = properties_to_dataframe(properties)
+    #     #     properties = feature["properties"]
+    #     #     df = properties_to_dataframe(properties)
 
 
-        # Bind the callback to the layer
-        geojson_layer.on_click(on_feature_click)
+    #     # Bind the callback to the layer
+    #     geojson_layer.on_click(on_feature_click)
 
-        self.geo_map.map.add_layer(geojson_layer)
+    #     self.geo_map.map.add_layer(geojson_layer)
 
     @staticmethod
-    def plot_station(self, station_data, station_id, lat, lon):
+    def plot_station(self, station_data, station_id):
         existing_traces = [trace.name for trace in self.f.data]
         for var, y_data in station_data.items():
             data_exists = len(y_data) > 0
