@@ -59,11 +59,19 @@ class IPyLeaflet:
         )
 
 
-    def add_marker(self, lat: float, lon: float, on_click_callback):
-        """Add a marker to the map."""
-        marker = Marker(location=[lat, lon], draggable=False, opacity=0.7)
-        marker.on_click(on_click_callback)
-        self.map.add_layer(marker)
+    def add_circle_marker(self, lat, lon, color, on_click_callback=None):
+        """Add a circle marker to the map."""
+        circle_marker = CircleMarker(
+            location=(lat, lon),
+            radius=7,
+            color="gray",
+            fill_color=color,
+            fill_opacity=0.8,
+            weight=1
+        )
+        if on_click_callback:
+            circle_marker.on_click(on_click_callback)
+        self.map.add_layer(circle_marker)
 
     @staticmethod
     def initialize_plot():
@@ -71,6 +79,7 @@ class IPyLeaflet:
         f = go.FigureWidget(
             layout=go.Layout(
                 height=350,
+                margin=dict(l=100),  # Adjust left margin
                 legend=dict(
                     orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
                 ),
@@ -78,19 +87,6 @@ class IPyLeaflet:
         )
         return f 
 
-    # def initialize_statistics_table(self):
-    #     # Create a placeholder dataframe with no values but with the title, header, and "Exp. name"
-    #     columns = ["Exp. name", "...", "..."]  # Add the required columns
-    #     data = [["", "", ""]]  # Empty values
-    #     df = pd.DataFrame(data, columns=columns)
-    #     self.display_dataframe_with_scroll(df, self.df_stats, title="")
-
-    # def initialize_station_property_table(self):
-    #     # Create a placeholder dataframe for station property with blank header and one blank row
-    #     columns = ["...", "...", "..."]  # Add the required columns
-    #     data = [["", "", ""]]  # Empty values
-    #     df = pd.DataFrame(data, columns=columns)
-    #     self.display_dataframe_with_scroll(df, self.df_output, title="Station Property")     
 
 
 class ThrottledClick:
@@ -108,7 +104,7 @@ class ThrottledClick:
         return False
 
 
-class NotebookMap:
+class InteractiveMap:
     """Main class for visualization in Jupyter Notebook."""
 
     def __init__(
@@ -117,6 +113,7 @@ class NotebookMap:
         stations_metadata: str,
         observations: str,
         simulations: Dict,
+        created_objects = {}
         stats=None,
     ):
         self.config = config
@@ -425,6 +422,8 @@ class NotebookMap:
         
         # Create an instance of IPyLeaflet with the calculated bounds
         self.geo_map = IPyLeaflet(bounds=self.bounds)
+        self.created_objects["geo_map"] = self.geo_map
+
 
         # Initialize a plotly figure widget for the time series
         self.f = (
@@ -486,21 +485,12 @@ class NotebookMap:
             else:
                 color = "gray"
 
-            #TODO should be in IpyLeaflet
-            circle_marker = CircleMarker(
-                location=(lat, lon),
-                radius=7,
-                color="gray",
-                fill_color=color,
-                fill_opacity=0.8,
-                weight = 1
-            )
-            circle_marker.on_click(partial(self.handle_marker_click, row=row))
-            self.geo_map.map.add_layer(circle_marker)
+            self.geo_map.add_circle_marker(lat, lon, color, partial(self.handle_marker_click, row=row))
+
 
         # Add date pickers for start and end dates
-        self.start_date_picker = DatePicker(description='Start Date')
-        self.end_date_picker = DatePicker(description='End Date')
+        self.start_date_picker = DatePicker(description='Start')
+        self.end_date_picker = DatePicker(description='End')
 
         # Observe changes in the date pickers to update the plot
         self.start_date_picker.observe(self.update_plot_based_on_date, names='value')
@@ -526,7 +516,7 @@ class NotebookMap:
         display(layout)
 
     
-    def handle_marker_click(self, row, **kwargs): #TODO Interactive map class
+    def handle_marker_click(self, row, **kwargs): #TODO add Interactive object class
         station_id = row[self.config["station_id_column_name"]]
         station_name = row["StationName"]
 
