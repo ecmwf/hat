@@ -149,6 +149,7 @@ class IPyLeaflet:
 
             display(HTML(content))
 
+
     @staticmethod
     def initialize_plot():
         """Initialize a plotly figure widget."""
@@ -179,6 +180,51 @@ class ThrottledClick:
             self.last_call = current_time
             return True
         return False
+    
+
+class PlotlyObject:
+    def __init__(self):
+        self.figure = go.FigureWidget(
+            layout=go.Layout(
+                height=350,
+                margin=dict(l=100),
+                legend=dict(
+                    orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
+                ),
+            )
+        )
+
+    def update_plot(self, x_data, y_data, name):
+        # Check if trace with the given name already exists
+        trace_exists = any([trace.name == name for trace in self.figure.data])
+
+        if trace_exists:
+            # Update the trace data
+            for trace in self.figure.data:
+                if trace.name == name:
+                    trace.x = x_data
+                    trace.y = y_data
+        else:
+            # Add a new trace
+            self.figure.add_trace(
+                go.Scatter(x=x_data, y=y_data, mode="lines", name=name)
+            )
+        print(f"Updated plot with trace '{name}'. Total traces now: {len(self.figure.data)}")
+
+
+class TableObject:
+    def __init__(self, geo_map_instance):
+        self.geo_map = geo_map_instance
+
+    def update_table(self, df, title):
+        self.geo_map.display_dataframe_with_scroll(df, title=title)
+
+
+class InteractiveObject:
+    def __init__(self, geo_map_instance):
+        self.plotly_obj = PlotlyObject()
+        self.table_obj = TableObject(geo_map_instance)
+
 
 
 class InteractiveMap:
@@ -364,11 +410,10 @@ class InteractiveMap:
                     ds_time_str, ds_time_series_data
                 )
 
-                self.f.add_trace(
-                    go.Scatter(
-                        x=valid_dates_ds, y=valid_data_ds, mode="lines", name="Simulation: "+name
-                    )
-                )
+                print(f"Updating plot with data for station: {station_id}")
+                print("Simulation data:", valid_dates_ds, valid_data_ds)
+                self.interactive_obj.plotly_obj.update_plot(valid_dates_ds, valid_data_ds, name)
+    
             else:
                 print(f"Station ID: {station_id} not found in dataset {name}.")
 
@@ -380,12 +425,10 @@ class InteractiveMap:
             valid_dates_obs, valid_data_obs = filter_nan_values(
                 ds_time_str, obs_time_series
             )
+            
+            print("Observation data:", valid_dates_obs, valid_data_obs)
 
-            self.f.add_trace(
-                go.Scatter(
-                    x=valid_dates_obs, y=valid_data_obs, mode="lines", name="Obs. Data"
-                )
-            )
+            self.interactive_obj.plotly_obj.update_plot(valid_dates_obs, valid_data_obs, "Obs. Data")
         else:
             print(
                 f"Station ID: {station_id} not found in obs_df. Columns are: {self.obs_ds.columns}"
@@ -405,6 +448,9 @@ class InteractiveMap:
             )
 
         self.loading_label.value = ""  # Clear the loading message
+
+        # Force a redraw of the figure
+        self.f.update()
 
         with self.geo_map.output_widget:
             clear_output(wait=True)  # Clear any previous plots or messages
@@ -427,16 +473,13 @@ class InteractiveMap:
         
         # Create an instance of IPyLeaflet with the calculated bounds
         self.geo_map = IPyLeaflet(bounds=self.bounds)
-        # self.created_objects["geo_map"] = self.geo_map
-
 
         # Initialize a plotly figure widget for the time series
         self.f = (
             self.geo_map.initialize_plot()
         )  
 
-        # self.geo_map.initialize_statistics_table()
-        # self.geo_map.initialize_station_property_table()
+        self.interactive_obj = InteractiveObject(self.geo_map)
 
         # Convert ds 'time' to datetime format for alignment with external_df
         self.ds_time = self.obs_ds["time"].values.astype("datetime64[D]")
@@ -543,6 +586,9 @@ class InteractiveMap:
         self.geo_map.display_dataframe_with_scroll(
             df, self.geo_map.df_output, title=title_table
         )
+
+        print(f"Handling click for station: {station_id}")
+
 
     def handle_geojson_click(self, feature, **kwargs):
         # Extract properties directly from the feature
