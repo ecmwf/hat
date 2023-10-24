@@ -48,6 +48,8 @@ class IPyLeaflet:
 
         pd.set_option("display.max_colwidth", None)
 
+        self.created_objects = {}
+
         # Initialize the output widget for time series plots and dataframe display
         self.output_widget = Output()
         self.df_output = Output()
@@ -73,6 +75,80 @@ class IPyLeaflet:
             circle_marker.on_click(on_click_callback)
         self.map.add_layer(circle_marker)
 
+
+    def generate_html_legend(self, colormap, min_val, max_val):
+        # Convert the colormap to a list of RGB values
+        rgb_values = [matplotlib.colors.rgb2hex(colormap(i)) for i in np.linspace(0, 1, 256)]
+        
+        # Create a gradient style using the RGB values
+        gradient_style = ', '.join(rgb_values)
+        gradient_html = f"""
+        <div style="
+            background: linear-gradient(to right, {gradient_style});
+            height: 30px;
+            width: 200px;
+            border: 1px solid black;
+        "></div>
+        """
+        
+        # Create labels
+        labels_html = f"""
+        <div style="display: flex; justify-content: space-between;">
+            <span>Low: {min_val:.1f}</span>
+            <span>High: {max_val:.1f}</span>
+        </div>
+        """
+        
+        # Combine gradient and labels
+        legend_html = gradient_html + labels_html
+        
+        return HTML(legend_html)
+    
+    
+    def display_dataframe_with_scroll(self,df, output, title=""):
+        """to display the dataframe as a html table with a horizontal scroll bar"""
+        with output:
+            clear_output(wait=True)
+
+            # Define styles directly within the HTML content
+            table_style = """
+            <style>
+                .custom-table-container {
+                    text-align: center;
+                    margin: 0;
+                }
+                .custom-table {
+                    max-width: 1000px;
+                    overflow-x: scroll;
+                    overflow-y: auto;
+                    display: inline-block;
+                    border: 2px solid grey;
+                    border-collapse: collapse;
+                    width: 100%;
+                    margin: 0
+                }
+                .custom-table th, .custom-table td {
+                    border: 1px solid #9E9E9E;
+                    padding: 8px;
+                    border-right: 2px solid black;
+                    border-left: 2px solid black;
+                }
+                .custom-table th {
+                    background-color: #f2f2f2;
+                    text-align: center;
+                }
+                .custom-table tr:hover {
+                    background-color: #f5f5f5;
+                }
+            </style>
+            """
+
+            title_style = "style='font-size: 18px; font-weight: bold; text-align: center;'"
+            table_html = df.to_html(classes="custom-table")
+            content = f"{table_style}<div class='custom-table-container'><h3 {title_style}>{title}</h3>{table_html}</div>"
+
+            display(HTML(content))
+
     @staticmethod
     def initialize_plot():
         """Initialize a plotly figure widget."""
@@ -86,7 +162,8 @@ class IPyLeaflet:
             )
         )
         return f 
-
+    
+    
 
 
 class ThrottledClick:
@@ -113,7 +190,6 @@ class InteractiveMap:
         stations_metadata: str,
         observations: str,
         simulations: Dict,
-        created_objects = {}
         stats=None,
     ):
         self.config = config
@@ -242,6 +318,7 @@ class InteractiveMap:
             else:
                 common_ids = set(id) & common_ids
         return list(common_ids)
+    
 
     def calculate_statistics(self):
         """in progress: to calculate statistics using the run_analysis tools -- 
@@ -258,51 +335,7 @@ class InteractiveMap:
             statistics[exp] = run_analysis(self.stats, sim_ds_f, obs_ds_f)
         return statistics
 
-    def display_dataframe_with_scroll(self, df, output, title=""):
-        """to display the dataframe as a html table with a horizontal scroll bar"""
-        with output:
-            clear_output(wait=True)
-
-            # Define styles directly within the HTML content
-            table_style = """
-            <style>
-                .custom-table-container {
-                    text-align: center;
-                    margin: 0;
-                }
-                .custom-table {
-                    max-width: 1000px;
-                    overflow-x: scroll;
-                    overflow-y: auto;
-                    display: inline-block;
-                    border: 2px solid grey;
-                    border-collapse: collapse;
-                    width: 100%;
-                    margin: 0
-                }
-                .custom-table th, .custom-table td {
-                    border: 1px solid #9E9E9E;
-                    padding: 8px;
-                    border-right: 2px solid black;
-                    border-left: 2px solid black;
-                }
-                .custom-table th {
-                    background-color: #f2f2f2;
-                    text-align: center;
-                }
-                .custom-table tr:hover {
-                    background-color: #f5f5f5;
-                }
-            </style>
-            """
-
-            title_style = "style='font-size: 18px; font-weight: bold; text-align: center;'"
-            table_html = df.to_html(classes="custom-table")
-            content = f"{table_style}<div class='custom-table-container'><h3 {title_style}>{title}</h3>{table_html}</div>"
-
-            display(HTML(content))
-
-    
+        
     def handle_click(self, station_id):
         '''Define a callback to handle marker clicks
         it adds the plot figure'''
@@ -367,7 +400,7 @@ class InteractiveMap:
         # Generate and display the statistics table for the clicked station
         if self.statistics:
             df_stats = self.generate_statistics_table(station_id)
-            self.display_dataframe_with_scroll(
+            self.geo_map.display_dataframe_with_scroll(
                 df_stats, self.geo_map.df_stats, title="Statistics Overview"
             )
 
@@ -385,34 +418,6 @@ class InteractiveMap:
         # Update the x-axis range of the plotly figure
         self.f.update_layout(xaxis_range=[start_date, end_date])
     
-    def generate_html_legend(self, colormap, min_val, max_val):
-        # Convert the colormap to a list of RGB values
-        rgb_values = [matplotlib.colors.rgb2hex(colormap(i)) for i in np.linspace(0, 1, 256)]
-        
-        # Create a gradient style using the RGB values
-        gradient_style = ', '.join(rgb_values)
-        gradient_html = f"""
-        <div style="
-            background: linear-gradient(to right, {gradient_style});
-            height: 30px;
-            width: 200px;
-            border: 1px solid black;
-        "></div>
-        """
-        
-        # Create labels
-        labels_html = f"""
-        <div style="display: flex; justify-content: space-between;">
-            <span>Low: {min_val:.1f}</span>
-            <span>High: {max_val:.1f}</span>
-        </div>
-        """
-        
-        # Combine gradient and labels
-        legend_html = gradient_html + labels_html
-        
-        return HTML(legend_html)
-
 
     def mapplot(self, colorby="kge", sim = None, range = None):
 
@@ -422,7 +427,7 @@ class InteractiveMap:
         
         # Create an instance of IPyLeaflet with the calculated bounds
         self.geo_map = IPyLeaflet(bounds=self.bounds)
-        self.created_objects["geo_map"] = self.geo_map
+        # self.created_objects["geo_map"] = self.geo_map
 
 
         # Initialize a plotly figure widget for the time series
@@ -470,7 +475,7 @@ class InteractiveMap:
         
         #create legend widget
         colormap = plt.cm.YlGnBu
-        legend_widget = self.generate_html_legend(colormap, min_val, max_val)
+        legend_widget = self.geo_map.generate_html_legend(colormap, min_val, max_val)
     
         # Create marker from stations_metadata 
         for _, row in self.stations_metadata.iterrows():
@@ -535,7 +540,7 @@ class InteractiveMap:
             [row]
         )  # Convert the station metadata to a DataFrame for display
         title_table = f"Station property from metadata: {self.station_file_name}"
-        self.display_dataframe_with_scroll(
+        self.geo_map.display_dataframe_with_scroll(
             df, self.geo_map.df_output, title=title_table
         )
 
@@ -549,7 +554,7 @@ class InteractiveMap:
             self.stations_metadata["ObsID"] == station_id
         ]
         title_table = f"Station property from metadata: {self.station_file_name}"
-        self.display_dataframe_with_scroll(df_station, title=title_table)
+        self.geo_map.display_dataframe_with_scroll(df_station, title=title_table)
 
     def generate_statistics_table(self, station_id):
 
