@@ -1,4 +1,3 @@
-
 """
 Python module for visualising geospatial content using jupyter notebook, 
 for both spatial and temporal, e.g. netcdf, vector, raster, with time series etc
@@ -24,6 +23,7 @@ from hat.observations import read_station_metadata_file
 
 class InteractiveElements:
     def __init__(self, bounds, map_instance, statistics=None):
+        """Initialize the interactive elements for the map."""
         self.map = self._initialize_map(bounds)
         self.loading_label = Label(value="")
         self.throttler = self._initialize_throttler()
@@ -33,6 +33,8 @@ class InteractiveElements:
         self.output_widget = Output()
         self.map_instance = map_instance
         self.statistics = map_instance.statistics
+        self.stations_metadata = map_instance.stations_metadata
+        self.station_index = map_instance.station_index
 
 
     def _initialize_map(self, bounds):
@@ -42,6 +44,7 @@ class InteractiveElements:
         return map_widget
     
     def generate_html_legend(self, colormap, min_val, max_val):
+        """Generate an HTML legend for the map."""
         # Convert the colormap to a list of RGB values
         rgb_values = [mpl.colors.rgb2hex(colormap(i)) for i in np.linspace(0, 1, 256)]
         
@@ -90,7 +93,7 @@ class InteractiveElements:
         self.handle_marker_action(station_id)
     
     def handle_marker_action(self, station_id):
-        '''Define a callback to handle marker clicks and add the plot figure.'''
+        '''Define a callback to handle marker clicks and add the plot figure and statistics and station property.'''
         
         # Check if we should process the click
         if not self.throttler.should_process():
@@ -98,10 +101,23 @@ class InteractiveElements:
 
         self.loading_label.value = "Loading..."  # Indicate that data is being loaded
         station_id = str(station_id)  # Convert station ID to string for consistency
-        print(f"Handling click for station: {station_id}")
+        station_name = self.stations_metadata.loc[self.stations_metadata[self.station_index] == station_id, "StationName"].values[0]
+        updated_title = f"<b>Selected station:<br>ID: {station_id}, name: {station_name}</b> "
 
         # Update the plot with simulation and observation data
         self.plotly_obj.update(station_id)
+        self.plotly_obj.figure.update_layout(title={
+                    'text': updated_title,
+                    'y': 0.9,
+                    'x': 0.5,  
+                    'xanchor': 'center',
+                    'yanchor': 'top',
+                    'font': {
+                        'color': 'black',
+                        'size': 16  
+                        }
+                    }
+                )
 
         # Generate and display the statistics table for the clicked station
         if self.statistics:
@@ -121,19 +137,36 @@ class InteractiveElements:
             
             self.map_instance.top_right_frame.children = tuple(children_list)
 
+
+        # Update the station table in the layout
+        children_list_main = list(self.map_instance.layout.children)
+        
+        # Find the index of the old station table and replace it with the new table
+        for i, child in enumerate(children_list_main):
+            if isinstance(child, type(self.table_obj.station_table_html)):
+                children_list_main[i] = self.table_obj.station_table_html
+                break
+        else:
+            # If the old station table wasn't found, append the new table
+            children_list_main.append(self.table_obj.station_table_html)
+        
+        self.map_instance.layout.children = tuple(children_list_main)
+
+        self.table_obj.update(station_id)
+
         self.loading_label.value = ""  # Clear the loading message
 
         with self.output_widget:
             clear_output(wait=True)  # Clear any previous plots or messages
 
-        print("End of handle_marker_action")
-
-
 
 class PlotlyObject:
     def __init__(self):
+        """Initialize the Plotly object for visualization."""
+        initial_title = "Click on your desired station location!"
         self.figure = go.FigureWidget(
             layout=go.Layout(
+                title = initial_title,
                 height=350,
                 margin=dict(l=100),
                 legend=dict(
@@ -146,6 +179,7 @@ class PlotlyObject:
         )
 
     def update_simulation_data(self, station_id):
+        """Update the simulation data for the given station ID."""
         for name, ds in self.sim_ds.items():
             if station_id in ds["station"].values:
                 ds_time_series_data = ds["dis"].sel(station=station_id).values
@@ -157,6 +191,7 @@ class PlotlyObject:
                 print(f"Station ID: {station_id} not found in dataset {name}.")
 
     def update_observation_data(self, station_id):
+        """Update the observation data for the given station ID."""
         if station_id in self.obs_ds["station"].values:
             obs_time_series = self.obs_ds["obsdis"].sel(station=station_id).values
             valid_dates_obs, valid_data_obs = filter_nan_values(
@@ -167,6 +202,7 @@ class PlotlyObject:
             print(f"Station ID: {station_id} not found in obs_df.")
 
     def _update_trace(self, x_data, y_data, name):
+        """Update or add a trace to the Plotly figure."""
         trace_exists = any([trace.name == name for trace in self.figure.data])
         if trace_exists:
             for trace in self.figure.data:
@@ -177,15 +213,16 @@ class PlotlyObject:
             self.figure.add_trace(
                 go.Scatter(x=x_data, y=y_data, mode="lines", name=name)
             )
-        print(f"Updated plot with trace '{name}'. Total traces now: {len(self.figure.data)}")
     
     def update(self, station_id):
+        """Update the overall plot with new data for the given station ID."""
         self.update_simulation_data(station_id)
         self.update_observation_data(station_id)
 
 
 class TableObject:
     def __init__(self, map_instance):
+        """Initialize the table object for displaying statistics and station properties."""
         self.map_instance = map_instance
         # Define the styles for the statistics table
         self.table_style = """
@@ -220,10 +257,14 @@ class TableObject:
             </style>
             """
         self.stat_title_style = "style='font-size: 18px; font-weight: bold; text-align: center;'"
+        # Initialize the stat_table_html and station_table_html with empty tables
+        empty_df = pd.DataFrame()
+        self.stat_table_html = self.display_dataframe_with_scroll(empty_df, title="Model Performance Statistics Overview")
+        self.station_table_html = self.display_dataframe_with_scroll(empty_df, title="Station Property")
 
-        
 
     def generate_statistics_table(self, station_id):
+        """Generate a statistics table for the given station ID."""
         data = []
 
         # Check if statistics is None or empty
@@ -255,22 +296,33 @@ class TableObject:
         statistics_df[numerical_columns] = statistics_df[numerical_columns].round(2)
 
         return statistics_df
+    
+    def generate_station_table(self, station_id):
+        """Generate a station property table for the given station ID."""
+        stations_df = self.map_instance.stations_metadata
+        selected_station_df = stations_df[stations_df[self.map_instance.station_index] == station_id]   
+
+        return selected_station_df
 
     def display_dataframe_with_scroll(self, df, title=""):
+        """Display a DataFrame with a scrollable view."""
         table_html = df.to_html(classes="custom-table")
         content = f"{self.table_style}<div class='custom-table-container'><h3 {self.stat_title_style}>{title}</h3>{table_html}</div>"
         return(HTML(content))
 
     def update(self, station_id):
-        df_stats = self.generate_statistics_table(station_id)
-        self.stat_table_html = self.display_dataframe_with_scroll(df_stats, title="Statistics Overview")
-        print("Updated stat_table_html:", self.stat_table_html)
+        """Update the tables with new data for the given station ID."""
+        df_stat = self.generate_statistics_table(station_id)
+        self.stat_table_html = self.display_dataframe_with_scroll(df_stat, title="Model Performance Statistics Overview")
 
+        df_station = self.generate_station_table(station_id)
+        self.station_table_html = self.display_dataframe_with_scroll(df_station, title="Station Property")
 
 
 
 class InteractiveMap:
     def __init__(self, config, stations, observations, simulations, stats=None):
+        """Initialize the interactive map with configurations and data sources."""
         self.config = config
         self.stations_metadata = read_station_metadata_file(
             fpath=stations,
@@ -321,7 +373,6 @@ class InteractiveMap:
         self.interactive_elements.plotly_obj.ds_time_str = [dt.isoformat() for dt in pd.to_datetime(self.ds_time)]
         
 
-
     def find_common_station(self):
         """find common station between observation and simulation and station metadata"""
         ids = []
@@ -347,6 +398,12 @@ class InteractiveMap:
 
     
     def mapplot(self, colorby="kge", sim=None, range=None, colormap=None):
+        """Plot the map with stations colored by a given metric. 
+        input example: 
+        colorby = "kge" # this should be the objective functions of the statistics
+        range = [<min>, <max>] #min and max values of the color bar
+        colormap =  plt.cm.get_cmap("RdYlGn") # color map to be used based on matplotlib colormap
+        """
     
         # Retrieve the statistics data of simulation choice/ by default
         stat_data = self.statistics[sim][colorby]
@@ -379,8 +436,6 @@ class InteractiveMap:
             point_style={'radius': 5},
             style_callback=map_color,
         )
-
-
         self.legend_widget = self.interactive_elements.generate_html_legend(colormap, min_val, max_val)
 
 
@@ -395,10 +450,6 @@ class InteractiveMap:
         self.start_date_picker.observe(self._update_plot_dates, names='value')
         self.end_date_picker.observe(self._update_plot_dates, names='value')
 
-        #initialise stat table with first ID
-        default_station_id = self.common_id[0]
-        self.interactive_elements.table_obj.update(default_station_id)
-        
         # Initialize layout elements
         self._initialize_layout_elements()
 
@@ -407,6 +458,7 @@ class InteractiveMap:
 
     
     def _initialize_layout_elements(self):
+        """Initialize the layout elements for the map visualization."""
         # Title label
         self.title_label = Label(
             "Interactive Map Visualisation for Hydrological Model Performance", 
@@ -414,36 +466,37 @@ class InteractiveMap:
             style={'font_weight': 'bold', 'font_size': '24px', 'font_family': 'Arial'}
         )
 
-        # Date label
-        self.date_label = Label("Please select the date to accurately change the date axis of the plot")
-
-    
         # Layouts
         main_layout = Layout(justify_content='space-around', align_items='stretch', spacing='2px', width='1000px')
         left_layout = Layout(justify_content='space-around', align_items='center', spacing='2px', width='40%')
         right_layout = Layout(justify_content='center', align_items='center', spacing='2px', width='60%')
 
-        # Date picker box
+        # Date picker box and label
+        self.date_label = Label("Please select the date to accurately change the date axis of the plot")
         self.date_picker_box = HBox([self.start_date_picker, self.end_date_picker])
 
         # Frames
         self.top_right_frame = VBox([self.interactive_elements.plotly_obj.figure, 
                                      self.date_label, self.date_picker_box, self.interactive_elements.table_obj.stat_table_html
                                      ], layout=right_layout)
-        self.top_left_frame = VBox([self.interactive_elements.map, self.legend_widget], layout=left_layout)  # Assuming self.map is the map widget and self.legend_widget is the legend
+        self.top_left_frame = VBox([self.interactive_elements.map, self.legend_widget], layout=left_layout) 
         self.main_top_frame = HBox([self.top_left_frame, self.top_right_frame])
 
         # Main layout
-        self.layout = VBox([self.title_label, self.interactive_elements.loading_label, self.main_top_frame], layout=main_layout)
+        self.layout = VBox([self.title_label, 
+                            self.interactive_elements.loading_label, 
+                            self.main_top_frame, 
+                            self.interactive_elements.table_obj.station_table_html], layout=main_layout)
 
         
 class ThrottledClick:
-    """Class to throttle click events."""
+    """Initialize a click throttler with a given delay. to prevent user from swift multiple events clicking that results in crashing"""
     def __init__(self, delay=1.0):
         self.delay = delay
         self.last_call = 0
 
     def should_process(self):
+        """Determine if a click should be processed based on the delay."""
         current_time = time.time()
         if current_time - self.last_call > self.delay:
             self.last_call = current_time
@@ -516,23 +569,15 @@ def properties_to_dataframe(properties: Dict) -> pd.DataFrame:
 
 
 def filter_nan_values(dates, data_values):
-    """
-    Filters out NaN values and their associated dates.
-
-    Parameters:
-    - dates: List of dates.
-    - data_values: List of data values corresponding to the dates.
-
-    Returns:
-    - valid_dates: List of dates without NaN values.
-    - valid_data: List of non-NaN data values.
-    """
+    """Filters out NaN values and their associated dates."""
     valid_dates = [date for date, val in zip(dates, data_values) if not np.isnan(val)]
     valid_data = [val for val in data_values if not np.isnan(val)]
 
     return valid_dates, valid_data
 
 def compute_bounds(stations_metadata, common_ids, station_index, coord_names):
+    """Compute the bounds of the map based on the stations metadata."""
+
     # Filter the metadata to only include stations with common IDs
     filtered_stations = stations_metadata[stations_metadata[station_index].isin(common_ids)]
     
@@ -546,4 +591,3 @@ def compute_bounds(stations_metadata, common_ids, station_index, coord_names):
     min_lon, max_lon = min(lons), max(lons)
 
     return [(float(min_lat), float(min_lon)), (float(max_lat), float(max_lon))]
-
