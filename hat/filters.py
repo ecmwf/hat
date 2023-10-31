@@ -164,7 +164,7 @@ def filter_timeseries(sims_ds: xr.DataArray, obs_ds: xr.DataArray, threshold=80)
     obs_ds = obs_ds.sel(station=matching_stations)
     obs_ds = obs_ds.sel(time=sims_ds.time)
 
-    obs_ds = obs_ds.dropna(dim='station', how='all')
+    obs_ds = obs_ds.dropna(dim="station", how="all")
     sims_ds = sims_ds.sel(station=obs_ds.station)
 
     # Only keep observations in the same time period as the simulations

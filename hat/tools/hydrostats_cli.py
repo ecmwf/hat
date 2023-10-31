@@ -4,10 +4,10 @@ import typer
 import xarray as xr
 
 from hat import hydrostats_functions
+from hat.data import find_main_var
 from hat.exceptions import UserError
 from hat.filters import filter_timeseries
 from hat.hydrostats import run_analysis
-from hat.data import find_main_var
 
 
 def check_inputs(functions, sims, obs):
@@ -80,7 +80,6 @@ def hydrostats_cli(
     if not functions:
         return
 
-    
     # simulations
     sims_ds = xr.open_dataset(sims)
     var = find_main_var(sims_ds, min_dim=2)

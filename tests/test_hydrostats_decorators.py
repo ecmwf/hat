@@ -63,10 +63,8 @@ def test_filter_nan():
     assert np.allclose(decorated(nan3, nan3), np.array([2, 4]))
 
     # all nans
-    with pytest.raises(ValueError):
-        decorated(arr, nans)
-    with pytest.raises(ValueError):
-        decorated(nans, arr)
+    assert decorated(arr, nans) is None
+    assert decorated(nans, arr) is None
 
 
 # def test_handle_divide_by_zero_error():
@@ -124,8 +122,7 @@ def test_hydrostat():
 
     # # all zero division
     # with pytest.raises(ZeroDivisionError):
-    #     decorated_divide(ones, zeros)
+    #     print(decorated_divide(ones, zeros))
 
     # all nans
-    with pytest.raises(ValueError):
-        decorated_divide(nans, nans)
+    assert decorated_divide(nans, nans) is None
