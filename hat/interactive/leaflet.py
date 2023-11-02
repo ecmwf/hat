@@ -1,0 +1,150 @@
+import json
+
+import ipyleaflet
+import ipywidgets
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+def _compute_bounds(stations_metadata, coord_names):
+    """Compute the bounds of the map based on the stations metadata."""
+
+    lon_column = coord_names[0]
+    lat_column = coord_names[1]
+
+    lons = stations_metadata[lon_column].values
+    lats = stations_metadata[lat_column].values
+
+    min_lat, max_lat = min(lats), max(lats)
+    min_lon, max_lon = min(lons), max(lons)
+
+    return [(float(min_lat), float(min_lon)), (float(max_lat), float(max_lon))]
+
+
+class LeafletMap:
+    def __init__(
+        self,
+        basemap=ipyleaflet.basemaps.OpenStreetMap.Mapnik,
+    ):
+        self.map = ipyleaflet.Map(
+            basemap=basemap, layout=ipywidgets.Layout(width="100%", height="600px")
+        )
+        self.legend_widget = ipywidgets.Output()
+
+    def _set_boundaries(self, stations_metadata, coord_names):
+        """Compute the boundaries of the map based on the stations metadata."""
+
+        lon_column = coord_names[0]
+        lat_column = coord_names[1]
+
+        lons = stations_metadata[lon_column].values
+        lats = stations_metadata[lat_column].values
+
+        min_lat, max_lat = min(lats), max(lats)
+        min_lon, max_lon = min(lons), max(lons)
+
+        bounds = [(float(min_lat), float(min_lon)), (float(max_lat), float(max_lon))]
+        self.map.fit_bounds(bounds)
+
+    def add_geolayer(self, geodata, colormap, widgets, coord_names=None):
+        geojson = ipyleaflet.GeoJSON(
+            data=json.loads(geodata.to_json()),
+            style={
+                "radius": 7,
+                "opacity": 0.5,
+                "weight": 1.9,
+                "dashArray": "2",
+                "fillOpacity": 0.5,
+            },
+            hover_style={"radius": 10, "fillOpacity": 1},
+            point_style={"radius": 5},
+            style_callback=colormap.style_callback(),
+        )
+        geojson.on_click(widgets.update)
+        self.map.add_layer(geojson)
+
+        if coord_names is not None:
+            self._set_boundaries(geodata, coord_names)
+
+        self.legend_widget = colormap.legend()
+
+    def output(self, layout):
+        output = ipywidgets.VBox([self.map, self.legend_widget], layout=layout)
+        return output
+
+
+class PyleafletColormap:
+    def __init__(self, config, stats=None, colormap_style="viridis", range=None):
+        self.config = config
+        self.stats = stats
+        print(self.stats)
+        if self.stats is not None:
+            # Normalize the data for coloring
+            if range is None:
+                self.min_val = self.stats.values.min()
+                self.max_val = self.stats.values.max()
+            else:
+                self.min_val = range[0]
+                self.max_val = range[1]
+        else:
+            self.min_val = 0
+            self.max_val = 1
+
+        self.colormap = plt.cm.get_cmap(colormap_style)
+
+    def style_callback(self):
+        if self.stats is not None:
+            norm = plt.Normalize(self.min_val, self.max_val)
+
+            def map_color(feature):
+                station_id = feature["properties"][
+                    self.config["station_id_column_name"]
+                ]
+                color = mpl.colors.rgb2hex(
+                    self.colormap(norm(self.stats.sel(station=station_id).values))
+                )
+                return {
+                    "color": "black",
+                    "fillColor": color,
+                }
+
+        else:
+
+            def map_color(feature):
+                return {
+                    "color": "black",
+                    "fillColor": "blue",
+                }
+
+        return map_color
+
+    def legend(self):
+        """Generate an HTML legend for the map."""
+        # Convert the colormap to a list of RGB values
+        rgb_values = [
+            mpl.colors.rgb2hex(self.colormap(i)) for i in np.linspace(0, 1, 256)
+        ]
+
+        # Create a gradient style using the RGB values
+        gradient_style = ", ".join(rgb_values)
+        gradient_html = f"""
+        <div style="
+            background: linear-gradient(to right, {gradient_style});
+            height: 30px;
+            width: 200px;
+            border: 1px solid black;
+        "></div>
+        """
+
+        # Create labels
+        labels_html = f"""
+        <div style="display: flex; justify-content: space-between;">
+            <span>Low: {self.min_val:.1f}</span>
+            <span>High: {self.max_val:.1f}</span>
+        </div>
+        """
+        # Combine gradient and labels
+        legend_html = gradient_html + labels_html
+
+        return ipywidgets.HTML(legend_html)

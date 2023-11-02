@@ -3,7 +3,6 @@ from typing import List
 
 import folium
 import geopandas as gpd
-import pandas as pd
 import numpy as np
 import xarray as xr
 from branca.colormap import linear
@@ -17,7 +16,9 @@ def run_analysis(
     sims_ds: xr.DataArray,
     obs_ds: xr.DataArray,
 ) -> xr.Dataset:
-    """Run statistical analysis on simulation and observation timeseries"""
+    """
+    Run statistical analysis on simulation and observation timeseries
+    """
 
     # list of stations
     stations = sims_ds.coords["station"].values
@@ -35,7 +36,7 @@ def run_analysis(
         for station in stations:
             sims = sims_ds.sel(station=station).to_numpy()
             obs = obs_ds.sel(station=station).to_numpy()
-           
+
             stat = func(sims, obs)
             if stat is None:
                 print(f"Warning! All NaNs for station {station}")
@@ -44,7 +45,7 @@ def run_analysis(
         statistics = np.array(statistics)
 
         # Add the Series to the DataFrame
-        ds[name] = xr.DataArray(statistics, coords={'station': stations})
+        ds[name] = xr.DataArray(statistics, coords={"station": stations})
 
     return ds
 
