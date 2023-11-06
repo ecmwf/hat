@@ -33,11 +33,6 @@ jobs:
           activate-environment: test
           environment-file: environment.yml
           auto-activate-base: false
-      - name: mamba check
-        shell: bash -l {0}
-        run: |
-          mamba info
-          mamba list
       - name: install hat package
         shell: bash -l {0}
         run: pip install .
