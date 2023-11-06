@@ -3,7 +3,7 @@ from typing import List
 
 import folium
 import geopandas as gpd
-import pandas as pd
+import numpy as np
 import xarray as xr
 from branca.colormap import linear
 from folium.plugins import Fullscreen
@@ -13,18 +13,17 @@ from hat import hydrostats_functions
 
 def run_analysis(
     functions: List,
-    sims_ds: xr.Dataset,
-    obs_ds: xr.Dataset,
-    sims_var_name="simulation_timeseries",
-    obs_var_name="obsdis",
+    sims_ds: xr.DataArray,
+    obs_ds: xr.DataArray,
 ) -> xr.Dataset:
-    """Run statistical analysis on simulation and observation timeseries"""
+    """
+    Run statistical analysis on simulation and observation timeseries
+    """
 
     # list of stations
     stations = sims_ds.coords["station"].values
 
-    # Create an empty DataFrame with stations as the index
-    df = pd.DataFrame(index=stations)
+    ds = xr.Dataset()
 
     # For each statistical function
     for name in functions:
@@ -33,23 +32,20 @@ def run_analysis(
 
         # do timeseries analysis for each station
         # (using a "numpy in, numpy out" function)
-        statistics = {}
+        statistics = []
         for station in stations:
-            sims = sims_ds.sel(station=station)[sims_var_name].to_numpy()
-            obs = obs_ds.sel(station=station)[obs_var_name].to_numpy()
-            statistics[station] = func(sims, obs)
+            sims = sims_ds.sel(station=station).to_numpy()
+            obs = obs_ds.sel(station=station).to_numpy()
 
-        # 1D Series of statistics (i.e. scalar value per station)
-        statistics_series = pd.Series(statistics, name=name)
+            stat = func(sims, obs)
+            if stat is None:
+                print(f"Warning! All NaNs for station {station}")
+                stat = 0
+            statistics += [stat]
+        statistics = np.array(statistics)
 
         # Add the Series to the DataFrame
-        df[name] = statistics_series
-
-    # Convert the DataFrame to an xarray Dataset
-    ds = df.to_xarray()
-    ds = ds.rename({"index": "station"})
-    ds["longitude"] = ("station", sims_ds.coords["longitude"].data)
-    ds["latitude"] = ("station", sims_ds.coords["latitude"].data)
+        ds[name] = xr.DataArray(statistics, coords={"station": stations})
 
     return ds
 

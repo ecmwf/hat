@@ -4,6 +4,7 @@ import typer
 import xarray as xr
 
 from hat import hydrostats_functions
+from hat.data import find_main_var
 from hat.exceptions import UserError
 from hat.filters import filter_timeseries
 from hat.hydrostats import run_analysis
@@ -81,15 +82,19 @@ def hydrostats_cli(
 
     # simulations
     sims_ds = xr.open_dataset(sims)
+    var = find_main_var(sims_ds, min_dim=2)
+    sims_da = sims_ds[var]
 
     # observations
     obs_ds = xr.open_dataset(obs)
+    var = find_main_var(obs_ds, min_dim=2)
+    obs_da = obs_ds[var]
 
     # clean timeseries
-    sims_ds, obs = filter_timeseries(sims_ds, obs_ds, threshold=obs_threshold)
+    sims_da, obs_da = filter_timeseries(sims_da, obs_da, threshold=obs_threshold)
 
     # calculate statistics
-    statistics_ds = run_analysis(functions, sims_ds, obs_ds)
+    statistics_ds = run_analysis(functions, sims_da, obs_da)
 
     # save to netcdf
     statistics_ds.to_netcdf(outpath)

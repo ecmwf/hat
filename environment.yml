@@ -11,7 +11,7 @@ dependencies:
   - xarray
   - plotly
   - matplotlib
-  - jupyterlab
+  - jupyter
   - tqdm
   - typer
   - humanize

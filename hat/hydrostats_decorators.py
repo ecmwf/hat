@@ -49,7 +49,7 @@ def filter_nan(func):
         nan_mask2 = np.isnan(arr2)
         filtered_mask = ~(nan_mask1 | nan_mask2)
         if not np.any(filtered_mask):
-            raise ValueError("All elements are NaN")
+            return None
         return func(arr1[filtered_mask], arr2[filtered_mask])
 
     return wrapper
