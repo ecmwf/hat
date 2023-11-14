@@ -3,7 +3,6 @@ import os
 import ipywidgets
 import pandas as pd
 import xarray as xr
-import earthkit.data
 from IPython.core.display import display
 
 from hat.interactive.leaflet import LeafletMap, PyleafletColormap
@@ -42,8 +41,7 @@ def prepare_simulations_data(simulations, sims_var_name):
         expanded_path = os.path.expanduser(path)
 
         if os.path.isfile(expanded_path):  # Check if it's a file
-            fs = earthkit.data.from_source("file", expanded_path)
-            ds = fs.to_xarray()
+            ds = xr.open_dataset(expanded_path)
 
         sim_ds[exp] = ds[sims_var_name]
 
@@ -116,7 +114,7 @@ def find_common_stations(station_index, stations_metadata, obs_ds, sim_ds, stati
     Parameters
     ----------
     station_index : str
-        The name of the column in the station metadata file that contains the 
+        The name of the column in the station metadata file that contains the
         station IDs.
     stations_metadata : pandas.DataFrame
         A pandas DataFrame containing the station metadata.
@@ -216,8 +214,12 @@ class TimeSeriesExplorer:
         )
 
         # Use the external functions to prepare data
-        sim_ds = prepare_simulations_data(config["simulations"], config["sims_var_name"])
-        obs_ds = prepare_observations_data(config["observations"], sim_ds, config["obs_var_name"])
+        sim_ds = prepare_simulations_data(
+            config["simulations"], config["sims_var_name"]
+        )
+        obs_ds = prepare_observations_data(
+            config["observations"], sim_ds, config["obs_var_name"]
+        )
 
         # set station index
         self.station_index = config["station_id_column_name"]
@@ -300,10 +302,7 @@ class TimeSeriesExplorer:
             width="40%",
         )
         right_layout = ipywidgets.Layout(
-            justify_content="center",
-            align_items="center",
-            spacing="2px",
-            width="60%"
+            justify_content="center", align_items="center", spacing="2px", width="60%"
         )
 
         # Frames

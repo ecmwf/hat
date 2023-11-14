@@ -142,6 +142,7 @@ class Widget:
     update(index, metadata, **kwargs)
         Update the widget's content based on the given index and metadata.
     """
+
     def __init__(self, output):
         self.output = output
 
@@ -269,7 +270,7 @@ class PlotlyWidget(Widget):
             }
         )
 
-    def update(self, index, metadata):
+    def update(self, index, metadata, **kwargs):
         """
         Updates the overall plot with new data for the given index.
 
@@ -292,6 +293,7 @@ class HTMLTableWidget(Widget):
     title : str
         The title of the table.
     """
+
     def __init__(self, title):
         self.title = title
         super().__init__(Output())
@@ -342,7 +344,7 @@ class HTMLTableWidget(Widget):
             clear_output(wait=True)  # Clear any previous plots or messages
             display(HTML(content))
 
-    def update(self, index, metadata):
+    def update(self, index, metadata, **kwargs):
         """
         Update the table with the dataframe as the given index.
 
@@ -367,6 +369,7 @@ class DataFrameWidget(Widget):
     title : str
         The title of the table.
     """
+
     def __init__(self, title):
         self.title = title
         super().__init__(output=Output(title=self.title))
@@ -377,7 +380,7 @@ class DataFrameWidget(Widget):
             clear_output(wait=True)  # Clear any previous plots or messages
             display(empty_df)
 
-    def update(self, index, metadata):
+    def update(self, index, metadata, **kwargs):
         """
         Update the table with the dataframe as the given index.
 
@@ -411,6 +414,7 @@ class MetaDataWidget(HTMLTableWidget):
     station_index : str
         Column name of the station index.
     """
+
     def __init__(self, dataframe, station_index):
         title = "Station Metadata"
         self.dataframe = dataframe
@@ -434,6 +438,7 @@ class StatisticsWidget(HTMLTableWidget):
     station_index : str
         Column name of the station index.
     """
+
     def __init__(self, statistics):
         title = "Model Performance Statistics Overview"
         self.statistics = statistics

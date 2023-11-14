@@ -29,7 +29,7 @@ class LeafletMap:
     Parameters
     ----------
     basemap : ipyleaflet.basemaps, optional
-        The basemap to use for the map. Default is 
+        The basemap to use for the map. Default is
         ipyleaflet.basemaps.OpenStreetMap.Mapnik.
 
     """
@@ -132,6 +132,7 @@ class PyleafletColormap:
         The minimum and maximum values of the colormap. If None, the
         minimum and maximum values in `stats` will be used.
     """
+
     def __init__(self, config, stats=None, colormap_style="viridis", range=None):
         self.config = config
         self.stats = stats
