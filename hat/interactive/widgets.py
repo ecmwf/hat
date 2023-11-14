@@ -11,7 +11,22 @@ from ipywidgets import HTML, DatePicker, HBox, Label, Layout, Output, VBox
 class ThrottledClick:
     """
     Initialize a click throttler with a given delay.
-    to prevent user from swift multiple events clicking that results in crashing
+
+    Parameters
+    ----------
+    delay : float, optional
+        The delay in seconds between clicks. Defaults to 1.0.
+
+    Notes
+    -----
+    This class is used to prevent users from rapidly clicking a button or widget
+    multiple times, which can cause the application to crash or behave unexpectedly.
+
+    Examples
+    --------
+    >>> click_throttler = ThrottledClick(delay=0.5)
+    >>> if click_throttler.should_process():
+    ...     # do something
     """
 
     def __init__(self, delay=1.0):
@@ -21,6 +36,17 @@ class ThrottledClick:
     def should_process(self):
         """
         Determine if a click should be processed based on the delay.
+
+        Returns
+        -------
+        bool
+            True if the click should be processed, False otherwise.
+
+        Notes
+        -----
+        This method should be called before processing a click event. If the
+        time since the last click is greater than the delay, the method returns
+        True and updates the last_call attribute. Otherwise, it returns False.
         """
         current_time = time.time()
         if current_time - self.last_call > self.delay:
@@ -30,18 +56,51 @@ class ThrottledClick:
 
 
 class WidgetsManager:
+    """
+    A class for managing a collection of widgets and updating following
+    a user interaction, providing an index.
+
+    Parameters
+    ----------
+    widgets : dict
+        A dictionary of widgets to manage.
+    index_column : str
+        The name of the column containing the index used to update the widgets.
+    loading_widget : optional
+        A widget to display a loading message while data is being loaded.
+
+    Attributes
+    ----------
+    widgets : dict
+        A dictionary of widgets being managed.
+    index_column : str
+        The name of the column containing the index used to update the widgets.
+    throttler : ThrottledClick
+        A throttler for click events.
+    loading_widget : optional
+        A widget to display a loading message while data is being loaded.
+    """
+
     def __init__(self, widgets, index_column, loading_widget=None):
         self.widgets = widgets
         self.index_column = index_column
-        self.throttler = self._initialize_throttler()
+        self.throttler = ThrottledClick()
         self.loading_widget = loading_widget
 
-    def _initialize_throttler(self, delay=1.0):
-        """Initialize the throttler for click events."""
-        return ThrottledClick(delay)
+    def __getitem__(self, item):
+        return self.widgets[item]
 
     def update(self, feature, **kwargs):
-        """Handle the selection of a marker on the map."""
+        """
+        Handle the selection of a marker on the map.
+
+        Parameters
+        ----------
+        feature : dict
+            A dictionary containing information about the selected feature.
+        **kwargs : dict
+            Additional keyword arguments to pass to the widgets update method.
+        """
 
         # Check if we should process the click
         if not self.throttler.should_process():
@@ -58,24 +117,39 @@ class WidgetsManager:
 
         # update widgets
         for wgt in self.widgets.values():
-            wgt.update(index, metadata)
+            wgt.update(index, metadata, **kwargs)
 
         if self.loading_widget is not None:
             self.loading_widget.value = ""  # Clear the loading message
 
-    def __getitem__(self, item):
-        return self.widgets[item]
-
 
 class Widget:
+    """
+    A base class for interactive widgets.
+
+    Parameters
+    ----------
+    output : Output
+        The ipywidget compatible object to display the widget's content.
+
+    Attributes
+    ----------
+    output : Output
+        The ipywidget compatible object to display the widget's content.
+
+    Methods
+    -------
+    update(index, metadata, **kwargs)
+        Update the widget's content based on the given index and metadata.
+    """
     def __init__(self, output):
         self.output = output
 
-    def update(self, index, metadata):
+    def update(self, index, metadata, **kwargs):
         raise NotImplementedError
 
 
-def filter_nan_values(dates, data_values):
+def _filter_nan_values(dates, data_values):
     """Filters out NaN values and their associated dates."""
     valid_dates = [date for date, val in zip(dates, data_values) if not np.isnan(val)]
     valid_data = [val for val in data_values if not np.isnan(val)]
@@ -84,20 +158,32 @@ def filter_nan_values(dates, data_values):
 
 
 class PlotlyWidget(Widget):
-    """Plotly widget to display timeseries."""
+    """
+    A widget to display timeseries data using Plotly.
+
+    Parameters
+    ----------
+    datasets : dict
+        A dictionary containing the xarray timeseries datasets to be displayed.
+
+    Attributes
+    ----------
+    datasets : dict
+        A dictionary containing the xarray timeseries datasets to be displayed.
+    figure : plotly.graph_objs._figurewidget.FigureWidget
+        The Plotly figure widget.
+    ds_time_str : list
+        A list of strings representing the dates in the timeseries data.
+    start_date_picker : DatePicker
+        The date picker widget for selecting the start date.
+    end_date_picker : DatePicker
+        The date picker widget for selecting the end date.
+    """
 
     def __init__(self, datasets):
         self.datasets = datasets
-        # initial_title = {
-        #     'text': "Click on your desired station location",
-        #     'y':0.9,
-        #     'x':0.5,
-        #     'xanchor': 'center',
-        #     'yanchor': 'top'
-        # }
         self.figure = go.FigureWidget(
             layout=go.Layout(
-                # title = initial_title,
                 height=350,
                 margin=dict(l=120),
                 legend=dict(
@@ -111,15 +197,12 @@ class PlotlyWidget(Widget):
         ds_time = datasets["obs"]["time"].values.astype("datetime64[D]")
         self.ds_time_str = [dt.isoformat() for dt in pd.to_datetime(ds_time)]
 
-        # Add date pickers for start and end dates
         self.start_date_picker = DatePicker(description="Start")
         self.end_date_picker = DatePicker(description="End")
 
-        # Observe changes in the date pickers to update the plot
         self.start_date_picker.observe(self._update_plot_dates, names="value")
         self.end_date_picker.observe(self._update_plot_dates, names="value")
 
-        # Date picker title
         date_label = Label(
             "Please select the date to accurately change the date axis of the plot"
         )
@@ -129,17 +212,22 @@ class PlotlyWidget(Widget):
         output = VBox([self.figure, date_label, date_picker_box], layout=layout)
         super().__init__(output)
 
-    def _update_plot_dates(self, change):
+    def _update_plot_dates(self):
+        """
+        Updates the plot with the selected start and end dates.
+        """
         start_date = self.start_date_picker.value.strftime("%Y-%m-%d")
         end_date = self.end_date_picker.value.strftime("%Y-%m-%d")
         self.figure.update_layout(xaxis_range=[start_date, end_date])
 
-    def update_data(self, station_id):
-        """Update the simulation data for the given station ID."""
+    def _update_data(self, station_id):
+        """
+        Updates the simulation data for the given station ID.
+        """
         for name, ds in self.datasets.items():
             if station_id in ds["station"].values:
                 ds_time_series_data = ds.sel(station=station_id).values
-                valid_dates_ds, valid_data_ds = filter_nan_values(
+                valid_dates_ds, valid_data_ds = _filter_nan_values(
                     self.ds_time_str, ds_time_series_data
                 )
                 self._update_trace(valid_dates_ds, valid_data_ds, name)
@@ -147,7 +235,9 @@ class PlotlyWidget(Widget):
                 print(f"Station ID: {station_id} not found in dataset {name}.")
 
     def _update_trace(self, x_data, y_data, name):
-        """Update or add a trace to the Plotly figure."""
+        """
+        Updates the plot trace for the given name with the given x and y data.
+        """
         trace_exists = any([trace.name == name for trace in self.figure.data])
         if trace_exists:
             for trace in self.figure.data:
@@ -159,7 +249,10 @@ class PlotlyWidget(Widget):
                 go.Scatter(x=x_data, y=y_data, mode="lines", name=name)
             )
 
-    def update_title(self, metadata):
+    def _update_title(self, metadata):
+        """
+        Updates the plot title following the point metadata.
+        """
         station_id = metadata["station_id"]
         station_name = metadata["StationName"]
         updated_title = (
@@ -177,17 +270,29 @@ class PlotlyWidget(Widget):
         )
 
     def update(self, index, metadata):
-        """Update the overall plot with new data for the given station ID."""
-        # self.update_title(metadata)
-        self.update_data(index)
+        """
+        Updates the overall plot with new data for the given index.
+
+        Parameters
+        ----------
+        index : str
+            The ID of the station to update the data for.
+        metadata : dict
+            A dictionary containing the metadata for the selected station.
+        """
+        self._update_data(index)
 
 
 class HTMLTableWidget(Widget):
-    def __init__(self, dataframe, title):
-        """
-        Initialize the table object for displaying statistics and station properties.
-        """
-        self.dataframe = dataframe
+    """
+    A widget to display a pandas dataframe with the HTML format.
+
+    Parameters
+    ----------
+    title : str
+        The title of the table.
+    """
+    def __init__(self, title):
         self.title = title
         super().__init__(Output())
 
@@ -228,10 +333,9 @@ class HTMLTableWidget(Widget):
         )
         # Initialize the stat_table_html and station_table_html with empty tables
         empty_df = pd.DataFrame()
-        self.display_dataframe_with_scroll(empty_df, title=self.title)
+        self._display_dataframe_with_scroll(empty_df, title=self.title)
 
-    def display_dataframe_with_scroll(self, df, title=""):
-        """Display a DataFrame with a scrollable view."""
+    def _display_dataframe_with_scroll(self, df, title=""):
         table_html = df.to_html(classes="custom-table")
         content = f"{self.table_style}<div class='custom-table-container'><h3 {self.stat_title_style}>{title}</h3>{table_html}</div>"  # noqa: E501
         with self.output:
@@ -239,16 +343,31 @@ class HTMLTableWidget(Widget):
             display(HTML(content))
 
     def update(self, index, metadata):
-        dataframe = self.extract_dataframe(index)
-        self.display_dataframe_with_scroll(dataframe, title=self.title)
+        """
+        Update the table with the dataframe as the given index.
+
+        Parameters
+        ----------
+        index : int
+            The index of the data to be displayed.
+        metadata : dict
+            The metadata associated with the data index.
+        """
+        dataframe = self._extract_dataframe(index)
+        self._display_dataframe_with_scroll(dataframe, title=self.title)
 
 
 class DataFrameWidget(Widget):
-    def __init__(self, dataframe, title):
-        """
-        Initialize the table object for displaying statistics and station properties.
-        """
-        self.dataframe = dataframe
+    """
+    A widget to display a pandas dataframe with the default pandas display
+    style.
+
+    Parameters
+    ----------
+    title : str
+        The title of the table.
+    """
+    def __init__(self, title):
         self.title = title
         super().__init__(output=Output(title=self.title))
 
@@ -259,42 +378,78 @@ class DataFrameWidget(Widget):
             display(empty_df)
 
     def update(self, index, metadata):
-        dataframe = self.extract_dataframe(index)
+        """
+        Update the table with the dataframe as the given index.
+
+        Parameters
+        ----------
+        index : int
+            The index of the data to be displayed.
+        metadata : dict
+            The metadata associated with the data index.
+        """
+        dataframe = self._extract_dataframe(index)
         with self.output:
             clear_output(wait=True)  # Clear any previous plots or messages
             display(dataframe)
 
+    def _extract_dataframe(self, index):
+        """
+        Virtual method to return the object dataframe at the index.
+        """
+        raise NotImplementedError
+
 
 class MetaDataWidget(HTMLTableWidget):
+    """
+    An extension of the HTMLTableWidget class to display a station metadata.
+
+    Parameters
+    ----------
+    dataframe : pd.DataFrame
+        A pandas dataframe to be displayed in the table.
+    station_index : str
+        Column name of the station index.
+    """
     def __init__(self, dataframe, station_index):
         title = "Station Metadata"
+        self.dataframe = dataframe
         self.station_index = station_index
-        super().__init__(dataframe, title)
+        super().__init__(title)
 
-    def extract_dataframe(self, station_id):
-        """Generate a station property table for the given station ID."""
+    def _extract_dataframe(self, station_id):
         stations_df = self.dataframe
         selected_station_df = stations_df[stations_df[self.station_index] == station_id]
-
         return selected_station_df
 
 
 class StatisticsWidget(HTMLTableWidget):
-    def __init__(self, dataframe):
-        title = "Model Performance Statistics Overview"
-        super().__init__(dataframe, title)
+    """
+    An extension of the HTMLTableWidget to display statistics at stations.
 
-    def extract_dataframe(self, station_id):
+    Parameters
+    ----------
+    dataframe : pd.DataFrame
+        A pandas dataframe to be displayed in the table.
+    station_index : str
+        Column name of the station index.
+    """
+    def __init__(self, statistics):
+        title = "Model Performance Statistics Overview"
+        self.statistics = statistics
+        super().__init__(title)
+
+    def _extract_dataframe(self, station_id):
         """Generate a statistics table for the given station ID."""
         data = []
 
         # Check if statistics is None or empty
-        if not self.dataframe:
+        if not self.statistics:
             print("No statistics data provided.")
             return pd.DataFrame()  # Return an empty dataframe
 
         # Loop through each simulation and get the statistics for the given station_id
-        for exp_name, stats in self.dataframe.items():
+        for exp_name, stats in self.statistics.items():
             if station_id in stats["station"].values:
                 row = [exp_name] + [
                     round(stats[var].sel(station=station_id).values.item(), 2)
