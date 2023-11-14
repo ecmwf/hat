@@ -23,6 +23,17 @@ def _compute_bounds(stations_metadata, coord_names):
 
 
 class LeafletMap:
+    """
+    A class for creating interactive leaflet maps.
+
+    Parameters
+    ----------
+    basemap : ipyleaflet.basemaps, optional
+        The basemap to use for the map. Default is 
+        ipyleaflet.basemaps.OpenStreetMap.Mapnik.
+
+    """
+
     def __init__(
         self,
         basemap=ipyleaflet.basemaps.OpenStreetMap.Mapnik,
@@ -33,8 +44,9 @@ class LeafletMap:
         self.legend_widget = ipywidgets.Output()
 
     def _set_boundaries(self, stations_metadata, coord_names):
-        """Compute the boundaries of the map based on the stations metadata."""
-
+        """
+        Compute the boundaries of the map based on the stations metadata.
+        """
         lon_column = coord_names[0]
         lat_column = coord_names[1]
 
@@ -48,6 +60,21 @@ class LeafletMap:
         self.map.fit_bounds(bounds)
 
     def add_geolayer(self, geodata, colormap, widgets, coord_names=None):
+        """
+        Add a geolayer to the map.
+
+        Parameters
+        ----------
+        geodata : geopandas.GeoDataFrame
+            The geodataframe containing the geospatial data.
+        colormap : hat.PyleafletColormap
+            The colormap to use for the geolayer.
+        widgets : hat.WidgetsManager
+            The widgets to use for the geolayer.
+        coord_names : list of str, optional
+            The names of the columns containing the spatial coordinates.
+            Default is None.
+        """
         geojson = ipyleaflet.GeoJSON(
             data=json.loads(geodata.to_json()),
             style={
@@ -70,11 +97,41 @@ class LeafletMap:
         self.legend_widget = colormap.legend()
 
     def output(self, layout):
+        """
+        Return the output widget.
+
+        Parameters
+        ----------
+        layout : ipywidgets.Layout
+            The layout of the widget.
+
+        Returns
+        -------
+        ipywidgets.VBox
+            The output widget.
+
+        """
         output = ipywidgets.VBox([self.map, self.legend_widget], layout=layout)
         return output
 
 
 class PyleafletColormap:
+    """
+    A class handling the colormap of a pyleaflet map.
+
+    Parameters
+    ----------
+    config : dict
+        A dictionary containing configuration options for the map.
+    stats : xarray.Dataset or None, optional
+        A dataset containing the data to be plotted on the map.
+        If None, a default constant colormap will be used.
+    colormap_style : str, optional
+        The name of the matplotlib colormap to use. Default is 'viridis'.
+    range : tuple of float, optional
+        The minimum and maximum values of the colormap. If None, the
+        minimum and maximum values in `stats` will be used.
+    """
     def __init__(self, config, stats=None, colormap_style="viridis", range=None):
         self.config = config
         self.stats = stats
@@ -94,6 +151,16 @@ class PyleafletColormap:
         self.colormap = plt.cm.get_cmap(colormap_style)
 
     def style_callback(self):
+        """
+        Returns a function that can be used as input style for the ipyleaflet
+        layer.
+
+        Returns
+        -------
+        function
+            A function that takes a dataframe feature as input and returns a
+            dictionary of style options for the ipyleaflet layer.
+        """
         if self.stats is not None:
             norm = plt.Normalize(self.min_val, self.max_val)
 
@@ -120,7 +187,14 @@ class PyleafletColormap:
         return map_color
 
     def legend(self):
-        """Generate an HTML legend for the map."""
+        """
+        Generates an HTML legend for the colormap.
+
+        Returns
+        -------
+        ipywidgets.HTML
+            An HTML widget containing the colormap legend.
+        """
         # Convert the colormap to a list of RGB values
         rgb_values = [
             mpl.colors.rgb2hex(self.colormap(i)) for i in np.linspace(0, 1, 256)
