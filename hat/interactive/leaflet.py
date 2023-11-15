@@ -89,14 +89,14 @@ class LeafletMap:
             style_callback=colormap.style_callback(),
         )
         geojson.on_click(widgets.update)
-        self.map.add_layer(geojson)
+        self.map.add(geojson)
 
         if coord_names is not None:
             self._set_boundaries(geodata, coord_names)
 
         self.legend_widget = colormap.legend()
 
-    def output(self, layout):
+    def output(self, layout={}):
         """
         Return the output widget.
 
@@ -133,11 +133,23 @@ class PyleafletColormap:
         minimum and maximum values in `stats` will be used.
     """
 
-    def __init__(self, config, stats=None, colormap_style="viridis", range=None):
+    def __init__(
+        self,
+        config={},
+        stats=None,
+        colormap_style="viridis",
+        range=None,
+        empty_color="white",
+        default_color="blue",
+    ):
         self.config = config
         self.stats = stats
-        print(self.stats)
+        self.empty_color = empty_color
+        self.default_color = default_color
         if self.stats is not None:
+            assert (
+                "station_id_column_name" in self.config
+            ), 'Config must contain "station_id_column_name"'
             # Normalize the data for coloring
             if range is None:
                 self.min_val = self.stats.values.min()
@@ -149,7 +161,13 @@ class PyleafletColormap:
             self.min_val = 0
             self.max_val = 1
 
-        self.colormap = plt.cm.get_cmap(colormap_style)
+        try:
+            self.colormap = mpl.colormaps[colormap_style]
+        except KeyError:
+            raise KeyError(
+                f"Colormap {colormap_style} not found. "
+                f"Available colormaps are: {mpl.colormaps}"
+            )
 
     def style_callback(self):
         """
@@ -169,20 +187,25 @@ class PyleafletColormap:
                 station_id = feature["properties"][
                     self.config["station_id_column_name"]
                 ]
-                color = mpl.colors.rgb2hex(
-                    self.colormap(norm(self.stats.sel(station=station_id).values))
-                )
-                return {
+                if station_id in self.stats.station.values:
+                    station_stats = self.stats.sel(station=station_id)
+                    color = mpl.colors.rgb2hex(
+                        self.colormap(norm(station_stats.values))
+                    )
+                else:
+                    color = self.empty_color
+                style = {
                     "color": "black",
                     "fillColor": color,
                 }
+                return style
 
         else:
 
             def map_color(feature):
                 return {
                     "color": "black",
-                    "fillColor": "blue",
+                    "fillColor": self.default_color,
                 }
 
         return map_color

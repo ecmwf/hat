@@ -3,7 +3,7 @@ import os
 import ipywidgets
 import pandas as pd
 import xarray as xr
-from IPython.core.display import display
+from IPython.display import display
 
 from hat.interactive.leaflet import LeafletMap, PyleafletColormap
 from hat.interactive.widgets import (

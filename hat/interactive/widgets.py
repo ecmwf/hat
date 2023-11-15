@@ -3,8 +3,7 @@ import time
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
-from IPython.core.display import display
-from IPython.display import clear_output
+from IPython.display import clear_output, display
 from ipywidgets import HTML, DatePicker, HBox, Label, Layout, Output, VBox
 
 
@@ -146,12 +145,17 @@ class Widget:
     def __init__(self, output):
         self.output = output
 
-    def update(self, index, metadata, **kwargs):
+    def update(self, index, *args, **kwargs):
         raise NotImplementedError
 
 
 def _filter_nan_values(dates, data_values):
-    """Filters out NaN values and their associated dates."""
+    """
+    Filters out NaN values and their associated dates.
+    """
+    assert len(dates) == len(
+        data_values
+    ), "Dates and data values must be the same length."
     valid_dates = [date for date, val in zip(dates, data_values) if not np.isnan(val)]
     valid_data = [val for val in data_values if not np.isnan(val)]
 
@@ -234,6 +238,8 @@ class PlotlyWidget(Widget):
                 self._update_trace(valid_dates_ds, valid_data_ds, name)
             else:
                 print(f"Station ID: {station_id} not found in dataset {name}.")
+                return False
+        return True
 
     def _update_trace(self, x_data, y_data, name):
         """
@@ -270,7 +276,7 @@ class PlotlyWidget(Widget):
             }
         )
 
-    def update(self, index, metadata, **kwargs):
+    def update(self, index, *args, **kwargs):
         """
         Updates the overall plot with new data for the given index.
 
@@ -281,7 +287,7 @@ class PlotlyWidget(Widget):
         metadata : dict
             A dictionary containing the metadata for the selected station.
         """
-        self._update_data(index)
+        return self._update_data(index)
 
 
 class HTMLTableWidget(Widget):
@@ -344,7 +350,7 @@ class HTMLTableWidget(Widget):
             clear_output(wait=True)  # Clear any previous plots or messages
             display(HTML(content))
 
-    def update(self, index, metadata, **kwargs):
+    def update(self, index, *args, **kwargs):
         """
         Update the table with the dataframe as the given index.
 
@@ -357,6 +363,9 @@ class HTMLTableWidget(Widget):
         """
         dataframe = self._extract_dataframe(index)
         self._display_dataframe_with_scroll(dataframe, title=self.title)
+        if dataframe.empty:
+            return False
+        return True
 
 
 class DataFrameWidget(Widget):
@@ -380,7 +389,7 @@ class DataFrameWidget(Widget):
             clear_output(wait=True)  # Clear any previous plots or messages
             display(empty_df)
 
-    def update(self, index, metadata, **kwargs):
+    def update(self, index, *args, **kwargs):
         """
         Update the table with the dataframe as the given index.
 
@@ -395,6 +404,9 @@ class DataFrameWidget(Widget):
         with self.output:
             clear_output(wait=True)  # Clear any previous plots or messages
             display(dataframe)
+        if dataframe.empty:
+            return False
+        return True
 
     def _extract_dataframe(self, index):
         """
@@ -442,6 +454,10 @@ class StatisticsWidget(HTMLTableWidget):
     def __init__(self, statistics):
         title = "Model Performance Statistics Overview"
         self.statistics = statistics
+        for stat in self.statistics.values():
+            assert (
+                "station" in stat.dims
+            ), 'Dimension "station" not found in statistics datasets.'  # noqa: E501
         super().__init__(title)
 
     def _extract_dataframe(self, station_id):
