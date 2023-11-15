@@ -2,11 +2,10 @@ name: hat
 channels:
   - conda-forge
 dependencies:
-  - python=3.10
+  - python<=3.10
   - netCDF4
   - eccodes
   - cfgrib
-  - cftime
   - geopandas
   - xarray
   - plotly
@@ -15,8 +14,9 @@ dependencies:
   - tqdm
   - typer
   - humanize
-  - folium
   - typer
+  - ipyleaflet
+  - ipywidgets
   - pip
   # - pytest
   # - mkdocs
