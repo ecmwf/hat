@@ -1,6 +1,5 @@
 click
 dask
-earthkit
 earthkit-data
 geopandas
 humanize
