@@ -37,6 +37,9 @@ def get_tmpdir():
     else:
         tmpdir = TemporaryDirectory().name
 
+    # Ensure the directory exists
+    os.makedirs(tmpdir, exist_ok=True)
+
     return tmpdir
 
 
@@ -257,8 +260,8 @@ def save_dataset_to_netcdf(ds: xr.Dataset, fpath: str):
     ds.to_netcdf(fpath)
 
 
-def find_main_var(ds):
-    variable_names = [k for k in ds.variables if len(ds.variables[k].dims) >= 3]
+def find_main_var(ds, min_dim=3):
+    variable_names = [k for k in ds.variables if len(ds.variables[k].dims) >= min_dim]
     if len(variable_names) > 1:
         raise Exception("More than one variable in dataset")
     elif len(variable_names) == 0:

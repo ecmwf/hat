@@ -14,7 +14,7 @@ Interfaces and functionality are likely to change, and the project itself may be
 
 Clone source code repository
 
-    $ git clone git@github.com:ecmwf-projects/hat.git
+    $ git clone https://github.com/ecmwf/hat.git
 
 Create conda python environment
 
