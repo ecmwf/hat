@@ -1,10 +1,14 @@
+import glob
 import json
+import os
 
 import ipyleaflet
 import ipywidgets
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
+from ipyleaflet import Popup, WidgetControl
+from ipywidgets import HTML
 
 
 def _compute_bounds(stations_metadata, coord_names):
@@ -59,6 +63,27 @@ class LeafletMap:
         bounds = [(float(min_lat), float(min_lon)), (float(max_lat), float(max_lon))]
         self.map.fit_bounds(bounds)
 
+    def create_hover(self, widgets):
+        def hover_handler(feature, **kwargs):
+            index = widgets.index(feature, **kwargs)
+            # Create a popup with the index as its content
+            message = HTML()
+            message.value = f"ID {index}"
+            self.popup = Popup(
+                location=(
+                    feature["geometry"]["coordinates"][1],
+                    feature["geometry"]["coordinates"][0],
+                ),
+                child=message,
+                close_button=False,
+                auto_close=True,
+                close_on_escape_key=False,
+            )
+            # Add the popup to the map
+            self.map.add_layer(self.popup)
+
+        return hover_handler
+
     def add_geolayer(self, geodata, colormap, widgets, coord_names=None):
         """
         Add a geolayer to the map.
@@ -89,126 +114,32 @@ class LeafletMap:
             style_callback=colormap.style_callback(),
         )
         geojson.on_click(widgets.update)
+        geojson.on_hover(self.create_hover(widgets))
         self.map.add(geojson)
 
         if coord_names is not None:
             self._set_boundaries(geodata, coord_names)
 
-        self.legend_widget = colormap.legend()
-
-    def output(self, layout={}):
-        """
-        Return the output widget.
-
-        Parameters
-        ----------
-        layout : ipywidgets.Layout
-            The layout of the widget.
-
-        Returns
-        -------
-        ipywidgets.VBox
-            The output widget.
-
-        """
-        output = ipywidgets.VBox([self.map, self.legend_widget], layout=layout)
-        return output
+        # Add the legend to the map
+        legend_control = WidgetControl(widget=colormap.legend(), position="bottomleft")
+        self.map.add_control(legend_control)
 
 
 class PyleafletColormap:
     """
-    A class handling the colormap of a pyleaflet map.
+    A base class handling the colormap of a pyleaflet map.
 
     Parameters
     ----------
-    config : dict
-        A dictionary containing configuration options for the map.
-    stats : xarray.Dataset or None, optional
-        A dataset containing the data to be plotted on the map.
-        If None, a default constant colormap will be used.
-    colormap_style : str, optional
-        The name of the matplotlib colormap to use. Default is 'viridis'.
-    range : tuple of float, optional
-        The minimum and maximum values of the colormap. If None, the
-        minimum and maximum values in `stats` will be used.
+    colormap : matplotlib.colors.Colormap
+        The matplotlib colormap object to use for the map.
     """
 
     def __init__(
         self,
-        config={},
-        stats=None,
-        colormap_style="viridis",
-        range=None,
-        empty_color="white",
-        default_color="blue",
+        colormap,
     ):
-        self.config = config
-        self.stats = stats
-        self.empty_color = empty_color
-        self.default_color = default_color
-        if self.stats is not None:
-            assert (
-                "station_id_column_name" in self.config
-            ), 'Config must contain "station_id_column_name"'
-            # Normalize the data for coloring
-            if range is None:
-                self.min_val = self.stats.values.min()
-                self.max_val = self.stats.values.max()
-            else:
-                self.min_val = range[0]
-                self.max_val = range[1]
-        else:
-            self.min_val = 0
-            self.max_val = 1
-
-        try:
-            self.colormap = mpl.colormaps[colormap_style]
-        except KeyError:
-            raise KeyError(
-                f"Colormap {colormap_style} not found. "
-                f"Available colormaps are: {mpl.colormaps}"
-            )
-
-    def style_callback(self):
-        """
-        Returns a function that can be used as input style for the ipyleaflet
-        layer.
-
-        Returns
-        -------
-        function
-            A function that takes a dataframe feature as input and returns a
-            dictionary of style options for the ipyleaflet layer.
-        """
-        if self.stats is not None:
-            norm = plt.Normalize(self.min_val, self.max_val)
-
-            def map_color(feature):
-                station_id = feature["properties"][
-                    self.config["station_id_column_name"]
-                ]
-                if station_id in self.stats.station.values:
-                    station_stats = self.stats.sel(station=station_id)
-                    color = mpl.colors.rgb2hex(
-                        self.colormap(norm(station_stats.values))
-                    )
-                else:
-                    color = self.empty_color
-                style = {
-                    "color": "black",
-                    "fillColor": color,
-                }
-                return style
-
-        else:
-
-            def map_color(feature):
-                return {
-                    "color": "black",
-                    "fillColor": self.default_color,
-                }
-
-        return map_color
+        self.colormap = colormap
 
     def legend(self):
         """
@@ -246,3 +177,159 @@ class PyleafletColormap:
         legend_html = gradient_html + labels_html
 
         return ipywidgets.HTML(legend_html)
+
+    def style_callback(self):
+        """
+        Returns a function that can be used as input style for the ipyleaflet
+        layer.
+
+        Returns
+        -------
+        function
+            A function that takes a dataframe feature as input and returns a
+            dictionary of style options for the ipyleaflet layer.
+        """
+        return NotImplementedError
+
+
+class StatsColormap(PyleafletColormap):
+    """
+    A class handling the colormap of a pyleaflet map colored by a statistic.
+
+    Parameters
+    ----------
+    config : dict
+        A dictionary containing configuration options for the map.
+    stats : xarray.Dataset or None, optional
+        A dataset containing the data to be plotted on the map.
+        If None, a default constant colormap will be used.
+    colormap_style : str, optional
+        The name of the matplotlib colormap to use. Default is 'viridis'.
+    range : tuple of float, optional
+        The minimum and maximum values of the colormap. If None, the
+        minimum and maximum values in `stats` will be used.
+    empty_color : str, optional
+        The color to use for stations that are not in `stats`. Default is
+        'white'.
+    default_color : str, optional
+        The color to use when statistics are not provided. Default is 'blue'.
+    """
+
+    def __init__(
+        self,
+        config={},
+        stats=None,
+        colormap_style="viridis",
+        range=None,
+        empty_color="white",
+        default_color="blue",
+    ):
+        self.config = config
+        self.stats = stats
+        self.empty_color = empty_color
+        self.default_color = default_color
+        if self.stats is not None:
+            assert (
+                "station_id_column_name" in self.config
+            ), 'Config must contain "station_id_column_name"'
+            # Normalize the data for coloring
+            if range is None:
+                self.min_val = self.stats.values.min()
+                self.max_val = self.stats.values.max()
+            else:
+                self.min_val = range[0]
+                self.max_val = range[1]
+        else:
+            self.min_val = 0
+            self.max_val = 1
+
+        try:
+            colormap = mpl.colormaps[colormap_style]
+        except KeyError:
+            raise KeyError(
+                f"Colormap {colormap_style} not found. "
+                f"Available colormaps are: {mpl.colormaps}"
+            )
+
+        super().__init__(colormap)
+
+    def style_callback(self):
+        if self.stats is not None:
+            norm = plt.Normalize(self.min_val, self.max_val)
+
+            def map_color(feature):
+                station_id = feature["properties"][
+                    self.config["station_id_column_name"]
+                ]
+                if station_id in self.stats.station.values:
+                    station_stats = self.stats.sel(station=station_id)
+                    color = mpl.colors.rgb2hex(
+                        self.colormap(norm(station_stats.values))
+                    )
+                else:
+                    color = self.empty_color
+                style = {
+                    "color": "black",
+                    "fillColor": color,
+                }
+                return style
+
+        else:
+
+            def map_color(feature):
+                return {
+                    "color": "black",
+                    "fillColor": self.default_color,
+                }
+
+        return map_color
+
+
+class PPColormap(PyleafletColormap):
+    def __init__(self, config):
+        self.station_id_column_name = config["station_id_column_name"]
+        date = config["pp"]["date"]
+        fc_dir = os.path.join(
+            config["pp"]["forecast"],
+            date.strftime("%Y%m"),
+            f"PPR{date.strftime('%Y%m%d%H')}",
+        )
+
+        # Create a custom colormap with two colors: red and blue
+        cmap_colors = ["red", "blue"]
+        colormap = mpl.colors.ListedColormap(cmap_colors)
+        self.min_val = 0
+        self.max_val = 1
+
+        degraded_file = os.path.join(fc_dir, "fail_list_*.txt")
+        self.degraded_stations = self._get_degraded_stations(degraded_file)
+
+        super().__init__(colormap)
+
+    def _get_degraded_stations(self, files_regex):
+        file_paths = glob.glob(files_regex)
+        numbers_set = set()
+
+        for file_path in file_paths:
+            with open(file_path, "r") as file:
+                contents = file.read()
+                numbers = contents.strip().split(",")
+                for number in numbers:
+                    if number != "":
+                        numbers_set.add(number)
+
+        return numbers_set
+
+    def style_callback(self):
+        def map_color(feature):
+            station_id = feature["properties"][self.station_id_column_name]
+            if station_id in self.degraded_stations:
+                color = "red"
+            else:
+                color = "green"
+            return {
+                "color": "black",
+                "fillColor": color,
+            }
+
+        return map_color
