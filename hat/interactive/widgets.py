@@ -157,8 +157,6 @@ class Widget:
 
 class PPForecastPlotWidget(Widget):
     def __init__(self, config):
-        # os.sys.path.append(config["source"])
-        self.source = config["source"]
         self.date = config["date"]
         self.fc_dir = os.path.join(
             config["forecast"],
@@ -167,7 +165,7 @@ class PPForecastPlotWidget(Widget):
         )
         self.assets = config["assets"]
         obs_dir = config["observations"]
-        os.sys.path.append(self.source)
+        os.sys.path.append(config["source"])
         import plot_site_forecast as psf
         import pp_helper_functions as phf
 
@@ -222,6 +220,20 @@ class PPForecastPlotWidget(Widget):
         )
 
         obs_station = self.observations[f"{int(ts):02d}"][index]
+        frcst_plot_dates = valid_dates >= self.date
+
+        x = []
+        y = []
+        for date in list(valid_dates[frcst_plot_dates]):
+            x.append(date)
+            if date in obs_station.index:
+                y.append(obs_station.loc[date])
+            else:
+                y.append(np.nan)
+        # obs_dates = list(valid_dates[frcst_plot_dates])
+        # obs_dates = [datetime.strftime(date, '%Y-%m-%d %H:%M:%S') for date in obs_dates if date in observations.index]
+        if not x:
+            print('No observations available for this station, skipping observations plot')
 
         # Disable the numpy warning in the plotting
         np.seterr(invalid="ignore")

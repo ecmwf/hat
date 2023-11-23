@@ -313,10 +313,8 @@ class PPColormap(PyleafletColormap):
         for file_path in file_paths:
             with open(file_path, "r") as file:
                 contents = file.read()
-                numbers = contents.strip().split(",")
-                for number in numbers:
-                    if number != "":
-                        numbers_set.add(number)
+                numbers = [number.strip() for number in contents.split(",") if number.strip() != ""]
+                numbers_set.update(numbers)
 
         return numbers_set
 
