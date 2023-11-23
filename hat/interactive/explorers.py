@@ -443,7 +443,6 @@ class PPForecastExplorer(StationsExplorer):
         # Main layout
         main_top_frame = ipywidgets.HBox(
             [self.leafletmap.map, self.widgets["plot"].output],
-            layout=half_layout,
         )
         main_frame = ipywidgets.VBox(
             [self.title_label, main_top_frame, self.widgets["meta"].output],
