@@ -1,11 +1,12 @@
 import os
 import time
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 from IPython.display import clear_output, display
-from ipywidgets import HTML, DatePicker, HBox, Label, Layout, Output, VBox
+from ipywidgets import HTML, Button, DatePicker, HBox, Label, Layout, Output, Text, VBox
 
 
 class ThrottledClick:
@@ -117,12 +118,15 @@ class WidgetsManager:
             )
 
         # Extract station_id from the selected feature
-        metadata = feature["properties"]
-        index = metadata[self.index_column]
+        if isinstance(feature, dict):
+            metadata = feature["properties"]
+            index = metadata[self.index_column]
+        else:
+            index = feature
 
         # update widgets
         for wgt in self.widgets.values():
-            wgt.update(index, metadata, **kwargs)
+            wgt.update(index, **kwargs)
 
         if self.loading_widget is not None:
             self.loading_widget.value = ""  # Clear the loading message
@@ -153,82 +157,6 @@ class Widget:
 
     def update(self, index, *args, **kwargs):
         raise NotImplementedError
-
-
-class PPForecastPlotWidget(Widget):
-    def __init__(self, config):
-        self.date = config["date"]
-        self.fc_dir = os.path.join(
-            config["forecast"],
-            self.date.strftime("%Y%m"),
-            f"PPR{self.date.strftime('%Y%m%d%H')}",
-        )
-        self.assets = config["assets"]
-        obs_dir = config["observations"]
-        os.sys.path.append(config["source"])
-        import plot_site_forecast as psf
-        import pp_helper_functions as phf
-
-        self.psf = psf
-        self.phf = phf
-        # from pp_helper_functions import (
-        #     collate_plotting_data,
-        #     extract_timestep,
-        #     open_mod_file,
-        #     open_record,
-        #     prepare_obs,
-        #     select_obs_quantiles,
-        # )
-
-        # observations
-        self.observations = {}
-        for ts in ["06", "24"]:
-            obs_file = os.path.join(obs_dir, f"Qobs_nrt{ts}.csv")
-            print(obs_file)
-            obs_data = pd.read_csv(obs_file, index_col="Timestamp")
-            obs_data.index = pd.to_datetime(obs_data.index)
-            self.observations[ts] = obs_data
-        super().__init__(Output())
-
-    def update(self, index, metadata, **kwargs):
-        # opening the record.pickle file
-        obs_data = self.phf.open_record(index, rec_path=self.fc_dir)
-
-        # opening the model file in assets
-        pp = self.phf.open_mod_file(os.path.join(self.assets, f"ID_{index}.pickle"))
-        ts = self.phf.extract_timestep(pp)
-
-        # get obs and valid dates from obs_data
-        obs, valid_dates = self.phf.prepare_obs(obs_data["obs"], pp, self.date, ts)
-
-        # select observed predicted distribution (i.e., forecast of the observations not the water balance
-        vars_dict = pd.read_csv(
-            os.path.join(self.fc_dir, f"mcp_{index}.csv"), index_col=0
-        )
-        frcst = self.phf.select_obs_quantiles(vars_dict, pp, self.date)
-
-        pp_objects = self.phf.collate_plotting_data(
-            pd.DataFrame(metadata),  # from outlets.csv
-            pp,  # model file ID_{obsidian}.pickle file in the assets /ec/ws3/tc/emos/work/cems/floods/efas/assets/efas_5.0/ppData/models
-            self.date,  # date time forecast
-            valid_dates,  # list of dates in the forecast time period, created from create_full_list_of_dates() and prepare_obs()
-            frcst,  # quantiles from the ftp file or Obs_{date}, only use the forecast lead time values, using select_obs_quantiles()
-            obs,  # Observations, from record.pickle file, extracted using prepare_obs(), which also gets the valid_dates. Obs_data is obtained using station_data = phf.open_record(station_id)
-            False,
-            False,
-            False,  # if station in fail_list, then True, False, False, otherwise False, False, False
-        )
-
-        obs_station = self.observations[f"{int(ts):02d}"][index]
-
-        # Disable the numpy warning in the plotting
-        np.seterr(invalid="ignore")
-
-        with self.output:
-            clear_output(wait=True)
-            self.psf.plot_site_forecast(
-                pp_objects, display=True, rt_observations=obs_station
-            )
 
 
 def _filter_nan_values(dates, data_values):
@@ -575,3 +503,127 @@ class StatisticsWidget(HTMLTableWidget):
         statistics_df[numerical_columns] = statistics_df[numerical_columns].round(2)
 
         return statistics_df
+
+
+class PPForecastPlotWidget(Widget):
+    def __init__(self, config, stations_metadata, station_index):
+        self.config = config
+        self.stations_metadata = stations_metadata
+        self.station_index = station_index
+
+        self.date = config["date"]
+        self.assets = config["assets"]
+        obs_dir = config["observations"]
+        os.sys.path.append(config["source"])
+        import plot_site_forecast as psf
+        import pp_helper_functions as phf
+
+        self.psf = psf
+        self.phf = phf
+        # from pp_helper_functions import (
+        #     collate_plotting_data,
+        #     extract_timestep,
+        #     open_mod_file,
+        #     open_record,
+        #     prepare_obs,
+        #     select_obs_quantiles,
+        # )
+
+        # observations
+        self.observations = {}
+        for ts in ["06", "24"]:
+            obs_file = os.path.join(obs_dir, f"Qobs_nrt{ts}.csv")
+            print(obs_file)
+            obs_data = pd.read_csv(obs_file, index_col="Timestamp")
+            obs_data.index = pd.to_datetime(obs_data.index)
+            self.observations[ts] = obs_data
+
+        # store last index
+        self.index = None
+
+        # Forecast date selector
+        self.date_input = Text(
+            description='Forecast Date:',
+            placeholder="YYYYMMDDHH",
+            value=self.date.strftime('%Y%m%d%H'),
+            disabled=False,
+            style={'description_width': 'initial'},
+            # layout=Layout(width='500px')
+        )
+        date_button = Button(description="Update", layout=Layout(width='100px'))
+        date_button.on_click(self._update_date)
+
+        # Add the date selector to the map
+        self.date_widget = HBox([self.date_input, date_button])
+
+        self.figure = Output()
+        output = VBox([self.date_widget, self.figure], layout=Layout(width='1000px', align_items="center"))
+        
+        super().__init__(output)
+
+    def update(self, index=None, *args, **kwargs):
+
+        if index is None:
+            index = self.index
+        else:
+            self.index = index
+
+        # station metadata
+        metadata = self.stations_metadata.loc[self.stations_metadata[self.station_index] == index]
+        if metadata.empty:
+            with self.figure:
+                print(f"Station ID: {index} not found in the stations metadata.")
+            return False
+        
+        fc_dir = os.path.join(
+            self.config["forecast"],
+            self.date.strftime("%Y%m"),
+            f"PPR{self.date.strftime('%Y%m%d%H')}",
+        )
+        
+        # opening the record.pickle file
+        obs_data = self.phf.open_record(index, rec_path=fc_dir)
+
+        # opening the model file in assets
+        pp = self.phf.open_mod_file(os.path.join(self.assets, f"ID_{index}.pickle"))
+        ts = self.phf.extract_timestep(pp)
+
+        # get obs and valid dates from obs_data
+        obs, valid_dates = self.phf.prepare_obs(obs_data["obs"], pp, self.date, ts)
+
+        # select observed predicted distribution (i.e., forecast of the observations not the water balance
+        vars_dict = pd.read_csv(
+            os.path.join(fc_dir, f"mcp_{index}.csv"), index_col=0
+        )
+        frcst = self.phf.select_obs_quantiles(vars_dict, pp, self.date)
+
+        pp_objects = self.phf.collate_plotting_data(
+            pd.DataFrame(metadata),  # from outlets.csv
+            pp,  # model file ID_{obsidian}.pickle file in the assets /ec/ws3/tc/emos/work/cems/floods/efas/assets/efas_5.0/ppData/models
+            self.date,  # date time forecast
+            valid_dates,  # list of dates in the forecast time period, created from create_full_list_of_dates() and prepare_obs()
+            frcst,  # quantiles from the ftp file or Obs_{date}, only use the forecast lead time values, using select_obs_quantiles()
+            obs,  # Observations, from record.pickle file, extracted using prepare_obs(), which also gets the valid_dates. Obs_data is obtained using station_data = phf.open_record(station_id)
+            False,
+            False,
+            False,  # if station in fail_list, then True, False, False, otherwise False, False, False
+        )
+
+        obs_station = self.observations[f"{int(ts):02d}"][index]
+
+        # Disable the numpy warning in the plotting
+        np.seterr(invalid="ignore")
+
+        with self.figure:
+            clear_output(wait=True)
+            self.psf.plot_site_forecast(
+                pp_objects, display=True, rt_observations=obs_station
+            )
+
+    def _update_date(self, *args, **kwargs):
+        """
+        Updates the plot with the selected start and end dates.
+        """
+        
+        self.date = datetime.strptime(self.date_input.value, '%Y%m%d%H')
+        self.update()

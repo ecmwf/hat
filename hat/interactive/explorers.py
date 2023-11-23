@@ -158,11 +158,8 @@ class StationsExplorer:
     Base class for the interactive stations explorer.
     Provides the stations metadata, the title label and an empty LeafletMap.
     """
-    def __init__(
-        self,
-        config,
-        title="Interactive stations explorer"
-    ):
+
+    def __init__(self, config, title="Interactive stations explorer"):
         """
         Initializes an instance of the Explorer class.
 
@@ -401,7 +398,9 @@ class PPForecastExplorer(StationsExplorer):
         # Create loading widget
         self.loading_widget = ipywidgets.Label(value="")
         widgets["meta"] = MetaDataWidget(self.stations_metadata, self.station_index)
-        widgets["plot"] = PPForecastPlotWidget(config["pp"])
+        widgets["plot"] = PPForecastPlotWidget(
+            config["pp"], self.stations_metadata, self.station_index
+        )
         self.widgets = WidgetsManager(
             widgets, config["station_id_column_name"], self.loading_widget
         )

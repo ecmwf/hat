@@ -8,7 +8,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from ipyleaflet import Popup, WidgetControl
-from ipywidgets import HTML
+from ipywidgets import HTML, Button, HBox, Layout, Text
 
 
 def _compute_bounds(stations_metadata, coord_names):
@@ -123,6 +123,21 @@ class LeafletMap:
         # Add the legend to the map
         legend_control = WidgetControl(widget=colormap.legend(), position="bottomleft")
         self.map.add_control(legend_control)
+
+        # Add station selector with update button
+        text_input = Text(placeholder="ID", description="Station:", disabled=False)
+        text_button = Button(description="Update", layout=Layout(width="100px"))
+
+        # Define the update function
+        def update_widgets_from_text(*args, **kwargs):
+            widgets.update(text_input.value)
+
+        text_button.on_click(update_widgets_from_text)
+
+        # Add the station selector to the map
+        widget_container = HBox([text_input, text_button])
+        widget_control = WidgetControl(widget=widget_container, position="topright")
+        self.map.add_control(widget_control)
 
 
 class PyleafletColormap:
@@ -277,10 +292,11 @@ class StatsColormap(PyleafletColormap):
         else:
 
             def map_color(feature):
-                return {
+                style = {
                     "color": "black",
                     "fillColor": self.default_color,
                 }
+                return style
 
         return map_color
 
@@ -313,21 +329,26 @@ class PPColormap(PyleafletColormap):
         for file_path in file_paths:
             with open(file_path, "r") as file:
                 contents = file.read()
-                numbers = [number.strip() for number in contents.split(",") if number.strip() != ""]
+                numbers = [
+                    number.strip()
+                    for number in contents.split(",")
+                    if number.strip() != ""
+                ]
                 numbers_set.update(numbers)
 
         return numbers_set
 
     def style_callback(self):
-        def map_color(feature):
+        def map_style(feature):
             station_id = feature["properties"][self.station_id_column_name]
             if station_id in self.degraded_stations:
                 color = "red"
             else:
                 color = "green"
-            return {
+            style = {
                 "color": "black",
                 "fillColor": color,
             }
+            return style
 
-        return map_color
+        return map_style
