@@ -423,12 +423,12 @@ class PPForecastExplorer(StationsExplorer):
             spacing="2px",
             width="1000px",
         )
-        half_layout = ipywidgets.Layout(
-            justify_content="space-around",
-            align_items="center",
-            spacing="2px",
-            width="50%",
-        )
+        # half_layout = ipywidgets.Layout(
+        #     justify_content="space-around",
+        #     align_items="center",
+        #     spacing="2px",
+        #     width="50%",
+        # )
         # left_layout = ipywidgets.Layout(
         #     justify_content="space-around",
         #     align_items="center",

@@ -47,7 +47,7 @@ class LeafletMap:
         )
         self.legend_widget = ipywidgets.Output()
 
-    def _set_boundaries(self, stations_metadata, coord_names):
+    def _set_default_boundaries(self, stations_metadata, coord_names):
         """
         Compute the boundaries of the map based on the stations metadata.
         """
@@ -59,6 +59,26 @@ class LeafletMap:
 
         min_lat, max_lat = min(lats), max(lats)
         min_lon, max_lon = min(lons), max(lons)
+
+        bounds = [(float(min_lat), float(min_lon)), (float(max_lat), float(max_lon))]
+        self.map.fit_bounds(bounds)
+
+    def _update_boundaries_from_station(self, station_id, metadata, coord_names):
+        """
+        Compute the boundaries of the map based on the stations metadata.
+        """
+        lon_column = coord_names[0]
+        lat_column = coord_names[1]
+
+        station_metadata = metadata[metadata['station_id'] == station_id]
+        lon = float(station_metadata[lon_column].values[0])
+        lat = float(station_metadata[lat_column].values[0])
+
+        shift = 1  # Adjust the shift value as needed
+        min_lat = lat - shift
+        max_lat = lat + shift
+        min_lon = lon - shift
+        max_lon = lon + shift
 
         bounds = [(float(min_lat), float(min_lon)), (float(max_lat), float(max_lon))]
         self.map.fit_bounds(bounds)
@@ -113,12 +133,18 @@ class LeafletMap:
             point_style={"radius": 5},
             style_callback=colormap.style_callback(),
         )
-        geojson.on_click(widgets.update)
+        
+        def update_widgets_from_click(*args, **kwargs):
+            widgets.update(*args, **kwargs)
+            # station_id = kwargs["feature"]["properties"]["station_id"]
+            # self._update_boundaries_from_station(station_id, geodata, coord_names)
+        
+        geojson.on_click(update_widgets_from_click)
         geojson.on_hover(self.create_hover(widgets))
         self.map.add(geojson)
 
         if coord_names is not None:
-            self._set_boundaries(geodata, coord_names)
+            self._set_default_boundaries(geodata, coord_names)
 
         # Add the legend to the map
         legend_control = WidgetControl(widget=colormap.legend(), position="bottomleft")
@@ -130,7 +156,9 @@ class LeafletMap:
 
         # Define the update function
         def update_widgets_from_text(*args, **kwargs):
-            widgets.update(text_input.value)
+            station_id = text_input.value
+            widgets.update(station_id)
+            self._update_boundaries_from_station(station_id, geodata, coord_names)            
 
         text_button.on_click(update_widgets_from_text)
 
