@@ -1,0 +1,12 @@
+{
+    "netcdf_file": "/home/dadiyorto/freelance/02_ort_ecmwf/station_mapping/CAMA_static_network_nc_v2.1/glb_01min_d8/ncdata.nc",
+    "nc_variable": "uparea_grid",
+    "csv_file": "/home/dadiyorto/freelance/02_ort_ecmwf/station_mapping/DESTINE/outlets_v4.0_20230726_withEFAS.csv",
+    "station_name_col": "StationName",
+    "lat_col": "StationLat",
+    "lon_col": "StationLon",
+    "csv_variable": "drainage_area_provided",
+    "max_neighboring_cells": 5,
+    "max_area_diff": 10,
+    "grid_size_arcmin": 1.0
+}
