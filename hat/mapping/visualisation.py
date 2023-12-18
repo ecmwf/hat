@@ -3,7 +3,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import ipywidgets as widgets
-from ipyleaflet import Map, GeoJSON, LayersControl, Popup, basemaps
+from ipyleaflet import Map, GeoJSON, LayersControl, Popup, basemaps, CircleMarker, LayerGroup
 import IPython.display as display
 from ipywidgets import Layout
 
@@ -27,7 +27,7 @@ class GeoJSONLayerManager:
 
 class InteractiveMap:
     def __init__(self, center=(0, 0), zoom=2):
-        self.map = Map(basemap=basemaps.CartoDB.Positron, center=center, zoom=zoom, layout=Layout(height='600px'))
+        self.map = Map(basemap=basemaps.Esri.WorldImagery, center=center, zoom=zoom, layout=Layout(height='600px'), scroll_wheel_zoom=False)
         self.map.add_control(LayersControl())
 
     def add_layer(self, layer_manager):
@@ -71,17 +71,28 @@ def create_polygon_legend(colors, labels):
     legend_html = "<div style='padding:10px;background-color:white;opacity:0.8;'>" + "".join(items) + "</div>"
     return widgets.HTML(legend_html)
 
-def make_line_click_handler(near_area_attr, new_area_attr, distance_attr, map_object):
+def make_line_click_handler(station_name_attr,
+                            station_area_attr, 
+                            near_area_attr, 
+                            new_area_attr, 
+                            near_dist_attr, 
+                            new_dist_attr, 
+                            map_object):
     def line_click_handler(feature, **kwargs):
-        near_area_diff = feature['properties'].get(near_area_attr, 'N/A')
-        new_area_diff = feature['properties'].get(new_area_attr, 'N/A')
-        distance_km = feature['properties'].get(distance_attr, 'N/A')
+        station_area = feature['properties'].get(station_area_attr, 'N/A')
+        near_area = feature['properties'].get(near_area_attr, 'N/A')
+        new_area = feature['properties'].get(new_area_attr, 'N/A')
+        near_dist_km = feature['properties'].get(near_dist_attr, 'N/A')
+        new_dist_km = feature['properties'].get(new_dist_attr, 'N/A')
 
         # Format the popup message
         message_html = f"""
-        <div>Near Area Difference (%): {near_area_diff:.1f}</div>
-        <div>New Area Difference (%): {new_area_diff:.1f}</div>
-        <div>Distance (km): {distance_km:.1f}</div>
+        <div>Station Name: {feature['properties'][station_name_attr]}</div>
+        <div>Station Upstream Area (km2): {station_area:.1f}</div>
+        <div>Near Cell Upstream Area (km2): {near_area:.1f}</div>
+        <div>New Cell Upstream Area (km2): {new_area:.1f}</div>
+        <div>Near Cell Distance (km): {near_dist_km:.1f}</div>
+        <div>New Cell Distance (km): {new_dist_km:.1f}</div>
         """
         message = widgets.HTML(message_html)
 
@@ -109,3 +120,49 @@ def vector_style(feature, color, opacity):
         'fillOpacity': opacity   # Opacity of the fill
     }
 
+
+def attribute_based_style(row, attribute_name, threshold, color_above, color_below):
+    """Style function for GeoJSON features based on an attribute value."""
+    attribute_value = row.get(attribute_name)
+    if attribute_value is not None:
+        color = color_above if attribute_value > threshold else color_below
+        return {
+            'radius': 5,
+            'color': color,
+            'fillColor': color,
+            'fillOpacity': 0.5,
+        }
+    else:
+        return {
+            'radius': 5,
+            'color': 'gray',
+            'fillColor': 'gray',
+            'fillOpacity': 0.5,
+        }
+
+
+def create_circle_markers(feature, attribute_name, threshold, color_above, color_below, name):
+    """Create a CircleMarker for each feature in the GeoDataFrame."""
+    # Create a layer group to hold the circle markers
+    layer_group = LayerGroup(name=name)
+
+    # Iterate over GeoDataFrame rows and create a circle marker for each row
+    for _, row in feature.iterrows():
+        # Get the coordinates (longitude, latitude)
+        coords = row.geometry.coords[0]
+        
+        # Determine the style of the feature
+        style = attribute_based_style(row, attribute_name, threshold, color_above, color_below)
+        
+        # Create a circle marker
+        marker = CircleMarker()
+        marker.location = (coords[1], coords[0])  # Note: Leaflet expects (lat, lon)
+        marker.radius = style['radius']
+        marker.color = style['color']
+        marker.fill_color = style['fillColor']
+        marker.fill_opacity = style['fillOpacity']
+        
+        # Add the circle marker to the layer group
+        layer_group.add_layer(marker)
+    
+    return layer_group

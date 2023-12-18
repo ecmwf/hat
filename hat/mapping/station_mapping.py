@@ -62,52 +62,61 @@ def create_grid_polygon(lat, lon, cell_size):
 def process_station_data(station, latitudes, longitudes, nc_data, max_neighboring_cells, max_area_diff, lat_col, lon_col, station_name_col, csv_variable, cell_size):
     """Process data for a single station."""
     lat, lon = station[lat_col], station[lon_col]
-    csv_data = station[csv_variable]
+    station_area = station[csv_variable]
 
     # Original grid point
     lat_idx, lon_idx = get_grid_index(lat, lon, latitudes, longitudes)
-    original_grid_data = nc_data[lat_idx, lon_idx]
-    original_grid_data = float(original_grid_data) if not is_masked(original_grid_data) else np.nan
-    original_area_diff = area_diff_percentage(original_grid_data, csv_data)
-    original_grid_polygon = create_grid_polygon(latitudes[lat_idx], longitudes[lon_idx], cell_size)
+    near_grid_area = nc_data[lat_idx, lon_idx]
+    near_grid_area = float(near_grid_area) if not is_masked(near_grid_area) else np.nan
+    near_area_diff = area_diff_percentage(near_grid_area, station_area)
+    near_grid_polygon = create_grid_polygon(latitudes[lat_idx], longitudes[lon_idx], cell_size)
+    near_distance_km = calculate_distance(lat, lon, latitudes[lat_idx], longitudes[lon_idx])
 
     # Best matching grid point
-    new_lat_idx, new_lon_idx = find_best_matching_grid(lat, lon, latitudes, longitudes, nc_data, csv_data, max_neighboring_cells, max_area_diff)
-    new_grid_data = nc_data[new_lat_idx, new_lon_idx]
-    new_grid_data = float(new_grid_data) if not is_masked(new_grid_data) else np.nan
-    new_area_diff = area_diff_percentage(new_grid_data, csv_data)
+    new_lat_idx, new_lon_idx = find_best_matching_grid(lat, lon, latitudes, longitudes, nc_data, station_area, max_neighboring_cells, max_area_diff)
+    new_grid_area = nc_data[new_lat_idx, new_lon_idx]
+    new_grid_area = float(new_grid_area) if not is_masked(new_grid_area) else np.nan
+    new_area_diff = area_diff_percentage(new_grid_area, station_area)
     new_grid_polygon = create_grid_polygon(latitudes[new_lat_idx], longitudes[new_lon_idx], cell_size)
+    new_distance_km = calculate_distance(lat, lon, latitudes[new_lat_idx], longitudes[new_lon_idx])
 
     return {
+        # Station data
         'station_name': station[station_name_col],
         'station_lat': lat,
         'station_lon': lon,
-        'grid_lat': latitudes[lat_idx],
-        'grid_lon': longitudes[lon_idx],
-        'nc_variable': original_grid_data,
-        'csv_variable': csv_data,
-        'original_area_diff': original_area_diff,
-        'distance_km': calculate_distance(lat, lon, latitudes[lat_idx], longitudes[lon_idx]),
+        'station_area': station_area,
+        # Near grid data
+        'near_grid_lat': latitudes[lat_idx],
+        'near_grid_lon': longitudes[lon_idx],
+        'near_grid_area': near_grid_area,
+        'near_area_diff': near_area_diff,
+        'near_distance_km': near_distance_km,
+        'near_grid_polygon': near_grid_polygon,
+        # New grid data
         'new_grid_lat': latitudes[new_lat_idx],
         'new_grid_lon': longitudes[new_lon_idx],
-        'new_nc_variable': new_grid_data,
+        'new_grid_area': new_grid_area,
         'new_area_diff': new_area_diff,
-        'new_distance_km': calculate_distance(lat, lon, latitudes[new_lat_idx], longitudes[new_lon_idx]),
-        'original_grid_polygon': original_grid_polygon,
-        'new_grid_polygon': new_grid_polygon
-    }
+        'new_distance_km': new_distance_km,
+        'new_grid_polygon': new_grid_polygon,
+        # Difference between near and new grid data
+        'near2new_area_diff': abs(new_area_diff - near_area_diff),
+        'near2new_distance_km': abs(new_distance_km - near_distance_km)
+        }
 
 def main(config):
     netcdf_file = config["netcdf_file"]
     nc_variable = config["nc_variable"]
     csv_file = config["csv_file"]
-    station_name_col = config["station_name_col"]
-    lat_col = config["lat_col"]
-    lon_col = config["lon_col"]
+    station_name_col = config["csv_station_name_col"]
+    lat_col = config["csv_lat_col"]
+    lon_col = config["csv_lon_col"]
     csv_variable = config["csv_variable"]
     max_neighboring_cells = config["max_neighboring_cells"]
     max_area_diff = config["max_area_diff"]
     min_area_diff =config["min_area_diff"]
+    nc_grid_size_arcmin = config["nc_grid_size_arcmin"]
 
 
     # Read station CSV and filter out invalid data
@@ -121,36 +130,36 @@ def main(config):
     nc_data = (dataset.variables[nc_variable][:])*1e-6
 
      # Convert 1 arc minute to degrees for grid cell size
-    cell_size = 1.0 / 60
+    cell_size = nc_grid_size_arcmin/ 60
 
     # Process each station and collect data in a list
     data_list = []
     for index, station in stations.iterrows():
         station_data = process_station_data(station, latitudes, longitudes, nc_data, max_neighboring_cells, max_area_diff, lat_col, lon_col, station_name_col, csv_variable, cell_size)
-        if station_data['original_area_diff'] > min_area_diff:
+        if station_data['near_area_diff'] > min_area_diff:
             data_list.append(station_data)
     df = pd.DataFrame(data_list)
 
-    df['original_grid_polygon'] = df.apply(lambda row: create_grid_polygon(row['grid_lat'], row['grid_lon'], cell_size), axis=1)
+    df['near_grid_polygon'] = df.apply(lambda row: create_grid_polygon(row['near_grid_lat'], row['near_grid_lon'], cell_size), axis=1)
     df['new_grid_polygon'] = df.apply(lambda row: create_grid_polygon(row['new_grid_lat'], row['new_grid_lon'], cell_size), axis=1)
     
     # Convert any additional geometry columns to WKT for serialization
-    df['original_grid_polygon_wkt'] = df['original_grid_polygon'].apply(lambda x: x.wkt)
+    df['near_grid_polygon_wkt'] = df['near_grid_polygon'].apply(lambda x: x.wkt)
     df['new_grid_polygon_wkt'] = df['new_grid_polygon'].apply(lambda x: x.wkt)
 
-    # Drop the original Shapely object columns
-    df = df.drop(columns=['original_grid_polygon', 'new_grid_polygon'])
+    # Drop the Shapely object columns that were replaced by wkts instead
+    df = df.drop(columns=['near_grid_polygon', 'new_grid_polygon'])
 
     # Create GeoDataFrames
     gdf_station_point = gpd.GeoDataFrame(df, geometry=[Point(xy) for xy in zip(df['station_lon'], df['station_lat'])])
-    gdf_original_grid_polygon = gpd.GeoDataFrame(df, geometry=df['original_grid_polygon_wkt'].apply(loads))
+    gdf_near_grid_polygon = gpd.GeoDataFrame(df, geometry=df['near_grid_polygon_wkt'].apply(loads))
     gdf_new_grid_polygon = gpd.GeoDataFrame(df, geometry=df['new_grid_polygon_wkt'].apply(loads))
-    gdf_line = gpd.GeoDataFrame(df, geometry=[LineString([(row['station_lon'], row['station_lat']), (row['grid_lon'], row['grid_lat'])]) for index, row in df.iterrows()])
+    gdf_line = gpd.GeoDataFrame(df, geometry=[LineString([(row['station_lon'], row['station_lat']), (row['near_grid_lon'], row['near_grid_lat'])]) for index, row in df.iterrows()])
     gdf_line_new = gpd.GeoDataFrame(df, geometry=[LineString([(row['station_lon'], row['station_lat']), (row['new_grid_lon'], row['new_grid_lat'])]) for index, row in df.iterrows()])
 
     # Save to GeoJSON
     gdf_station_point.to_file("station.geojson", driver="GeoJSON")
-    gdf_original_grid_polygon.to_file("nearest_grid.geojson", driver="GeoJSON")
+    gdf_near_grid_polygon.to_file("near_grid.geojson", driver="GeoJSON")
     gdf_new_grid_polygon.to_file("new_grid.geojson", driver="GeoJSON")
     gdf_line.to_file("station2grid_line.geojson", driver="GeoJSON")
     gdf_line_new.to_file("station2grid_new_line.geojson", driver="GeoJSON")
