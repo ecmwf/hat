@@ -20,10 +20,18 @@ def get_grid_index(lat, lon, latitudes, longitudes):
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """Calculate the distance in kilometers between two points."""
+    if pd.isna(lat1) or pd.isna(lon1) or pd.isna(lat2) or pd.isna(lon2):
+        return np.nan
     return geodesic((lat1, lon1), (lat2, lon2)).kilometers
 
-def area_diff_percentage(old_value, new_value):
+def area_diff_percentage(new_value, old_value):
     """Calculate the area difference as a percentage."""
+    try:
+        old_value = float(old_value)
+        new_value = float(new_value)
+    except ValueError:
+        return np.nan  # Return NaN if conversion fails
+
     if old_value <= 0:
         return np.nan  # Avoid division by zero
     return ((old_value - new_value) / old_value) * 100
@@ -58,11 +66,24 @@ def create_grid_polygon(lat, lon, cell_size):
     half_cell = cell_size / 2
     return box(lon - half_cell, lat - half_cell, lon + half_cell, lat + half_cell)
 
-
-def process_station_data(station, latitudes, longitudes, nc_data, max_neighboring_cells, max_area_diff, lat_col, lon_col, station_name_col, csv_variable, cell_size):
+def process_station_data(station, 
+                         latitudes, longitudes, nc_data, 
+                         max_neighboring_cells, max_area_diff, 
+                         lat_col, lon_col, station_name_col, csv_variable, 
+                         cell_size,
+                         manual_lat_col, manual_lon_col, manual_area):
     """Process data for a single station."""
     lat, lon = station[lat_col], station[lon_col]
-    station_area = station[csv_variable]
+    station_area = float(station[csv_variable]) if station[csv_variable] else np.nan
+    
+    #manually mapped variable
+    manual_lat = station.get(manual_lat_col, np.nan)
+    manual_lon = station.get(manual_lon_col, np.nan)
+    manual_lat = float(manual_lat) if not pd.isna(manual_lat) else np.nan
+    manual_lon = float(manual_lon) if not pd.isna(manual_lon) else np.nan
+    manual_area = float(station[manual_area]) if station[manual_area] else np.nan
+    manual_area_diff = area_diff_percentage(manual_area, station_area)
+    manual_distance_km = calculate_distance(lat, lon, manual_lat, manual_lon)
 
     # Original grid point
     lat_idx, lon_idx = get_grid_index(lat, lon, latitudes, longitudes)
@@ -79,6 +100,7 @@ def process_station_data(station, latitudes, longitudes, nc_data, max_neighborin
     new_area_diff = area_diff_percentage(new_grid_area, station_area)
     new_grid_polygon = create_grid_polygon(latitudes[new_lat_idx], longitudes[new_lon_idx], cell_size)
     new_distance_km = calculate_distance(lat, lon, latitudes[new_lat_idx], longitudes[new_lon_idx])
+
 
     return {
         # Station data
@@ -102,7 +124,13 @@ def process_station_data(station, latitudes, longitudes, nc_data, max_neighborin
         'new_grid_polygon': new_grid_polygon,
         # Difference between near and new grid data
         'near2new_area_diff': abs(new_area_diff - near_area_diff),
-        'near2new_distance_km': abs(new_distance_km - near_distance_km)
+        'near2new_distance_km': abs(new_distance_km - near_distance_km),
+        # Manually mapped variable
+        'manual_lat' : manual_lat,
+        'manual_lon' : manual_lon,
+        'manual_area' : manual_area,
+        'manual_area_diff': manual_area_diff,
+        'manual_distance_km': manual_distance_km
         }
 
 def main(config):
@@ -117,6 +145,9 @@ def main(config):
     max_area_diff = config["max_area_diff"]
     min_area_diff =config["min_area_diff"]
     nc_grid_size_arcmin = config["nc_grid_size_arcmin"]
+    manual_lat_col = config["manual_lat_col"]
+    manual_lon_col = config["manual_lon_col"]
+    manual_area = config["manual_area"]
 
 
     # Read station CSV and filter out invalid data
@@ -135,7 +166,12 @@ def main(config):
     # Process each station and collect data in a list
     data_list = []
     for index, station in stations.iterrows():
-        station_data = process_station_data(station, latitudes, longitudes, nc_data, max_neighboring_cells, max_area_diff, lat_col, lon_col, station_name_col, csv_variable, cell_size)
+        station_data = process_station_data(station, 
+                                            latitudes, longitudes, nc_data, 
+                                            max_neighboring_cells, max_area_diff, 
+                                            lat_col, lon_col, station_name_col, csv_variable, 
+                                            cell_size, 
+                                            manual_lat_col, manual_lon_col, manual_area)
         if station_data['near_area_diff'] > min_area_diff:
             data_list.append(station_data)
     df = pd.DataFrame(data_list)
@@ -163,6 +199,10 @@ def main(config):
     gdf_new_grid_polygon.to_file("new_grid.geojson", driver="GeoJSON")
     gdf_line.to_file("station2grid_line.geojson", driver="GeoJSON")
     gdf_line_new.to_file("station2grid_new_line.geojson", driver="GeoJSON")
+
+    # save to csv
+    gdf_station_point.to_csv("station.csv")
+
     dataset.close()
 
 

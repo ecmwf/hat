@@ -3,7 +3,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import ipywidgets as widgets
-from ipyleaflet import Map, GeoJSON, LayersControl, Popup, basemaps, CircleMarker, LayerGroup
+from ipyleaflet import Map, GeoJSON, Marker, LayersControl, Popup, basemaps, CircleMarker, LayerGroup, SearchControl
 import IPython.display as display
 from ipywidgets import Layout
 
@@ -29,6 +29,14 @@ class InteractiveMap:
     def __init__(self, center=(0, 0), zoom=2):
         self.map = Map(basemap=basemaps.Esri.WorldImagery, center=center, zoom=zoom, layout=Layout(height='600px'), scroll_wheel_zoom=False)
         self.map.add_control(LayersControl())
+
+        search = SearchControl(
+        position="topleft",
+        url='https://nominatim.openstreetmap.org/search?format=json&q={s}',
+        zoom=12,
+        marker=Marker()
+        )
+        self.map.add_control(search)
 
     def add_layer(self, layer_manager):
         layer_manager.add_to_map(self.map)
@@ -71,28 +79,61 @@ def create_polygon_legend(colors, labels):
     legend_html = "<div style='padding:10px;background-color:white;opacity:0.8;'>" + "".join(items) + "</div>"
     return widgets.HTML(legend_html)
 
-def make_line_click_handler(station_name_attr,
-                            station_area_attr, 
-                            near_area_attr, 
-                            new_area_attr, 
-                            near_dist_attr, 
-                            new_dist_attr, 
+
+def make_line_click_handler(station_name_attr, station_area_attr, 
+                            near_area_attr, new_area_attr,
+                            near_dist_attr, new_dist_attr, 
                             map_object):
     def line_click_handler(feature, **kwargs):
         station_area = feature['properties'].get(station_area_attr, 'N/A')
         near_area = feature['properties'].get(near_area_attr, 'N/A')
+        # near_area_diff = feature['properties'].get(near_area_diff_attr, 'N/A')
         new_area = feature['properties'].get(new_area_attr, 'N/A')
+        # new_area_diff = feature['properties'].get(new_area_diff_attr, 'N/A')
         near_dist_km = feature['properties'].get(near_dist_attr, 'N/A')
         new_dist_km = feature['properties'].get(new_dist_attr, 'N/A')
 
-        # Format the popup message
+        # Format numbers with comma separators
+        station_area = f"{station_area:,.1f}" if station_area != 'N/A' else station_area
+        near_area = f"{near_area:,.1f}" if near_area != 'N/A' else near_area
+        # near_area_diff = f"{near_area_diff:,.1f}" if near_area_diff != 'N/A' else near_area_diff
+        new_area = f"{new_area:,.1f}" if new_area != 'N/A' else new_area
+        # new_area_diff = f"{new_area_diff:,.1f}" if new_area_diff != 'N/A' else new_area_diff
+        near_dist_km = f"{near_dist_km:,.1f}" if near_dist_km != 'N/A' else near_dist_km
+        new_dist_km = f"{new_dist_km:,.1f}" if new_dist_km != 'N/A' else new_dist_km
+
+        # Format the popup message with HTML
         message_html = f"""
-        <div>Station Name: {feature['properties'][station_name_attr]}</div>
-        <div>Station Upstream Area (km2): {station_area:.1f}</div>
-        <div>Near Cell Upstream Area (km2): {near_area:.1f}</div>
-        <div>New Cell Upstream Area (km2): {new_area:.1f}</div>
-        <div>Near Cell Distance (km): {near_dist_km:.1f}</div>
-        <div>New Cell Distance (km): {new_dist_km:.1f}</div>
+        <table class="tg">
+        <thead>
+        <tr>
+            <th class="tg-1wig">Station Name</th>
+            <th class="tg-1wig">{feature['properties'][station_name_attr]}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td class="tg-0lax">Station Upstream Area</td>
+            <td class="tg-0lax">{station_area}km<sup>2</sup></td>
+        </tr>
+        <tr>
+            <td class="tg-0lax">Near-Grid Upstream Area</td>
+            <td class="tg-0lax">{near_area}km<sup>2</sup></td>
+        </tr>
+        <tr>
+            <td class="tg-0lax"><b>New-Grid</b> Upstream Area</td>
+            <td class="tg-0lax">{new_area}km<sup>2</sup></td>
+        </tr>
+        <tr>
+            <td class="tg-0lax">Near-Grid Distance</td>
+            <td class="tg-0lax">{near_dist_km}km</td>
+        </tr>
+        <tr>
+            <td class="tg-0lax"><b>New-Grid</b> Distance</td>
+            <td class="tg-0lax">{new_dist_km}km</td>
+        </tr>
+        </tbody>
+        </table>
         """
         message = widgets.HTML(message_html)
 
@@ -103,6 +144,7 @@ def make_line_click_handler(station_name_attr,
         map_object.add_layer(popup)
 
     return line_click_handler
+
 
 def make_style_callback(attribute, cmap, norm):
     def style_callback(feature):
