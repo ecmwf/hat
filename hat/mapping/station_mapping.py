@@ -187,6 +187,8 @@ def main():
         config = json.load(file)
 
     out_dir = config["out_directory"]
+    # Create output directory if it doesn't exist
+    os.makedirs(out_dir, exist_ok=True)
 
     # grid and upstream area file
     upstream_area_file = config["upstream_area_file"]
@@ -225,7 +227,7 @@ def main():
     nc_data = dataset[nc_variable]*1e-6  # Convert from m^2 to km^2
     latitudes = dataset['lat'].values
     longitudes = dataset['lon'].values
-    print(dataset)
+    # print(dataset)
 
     # extract cell size from coordinates
     cell_size = abs(latitudes[0] - latitudes[1])
@@ -233,7 +235,7 @@ def main():
     # Process each station and collect data in a list
     data_list = []
     for index, station in stations.iterrows():
-        print(index)
+        # print(index)
         station_data = process_station_data(station,
                                             latitudes, longitudes, nc_data,
                                             max_neighboring_cells, min_area_diff, max_area_diff, 
