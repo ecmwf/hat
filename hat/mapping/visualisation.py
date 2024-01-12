@@ -25,6 +25,7 @@ class GeoJSONLayerManager:
             self.layer = GeoJSON(data=self.gdf.__geo_interface__, name=self.name)
         map_object.add_layer(self.layer)
 
+
 class InteractiveMap:
     def __init__(self, center=(0, 0), zoom=2):
         self.map = Map(basemap=basemaps.Esri.WorldImagery, center=center, zoom=zoom, layout=Layout(height='600px'), scroll_wheel_zoom=False)

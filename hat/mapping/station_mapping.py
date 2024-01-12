@@ -176,16 +176,16 @@ def process_station_data(station,
 
 
 def main():
-
     parser = argparse.ArgumentParser(description='Station mapping tool: maps stations on provided grid.')
     parser.add_argument('config_file', type=str, help='Path to the JSON configuration file')
-
     args = parser.parse_args()
-
     # Load configuration from the specified JSON file
     with open(args.config_file, 'r') as file:
         config = json.load(file)
+    station_mapping(config)
 
+
+def station_mapping(config):
     out_dir = config["out_directory"]
     # Create output directory if it doesn't exist
     os.makedirs(out_dir, exist_ok=True)
