@@ -52,8 +52,7 @@ def count_within_abs_error_range(df, column_reference, column_evaluated, lower_l
     return count
 
 
-def update_config_file(config_path, new_max_cells, new_max_diff):
-
+def update_config_file(config_path, new_max_cells, new_max_diff, out_folder_name):
     config_path = os.path.expanduser(config_path)
 
     with open(config_path, 'r') as file:
@@ -61,6 +60,7 @@ def update_config_file(config_path, new_max_cells, new_max_diff):
 
     config["max_neighboring_cells"] = new_max_cells
     config["max_area_diff"] = new_max_diff
+    config["out_directory"] = out_folder_name  # Update output directory
 
     with open(config_path, 'w') as file:
         json.dump(config, file, indent=4)
