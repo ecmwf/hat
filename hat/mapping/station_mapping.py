@@ -27,12 +27,12 @@ def calculate_distance(lat1, lon1, lat2, lon2):
         return np.nan
     return geodesic((lat1, lon1), (lat2, lon2)).kilometers
 
-def area_diff_percentage(new_value, old_value):
+def calculate_area_diff_percentage(new_value, old_value):
     """Calculate the area difference as a percentage."""
     try:
         old_value = float(old_value)
         new_value = float(new_value)
-    except ValueError:
+    except ValueError   :
         return np.nan  # Return NaN if conversion fails
 
     if old_value <= 0:
@@ -57,7 +57,7 @@ def find_best_matching_grid(lat, lon, latitudes, longitudes, nc_data, csv_value,
             if is_masked(grid_data):
                 continue
             grid_data = float(grid_data)
-            area_diff = area_diff_percentage(grid_data, csv_value)
+            area_diff = calculate_area_diff_percentage(grid_data, csv_value)
             if abs(area_diff) < min_diff and abs(area_diff) <= max_area_diff:
                 min_diff = abs(area_diff)
                 best_match = (i, j)
@@ -109,39 +109,39 @@ def process_station_data(station,
         manual_lat = float(manual_lat) if not pd.isna(manual_lat) and manual_lat != "" else np.nan
         manual_lon = float(manual_lon) if not pd.isna(manual_lon) and manual_lon != "" else np.nan
         manual_area = float(station[manual_area]) if station[manual_area] else np.nan
-        manual_area_diff = area_diff_percentage(manual_area, station_area)
-        manual_distance_km = calculate_distance(lat, lon, manual_lat, manual_lon)
+        # manual_area_diff = area_diff_percentage(manual_area, station_area)
+        # manual_distance_km = calculate_distance(lat, lon, manual_lat, manual_lon)
     else:
         manual_lat = np.nan
         manual_lon = np.nan
         manual_area = np.nan
-        manual_area_diff = np.nan
-        manual_distance_km = np.nan
+        # manual_area_diff = np.nan
+        # manual_distance_km = np.nan
 
     # Nearest grid cell
     lat_idx, lon_idx = get_grid_index(lat, lon, latitudes, longitudes)
     near_grid_area = nc_data[lat_idx, lon_idx]
     near_grid_area = float(near_grid_area) if not is_masked(near_grid_area) else np.nan
-    near_area_diff = area_diff_percentage(near_grid_area, station_area)
+    near_area_diff = calculate_area_diff_percentage(near_grid_area, station_area)
     near_grid_polygon = create_grid_polygon(latitudes[lat_idx], longitudes[lon_idx], cell_size)
-    near_distance_km = calculate_distance(lat, lon, latitudes[lat_idx], longitudes[lon_idx])
+    # near_distance_km = calculate_distance(lat, lon, latitudes[lat_idx], longitudes[lon_idx])
 
     # if the area difference is greater than the minimum, find the best matching grid cell otherwise use the nearest grid cell
-    if near_area_diff > min_area_diff:
+    if near_area_diff >= min_area_diff:
         # Best matching upstream area grid cell within the specified search radius
         new_lat_idx, new_lon_idx = find_best_matching_grid(lat, lon, latitudes, longitudes, nc_data, station_area, max_neighboring_cells, max_area_diff)
         new_grid_area = nc_data[new_lat_idx, new_lon_idx]
         new_grid_area = float(new_grid_area) if not is_masked(new_grid_area) else np.nan
-        new_area_diff = area_diff_percentage(new_grid_area, station_area)
+        # new_area_diff = area_diff_percentage(new_grid_area, station_area)
         new_grid_polygon = create_grid_polygon(latitudes[new_lat_idx], longitudes[new_lon_idx], cell_size)
-        new_distance_km = calculate_distance(lat, lon, latitudes[new_lat_idx], longitudes[new_lon_idx])
+        # new_distance_km = calculate_distance(lat, lon, latitudes[new_lat_idx], longitudes[new_lon_idx])
     else:
         # Use the nearest grid cell as the best matching grid cell
         new_lat_idx, new_lon_idx = lat_idx, lon_idx
         new_grid_area = near_grid_area
-        new_area_diff = near_area_diff
+        # new_area_diff = near_area_diff
         new_grid_polygon = near_grid_polygon
-        new_distance_km = near_distance_km
+        # new_distance_km = near_distance_km
 
     return {
         # Station data
@@ -153,25 +153,25 @@ def process_station_data(station,
         'near_grid_lat': latitudes[lat_idx],
         'near_grid_lon': longitudes[lon_idx],
         'near_grid_area': near_grid_area,
-        'near_area_diff': near_area_diff,
-        'near_distance_km': near_distance_km,
+        # 'near_area_diff': near_area_diff,
+        # 'near_distance_km': near_distance_km,
         'near_grid_polygon': near_grid_polygon,
         # New grid data
         'new_grid_lat': latitudes[new_lat_idx],
         'new_grid_lon': longitudes[new_lon_idx],
         'new_grid_area': new_grid_area,
-        'new_area_diff': new_area_diff,
-        'new_distance_km': new_distance_km,
+        # 'new_area_diff': new_area_diff,
+        # 'new_distance_km': new_distance_km,
         'new_grid_polygon': new_grid_polygon,
-        # Difference between near and new grid data
-        'near2new_area_diff': abs(new_area_diff - near_area_diff),
-        'near2new_distance_km': abs(new_distance_km - near_distance_km),
+        # # Difference between near and new grid data
+        # 'near2new_area_diff': abs(new_area_diff - near_area_diff),
+        # 'near2new_distance_km': abs(new_distance_km - near_distance_km),
         # Manually mapped variable
         'manual_lat' : manual_lat,
         'manual_lon' : manual_lon,
         'manual_area' : manual_area,
-        'manual_area_diff': manual_area_diff,
-        'manual_distance_km': manual_distance_km
+        # 'manual_area_diff': manual_area_diff,
+        # 'manual_distance_km': manual_distance_km
         }
 
 
