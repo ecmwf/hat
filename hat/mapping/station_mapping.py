@@ -14,7 +14,6 @@ from shapely.wkt import loads
 import hat
 from hat.observations import read_station_metadata_file
 
-
 def get_grid_index(lat, lon, latitudes, longitudes):
     """Find the index of the nearest grid cell to the given lat/lon."""
     lat_idx = (np.abs(latitudes - lat)).argmin()
@@ -124,7 +123,7 @@ def process_station_data(station,
     near_grid_area = float(near_grid_area) if not is_masked(near_grid_area) else np.nan
     near_area_diff = calculate_area_diff_percentage(near_grid_area, station_area)
     near_grid_polygon = create_grid_polygon(latitudes[lat_idx], longitudes[lon_idx], cell_size)
-    # near_distance_km = calculate_distance(lat, lon, latitudes[lat_idx], longitudes[lon_idx])
+    near_distance_km = calculate_distance(lat, lon, latitudes[lat_idx], longitudes[lon_idx])
 
     # if the area difference is greater than the minimum, find the best matching grid cell otherwise use the nearest grid cell
     if near_area_diff >= min_area_diff:
@@ -132,16 +131,16 @@ def process_station_data(station,
         new_lat_idx, new_lon_idx = find_best_matching_grid(lat, lon, latitudes, longitudes, nc_data, station_area, max_neighboring_cells, max_area_diff)
         new_grid_area = nc_data[new_lat_idx, new_lon_idx]
         new_grid_area = float(new_grid_area) if not is_masked(new_grid_area) else np.nan
-        # new_area_diff = area_diff_percentage(new_grid_area, station_area)
+        new_area_diff = calculate_area_diff_percentage(new_grid_area, station_area)
         new_grid_polygon = create_grid_polygon(latitudes[new_lat_idx], longitudes[new_lon_idx], cell_size)
-        # new_distance_km = calculate_distance(lat, lon, latitudes[new_lat_idx], longitudes[new_lon_idx])
+        new_distance_km = calculate_distance(lat, lon, latitudes[new_lat_idx], longitudes[new_lon_idx])
     else:
         # Use the nearest grid cell as the best matching grid cell
         new_lat_idx, new_lon_idx = lat_idx, lon_idx
         new_grid_area = near_grid_area
-        # new_area_diff = near_area_diff
+        new_area_diff = near_area_diff
         new_grid_polygon = near_grid_polygon
-        # new_distance_km = near_distance_km
+        new_distance_km = near_distance_km
 
     return {
         # Station data
@@ -154,14 +153,14 @@ def process_station_data(station,
         'near_grid_lon': longitudes[lon_idx],
         'near_grid_area': near_grid_area,
         # 'near_area_diff': near_area_diff,
-        # 'near_distance_km': near_distance_km,
+        'near_distance_km': near_distance_km,
         'near_grid_polygon': near_grid_polygon,
         # New grid data
         'new_grid_lat': latitudes[new_lat_idx],
         'new_grid_lon': longitudes[new_lon_idx],
         'new_grid_area': new_grid_area,
-        # 'new_area_diff': new_area_diff,
-        # 'new_distance_km': new_distance_km,
+        'new_area_diff': new_area_diff,
+        'new_distance_km': new_distance_km,
         'new_grid_polygon': new_grid_polygon,
         # # Difference between near and new grid data
         # 'near2new_area_diff': abs(new_area_diff - near_area_diff),
@@ -279,6 +278,7 @@ def station_mapping(config):
     gdf_station_point.to_csv(os.path.join(out_dir, "stations.csv"))
 
     dataset.close()
+    return df
 
 
 if __name__ == "__main__":
