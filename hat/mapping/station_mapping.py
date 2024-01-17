@@ -173,7 +173,6 @@ def process_station_data(station,
         # 'manual_distance_km': manual_distance_km
         }
 
-
 def main():
     parser = argparse.ArgumentParser(description='Station mapping tool: maps stations on provided grid.')
     parser.add_argument('config_file', type=str, help='Path to the JSON configuration file')
