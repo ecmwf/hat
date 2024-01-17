@@ -1,3 +1,4 @@
+
 import matplotlib.pyplot as plt
 from hat.mapping.station_mapping import calculate_distance, calculate_area_diff_percentage
 import pandas as pd
@@ -82,97 +83,77 @@ def count_perfect_mapping(df, ref_lat_col, ref_lon_col, eval_lat_col, eval_lon_c
                 count += 1
             valid_count += 1
     print(f"Count of perfect mapping rows with distance within {tolerance_degrees} decimal degrees: {count} / {valid_count}")
-    return count
+    return 
 
-from geopy.distance import geodesic
-
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
-from hat.mapping.station_mapping import calculate_distance
-
-def plot_distance_histogram(df, ref_lat_col, ref_lon_col, eval_lat_col, eval_lon_col, interval, y_max=None):
+def plot_distance_histogram(df, ref_lat_col, ref_lon_col, eval_lat_col, eval_lon_col, interval, y_max=None, max_distance=None):
     """
-    Plot a histogram of the distances between reference and evaluated points.
+    Plot an interactive histogram of distances between reference and evaluated points using Plotly.
 
-    :param df: Pandas DataFrame with the station data.
-    :param ref_lat_col: Column name of the reference latitude.
-    :param ref_lon_col: Column name of the reference longitude.
-    :param eval_lat_col: Column name of the evaluated latitude.
-    :param eval_lon_col: Column name of the evaluated longitude.
-    :param interval: The interval size for the histogram bins.
-    :param y_max: Maximum value for the y-axis. If None, the axis limit is determined automatically.
-    :return: The matplotlib figure object.
+    Parameters:
+    - df (pd.DataFrame): DataFrame containing the station data.
+    - ref_lat_col (str): Column name of the reference latitude.
+    - ref_lon_col (str): Column name of the reference longitude.
+    - eval_lat_col (str): Column name of the evaluated latitude.
+    - eval_lon_col (str): Column name of the evaluated longitude.
+    - interval (float): Interval size for the histogram bins.
+    - y_max (float, optional): Maximum value for the y-axis. If None, the axis limit is determined automatically.
+
+    Returns:
+    - plotly.graph_objs.Figure: Plotly figure object of the histogram.
     """
-    # Calculate the distances
+    # Calculate distances
     distances = df.apply(lambda row: calculate_distance(row[ref_lat_col], row[ref_lon_col], row[eval_lat_col], row[eval_lon_col]), axis=1)
     distances = distances[~np.isnan(distances)]  # Remove NaN values
-    
-    max_distance = distances.max()
 
-    # Create the histogram
+    # Create histogram
     fig, ax = plt.subplots()
     ax.hist(distances, bins=np.arange(0, max_distance + interval, interval), color='blue', alpha=0.7)
     ax.set_title('Histogram of Distances Between Reference and Evaluated Points')
     ax.set_xlabel('Distance (km)')
     ax.set_ylabel('Number of Stations')
-    ax.set_xlim(0, max_distance)  # Set the limit of x-axis to the maximum distance
-
-    # Set the y-axis limit if specified
-    if y_max is not None:
+    
+    # Set x- and y axis limit if specified
+    if max_distance:
+        ax.set_xlim(0, max_distance)
+    if y_max:
         ax.set_ylim(0, y_max)
-
-    # Show the plot
-    plt.show()
 
     return fig
 
 def plot_area_error_histogram(df, ref_area_col, eval_area_col, interval, y_max=None, max_area_error=None):
     """
-    Plot a histogram of the area error percentage between reference and evaluated areas using vectorized operations.
+    Plot an interactive histogram of area error percentage between reference and evaluated areas using Plotly.
 
-    :param df: Pandas DataFrame with the station data.
-    :param ref_area_col: Column name of the reference area.
-    :param eval_area_col: Column name of the evaluated area.
-    :param interval: The interval size for the histogram bins.
-    :param y_max: Maximum value for the y-axis. If None, the axis limit is determined automatically.
-    :param max_area_error: Maximum area error to include in the histogram. If None, all data is included.
-    :return: The matplotlib figure object.
+    Parameters:
+    - df (pd.DataFrame): DataFrame containing the station data.
+    - ref_area_col (str): Column name of the reference area.
+    - eval_area_col (str): Column name of the evaluated area.
+    - interval (float): Interval size for the histogram bins.
+    - y_max (float, optional): Maximum value for the y-axis. If None, the axis limit is determined automatically.
+    - max_area_error (float, optional): Maximum area error to include in the histogram. If None, all data is included.
+
+    Returns:
+    - plotly.graph_objs.Figure: Plotly figure object of the histogram.
     """
-    # Vectorized calculation of area differences
-    area_diff = df[ref_area_col] - df[eval_area_col]
-    area_diff_percentage = np.abs((area_diff / df[ref_area_col]) * 100)
+    # Calculate area differences in percentage
+    area_diff_percentages = df.apply(lambda row: abs(calculate_area_diff_percentage(row[eval_area_col], row[ref_area_col])), axis=1)
 
-    # Handle divisions by zero or invalid values
-    area_diff_percentage.replace([np.inf, -np.inf], np.nan, inplace=True)
+    # Remove NaN values and limit the maximum area error if specified
+    area_diff_percentages = area_diff_percentages.dropna()
 
-    # Filter out NaN values and limit the maximum area error if specified
-    area_diff_percentage = area_diff_percentage.dropna()
-    if max_area_error is not None:
-        area_diff_percentage = area_diff_percentage[abs(area_diff_percentage) <= max_area_error]
-
-    # Determine the range of the histogram
-    min_error = area_diff_percentage.min()
-    max_error = area_diff_percentage.max()
-    bins = np.arange(min_error, max_error + interval, interval)
-
-    # Create the histogram
+    # Create histogram
     fig, ax = plt.subplots()
-    ax.hist(area_diff_percentage, bins=bins, color='blue', alpha=0.7)
+    ax.hist(area_diff_percentages, bins=np.arange(0, max_area_error + interval, interval), color='blue', alpha=0.7)
     ax.set_title('Histogram of Area Difference Percentage')
     ax.set_xlabel('Area Difference (%)')
     ax.set_ylabel('Number of Stations')
 
-    # Set the x-axis limit to the range of area differences
-    ax.set_xlim(min_error, max_error)
-
-    # Set the y-axis limit if specified
-    if y_max is not None:
+    if max_area_error:
+        ax.set_xlim(0, max_area_error)
+    if y_max:
         ax.set_ylim(0, y_max)
 
-    plt.show()
     return fig
-
 
 def update_config_file(config_path, new_max_cells, new_max_diff, out_folder_name):
     config_path = os.path.expanduser(config_path)
