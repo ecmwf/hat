@@ -26,6 +26,22 @@ def calculate_distance(lat1, lon1, lat2, lon2):
         return np.nan
     return geodesic((lat1, lon1), (lat2, lon2)).kilometers
 
+def calculate_distance_cells(lat_idx1, lon_idx1, lat_idx2, lon_idx2):
+    """
+    Calculate the distance between two points in terms of grid cells.
+
+    Parameters:
+    - lat_idx1, lon_idx1: Grid indices for the first point.
+    - lat_idx2, lon_idx2: Grid indices for the second point.
+
+    Returns:
+    - int: Distance in terms of the number of grid cells.
+    """
+    lat_diff = abs(lat_idx1 - lat_idx2)
+    lon_diff = abs(lon_idx1 - lon_idx2)
+    return np.sqrt(lat_diff**2 + lon_diff**2)
+
+
 def calculate_area_diff_percentage(new_value, old_value):
     """Calculate the area difference as a percentage."""
     try:
@@ -107,6 +123,7 @@ def process_station_data(station,
         manual_lon = station.get(manual_lon_col, np.nan)
         manual_lat = float(manual_lat) if not pd.isna(manual_lat) and manual_lat != "" else np.nan
         manual_lon = float(manual_lon) if not pd.isna(manual_lon) and manual_lon != "" else np.nan
+        manual_lat_idx, manual_lon_idx = get_grid_index(manual_lat, manual_lon, latitudes, longitudes)
         manual_area = float(station[manual_area]) if station[manual_area] else np.nan
         # manual_area_diff = area_diff_percentage(manual_area, station_area)
         # manual_distance_km = calculate_distance(lat, lon, manual_lat, manual_lon)
@@ -114,6 +131,7 @@ def process_station_data(station,
         manual_lat = np.nan
         manual_lon = np.nan
         manual_area = np.nan
+        manual_lat_idx, manual_lon_idx = np.nan, np.nan
         # manual_area_diff = np.nan
         # manual_distance_km = np.nan
 
@@ -149,13 +167,17 @@ def process_station_data(station,
         'station_lon': lon,
         'station_area': station_area,
         # Near grid data
+        'near_grid_lat_idx': lat_idx,
+        'near_grid_lon_idx': lon_idx,
         'near_grid_lat': latitudes[lat_idx],
         'near_grid_lon': longitudes[lon_idx],
         'near_grid_area': near_grid_area,
         # 'near_area_diff': near_area_diff,
         'near_distance_km': near_distance_km,
         'near_grid_polygon': near_grid_polygon,
-        # New grid data
+        # New grid 
+        'new_grid_lat_idx': new_lat_idx,
+        'new_grid_lon_idx': new_lon_idx,
         'new_grid_lat': latitudes[new_lat_idx],
         'new_grid_lon': longitudes[new_lon_idx],
         'new_grid_area': new_grid_area,
@@ -168,6 +190,8 @@ def process_station_data(station,
         # Manually mapped variable
         'manual_lat' : manual_lat,
         'manual_lon' : manual_lon,
+        'manual_lat_idx': manual_lat_idx,
+        'manual_lon_idx': manual_lon_idx,
         'manual_area' : manual_area,
         # 'manual_area_diff': manual_area_diff,
         # 'manual_distance_km': manual_distance_km
@@ -181,7 +205,6 @@ def main():
     with open(args.config_file, 'r') as file:
         config = json.load(file)
     station_mapping(config)
-
 
 def station_mapping(config):
     out_dir = config["out_directory"]
