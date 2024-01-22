@@ -1,6 +1,6 @@
 
 import matplotlib.pyplot as plt
-from hat.mapping.station_mapping import calculate_distance, calculate_area_diff_percentage
+from hat.mapping.station_mapping import calculate_distance, calculate_area_diff_percentage, calculate_distance_cells
 import pandas as pd
 import numpy as np
 import json
@@ -114,6 +114,41 @@ def plot_distance_histogram(df, ref_lat_col, ref_lon_col, eval_lat_col, eval_lon
     ax.set_xlabel('Distance (km)')
     ax.set_ylabel('Number of Stations')
     ax.set_xlim(0, max_distance)
+    # ax.set_ylim(y_range if y_range else [0, ax.get_ylim()[1]])
+    ax.set_yscale(y_scale)
+
+    return 
+
+def plot_distance_cells_histogram(df, ref_lat_idx_col, ref_lon_idx_col, eval_lat_idx_col, eval_lon_idx_col, interval, y_range=None, max_distance=None, y_scale='linear'):
+    """
+    Plot a histogram of grid distances between reference and evaluated points.
+
+    Parameters:
+    - df (pd.DataFrame): DataFrame containing the station data.
+    - ref_lat_idx_col, ref_lon_idx_col, eval_lat_idx_col, eval_lon_idx_col: Column names for grid indices of latitude and longitude.
+    - interval (float): Interval size for the histogram bins.
+    - y_range (list): List of two elements [min, max] specifying the range of the y-axis.
+    - max_distance (float): Maximum distance for the x-axis.
+    - y_scale (str): Scale of the y-axis ('linear' or 'log').
+
+    Returns:
+    - matplotlib.figure.Figure: Matplotlib figure object of the histogram.
+    """
+    grid_distances = df.apply(lambda row: calculate_distance_cells(row[ref_lat_idx_col], row[ref_lon_idx_col], row[eval_lat_idx_col], row[eval_lon_idx_col]), axis=1)
+    grid_distances = grid_distances[~np.isnan(grid_distances)]  # Remove NaN values
+
+    fig, ax = plt.subplots()
+
+    if max_distance:
+        max_distance = max_distance
+    else:
+        max_distance = grid_distances.max()
+
+    ax.hist(grid_distances, bins=np.arange(0, max_distance + interval, interval), color='blue', alpha=0.7)
+    ax.set_title('Histogram of Grid Distances Between Reference and Evaluated Points')
+    ax.set_xlabel('Grid Distance (Number of Cells)')
+    ax.set_ylabel('Number of Stations')
+    ax.set_xlim(0, max_distance if max_distance else grid_distances.max())
     # ax.set_ylim(y_range if y_range else [0, ax.get_ylim()[1]])
     ax.set_yscale(y_scale)
 
