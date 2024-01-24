@@ -42,17 +42,17 @@ def calculate_distance_cells(lat_idx1, lon_idx1, lat_idx2, lon_idx2):
     return np.sqrt(lat_diff**2 + lon_diff**2)
 
 
-def calculate_area_diff_percentage(new_value, old_value):
+def calculate_area_diff_percentage(eval_value, ref_value):
     """Calculate the area difference as a percentage."""
     try:
-        old_value = float(old_value)
-        new_value = float(new_value)
+        ref_value = float(ref_value)
+        eval_value = float(eval_value)
     except ValueError   :
         return np.nan  # Return NaN if conversion fails
 
-    if old_value <= 0:
+    if ref_value <= 0:
         return np.nan  # Avoid division by zero
-    return ((old_value - new_value) / old_value) * 100
+    return ((ref_value - eval_value) / ref_value) * 100
 
 def find_best_matching_grid(lat, lon, latitudes, longitudes, nc_data, csv_value, max_neighboring_cells, max_area_diff):
     lat_idx, lon_idx = get_grid_index(lat, lon, latitudes, longitudes)

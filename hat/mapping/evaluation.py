@@ -53,7 +53,7 @@ def count_within_abs_error_range(df, column_reference, column_evaluated, lower_l
     count = ((abs_error_percent > lower_limit) & (abs_error_percent < upper_limit)).sum()
     count_all = len(df)
     print(f"Count of rows with absolute error % between {column_reference} and {column_evaluated} in the range of ({lower_limit}%, {upper_limit}%): {count} / {count_all}")
-    return 
+    return count
 
 
 def count_perfect_mapping(df, ref_lat_col, ref_lon_col, eval_lat_col, eval_lon_col, tolerance_degrees):
@@ -83,7 +83,37 @@ def count_perfect_mapping(df, ref_lat_col, ref_lon_col, eval_lat_col, eval_lon_c
                 count += 1
             valid_count += 1
     print(f"Count of perfect mapping rows with distance within {tolerance_degrees} decimal degrees: {count} / {valid_count}")
-    return 
+    return count
+
+def count_within_area_and_distance(df, ref_area_col, eval_area_col, ref_lat_idx_col, ref_lon_idx_col, eval_lat_idx_col, eval_lon_idx_col, area_diff_limit, distance_limit):
+    """
+    Count the number of rows in a DataFrame where the area difference and grid cell distance 
+    between reference and evaluated columns fall within specified limits.
+
+    :param df: Pandas DataFrame
+    :param ref_area_col: Name of the reference area column
+    :param eval_area_col: Name of the evaluated area column
+    :param ref_lat_idx_col, ref_lon_idx_col: Column names for reference latitude and longitude grid indices
+    :param eval_lat_idx_col, eval_lon_idx_col: Column names for evaluated latitude and longitude grid indices
+    :param area_diff_limit: Upper limit of the absolute area difference percentage
+    :param distance_limit: Upper limit of the grid cell distance
+    :return: Count of rows within the specified area difference and distance
+    """
+    valid_count = 0  # Counter for rows with valid values
+    count = 0
+
+    for index, row in df.iterrows():
+        area_diff = abs(calculate_area_diff_percentage(row[eval_area_col], row[ref_area_col]))
+        grid_distance = calculate_distance_cells(row[ref_lat_idx_col], row[ref_lon_idx_col], row[eval_lat_idx_col], row[eval_lon_idx_col])
+
+        # Check if both area difference and grid cell distance are within their respective limits
+        if area_diff <= area_diff_limit and grid_distance <= distance_limit:
+            count += 1
+        valid_count += 1
+
+    print(f"Count of rows within {area_diff_limit}% area difference and {distance_limit} grid cells distance: {count} / {valid_count}")
+    return count
+
 
 def plot_distance_histogram(df, ref_lat_col, ref_lon_col, eval_lat_col, eval_lon_col, interval, y_range=None, max_distance=None, y_scale='linear'):
     """
@@ -184,6 +214,66 @@ def plot_area_error_histogram(df, ref_area_col, eval_area_col, interval, y_range
     ax.set_xlim(0, max_area_error if max_area_error else area_diff_percentages.max())
     # ax.set_ylim(y_range if y_range else [0, ax.get_ylim()[1]])
     ax.set_yscale(y_scale)
+
+    return fig
+
+def count_and_analyze_area_distance(df, area_diff_limit, distance_limit, ref_name='manual', eval_name='nearest_grid', y_scale='log'):
+    """
+    Count stations based on area difference and grid cell distance, and analyze grid distances
+    exceeding the area difference limit.
+
+    :param df: Pandas DataFrame
+    :param area_diff_limit: Upper limit of area difference percentage.
+    :param distance_limit: Upper limit of grid cell distance.
+    :param ref_area_col, eval_area_col: identification names for reference and evaluated data, options: 'manual', 'nearest_grid', 'new_grid'
+    :param y_scale: Scale of the y-axis ('linear' or 'log').
+    :return: Detailed messages about counts and a histogram figure of grid distances exceeding the area diff limit.
+    """
+
+    ref_area_col, eval_area_col  = ref_name + '_area', eval_name + '_area' # column name for reference and evaluated grid upstream area  
+    ref_lat_idx_col, ref_lon_idx_col  = ref_name + '_lat_idx', ref_name + '_lon_idx' # column name for reference grid indices
+    eval_lat_idx_col, eval_lon_idx_col = eval_name + '_lat_idx', eval_name + '_lon_idx' # column name for evaluated grid indices
+
+    # Initialise counters for counting stations and distances frequencies
+    count_outside_area_limit = 0    
+    count_inside_area_limit = 0
+    count_within_distance_limit = 0
+    count_outside_distance_limit = 0
+    distance_freq = {}
+
+    for index, row in df.iterrows():
+        area_diff = abs(calculate_area_diff_percentage(row[eval_area_col], row[ref_area_col]))
+
+        if area_diff <= area_diff_limit:
+            grid_distance = round(calculate_distance_cells(row[ref_lat_idx_col], row[ref_lon_idx_col], row[eval_lat_idx_col], row[eval_lon_idx_col]))
+            distance_freq[grid_distance] = distance_freq.get(grid_distance, 0) + 1
+            count_inside_area_limit += 1
+            
+            if grid_distance <= distance_limit:
+                count_within_distance_limit += 1
+            else:
+                count_outside_distance_limit += 1
+            
+        else:
+            count_outside_area_limit += 1
+            
+            
+    # Prepare data for histogram
+    distances, frequencies = zip(*distance_freq.items())
+    fig, ax = plt.subplots()  
+    ax.bar(distances, frequencies, color='blue', alpha=0.7, width=0.9)
+    ax.set_title(f'Histogram of Distances Found within Acceptable Area Differences of {area_diff_limit}%')
+    ax.set_xlabel('Grid Distance (Number of Cells)')
+    ax.set_ylabel('Frequency')
+    ax.set_yscale(y_scale)
+    ax.yaxis.grid(True)
+
+
+    print(f"No of stations within {area_diff_limit}% upstream area difference margin: \n" +
+      f"  Not found: {count_outside_area_limit}\n" +
+      f"  Found: {count_inside_area_limit}\n" +
+      f"  - Found at right location: {count_within_distance_limit}\n" +
+      f"  - Found but NOT at right location: {count_outside_distance_limit}")
 
     return fig
 
