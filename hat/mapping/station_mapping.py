@@ -147,17 +147,17 @@ def process_station_data(station,
     if near_area_diff >= min_area_diff:
         # Best matching upstream area grid cell within the specified search radius
         new_lat_idx, new_lon_idx = find_best_matching_grid(lat, lon, latitudes, longitudes, nc_data, station_area, max_neighboring_cells, max_area_diff)
-        new_grid_area = nc_data[new_lat_idx, new_lon_idx]
-        new_grid_area = float(new_grid_area) if not is_masked(new_grid_area) else np.nan
-        new_area_diff = calculate_area_diff_percentage(new_grid_area, station_area)
-        new_grid_polygon = create_grid_polygon(latitudes[new_lat_idx], longitudes[new_lon_idx], cell_size)
+        optimum_grid_area = nc_data[new_lat_idx, new_lon_idx]
+        optimum_grid_area = float(optimum_grid_area) if not is_masked(optimum_grid_area) else np.nan
+        new_area_diff = calculate_area_diff_percentage(optimum_grid_area, station_area)
+        optimum_grid_polygon = create_grid_polygon(latitudes[new_lat_idx], longitudes[new_lon_idx], cell_size)
         new_distance_km = calculate_distance(lat, lon, latitudes[new_lat_idx], longitudes[new_lon_idx])
     else:
         # Use the nearest grid cell as the best matching grid cell
         new_lat_idx, new_lon_idx = lat_idx, lon_idx
-        new_grid_area = near_grid_area
+        optimum_grid_area = near_grid_area
         new_area_diff = near_area_diff
-        new_grid_polygon = near_grid_polygon
+        optimum_grid_polygon = near_grid_polygon
         new_distance_km = near_distance_km
 
     return {
@@ -176,14 +176,14 @@ def process_station_data(station,
         'near_distance_km': near_distance_km,
         'near_grid_polygon': near_grid_polygon,
         # New grid 
-        'new_grid_lat_idx': new_lat_idx,
-        'new_grid_lon_idx': new_lon_idx,
-        'new_grid_lat': latitudes[new_lat_idx],
-        'new_grid_lon': longitudes[new_lon_idx],
-        'new_grid_area': new_grid_area,
+        'optimum_grid_lat_idx': new_lat_idx,
+        'optimum_grid_lon_idx': new_lon_idx,
+        'optimum_grid_lat': latitudes[new_lat_idx],
+        'optimum_grid_lon': longitudes[new_lon_idx],
+        'optimum_grid_area': optimum_grid_area,
         'new_area_diff': new_area_diff,
         'new_distance_km': new_distance_km,
-        'new_grid_polygon': new_grid_polygon,
+        'optimum_grid_polygon': optimum_grid_polygon,
         # # Difference between near and new grid data
         # 'near2new_area_diff': abs(new_area_diff - near_area_diff),
         # 'near2new_distance_km': abs(new_distance_km - near_distance_km),
@@ -267,32 +267,32 @@ def station_mapping(config):
     df = pd.DataFrame(data_list)
 
     df['near_grid_polygon'] = df.apply(lambda row: create_grid_polygon(row['near_grid_lat'], row['near_grid_lon'], cell_size), axis=1)
-    df['new_grid_polygon'] = df.apply(lambda row: create_grid_polygon(row['new_grid_lat'], row['new_grid_lon'], cell_size), axis=1)
+    df['optimum_grid_polygon'] = df.apply(lambda row: create_grid_polygon(row['optimum_grid_lat'], row['optimum_grid_lon'], cell_size), axis=1)
     
     # Convert any additional geometry columns to WKT for serialization
     df['near_grid_polygon_wkt'] = df['near_grid_polygon'].apply(lambda x: x.wkt)
-    df['new_grid_polygon_wkt'] = df['new_grid_polygon'].apply(lambda x: x.wkt)
+    df['optimum_grid_polygon_wkt'] = df['optimum_grid_polygon'].apply(lambda x: x.wkt)
 
     # Drop the Shapely object columns that were replaced by wkts instead
-    df = df.drop(columns=['near_grid_polygon', 'new_grid_polygon'])
+    df = df.drop(columns=['near_grid_polygon', 'optimum_grid_polygon'])
 
     # create line between station and near grid
     lines = df.apply(lambda row: LineString([(row['station_lon'], row['station_lat']), (row['near_grid_lon'], row['near_grid_lat'])]), axis=1)
 
     # create line between station and new grid
-    new_lines = df.apply(lambda row: LineString([(row['station_lon'], row['station_lat']), (row['new_grid_lon'], row['new_grid_lat'])]), axis=1)
+    new_lines = df.apply(lambda row: LineString([(row['station_lon'], row['station_lat']), (row['optimum_grid_lon'], row['optimum_grid_lat'])]), axis=1)
 
     # Create GeoDataFrames
     gdf_station_point = gpd.GeoDataFrame(df, geometry=[Point(xy) for xy in zip(df['station_lon'], df['station_lat'])])
     gdf_near_grid_polygon = gpd.GeoDataFrame(df, geometry=df['near_grid_polygon_wkt'].apply(loads))
-    gdf_new_grid_polygon = gpd.GeoDataFrame(df, geometry=df['new_grid_polygon_wkt'].apply(loads))
+    gdf_optimum_grid_polygon = gpd.GeoDataFrame(df, geometry=df['optimum_grid_polygon_wkt'].apply(loads))
     gdf_line = gpd.GeoDataFrame(df, geometry=lines)
     gdf_line_new = gpd.GeoDataFrame(df, geometry=new_lines)
 
     # Save to GeoJSON
     gdf_station_point.to_file(os.path.join(out_dir, "stations.geojson"), driver="GeoJSON")
     gdf_near_grid_polygon.to_file(os.path.join(out_dir, "near_grid.geojson"), driver="GeoJSON")
-    gdf_new_grid_polygon.to_file(os.path.join(out_dir, "new_grid.geojson"), driver="GeoJSON")
+    gdf_optimum_grid_polygon.to_file(os.path.join(out_dir, "optimum_grid.geojson"), driver="GeoJSON")
     gdf_line.to_file(os.path.join(out_dir, "stations2grid_line.geojson"), driver="GeoJSON")
     gdf_line_new.to_file(os.path.join(out_dir, "stations2grid_new_line.geojson"), driver="GeoJSON")
 

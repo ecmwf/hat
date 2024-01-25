@@ -217,7 +217,7 @@ def plot_area_error_histogram(df, ref_area_col, eval_area_col, interval, y_range
 
     return fig
 
-def count_and_analyze_area_distance(df, area_diff_limit, distance_limit, ref_name='manual', eval_name='nearest_grid', y_scale='log'):
+def count_and_analyze_area_distance(df, area_diff_limit, distance_limit, ref_name='manual', eval_name='optimum_grid', y_scale='log'):
     """
     Count stations based on area difference and grid cell distance, and analyze grid distances
     exceeding the area difference limit.
@@ -225,7 +225,7 @@ def count_and_analyze_area_distance(df, area_diff_limit, distance_limit, ref_nam
     :param df: Pandas DataFrame
     :param area_diff_limit: Upper limit of area difference percentage.
     :param distance_limit: Upper limit of grid cell distance.
-    :param ref_area_col, eval_area_col: identification names for reference and evaluated data, options: 'manual', 'nearest_grid', 'new_grid'
+    :param ref_area_col, eval_area_col: identification names for reference and evaluated data, options: 'manual', 'nearest_grid', 'optimum_grid'
     :param y_scale: Scale of the y-axis ('linear' or 'log').
     :return: Detailed messages about counts and a histogram figure of grid distances exceeding the area diff limit.
     """
@@ -276,16 +276,3 @@ def count_and_analyze_area_distance(df, area_diff_limit, distance_limit, ref_nam
       f"  - Found but NOT at right location: {count_outside_distance_limit}")
 
     return fig
-
-def update_config_file(config_path, new_max_cells, new_max_diff, out_folder_name):
-    config_path = os.path.expanduser(config_path)
-
-    with open(config_path, 'r') as file:
-        config = json.load(file)
-
-    config["max_neighboring_cells"] = new_max_cells
-    config["max_area_diff"] = new_max_diff
-    config["out_directory"] = out_folder_name  # Update output directory
-
-    with open(config_path, 'w') as file:
-        json.dump(config, file, indent=4)
