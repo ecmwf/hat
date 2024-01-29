@@ -86,6 +86,8 @@ Outputs
 ------
 
 The following elements (column) will be written as dataframe as the expected `station_mapping` output.
+Note: `_lat` and `_lon` refer to the actual lattitude and longitude of the location, while `_lat_idx` and `_lon_idx` refer to the lat and lon grid ID. 
+
 * Station data
 `station_name`, `station_lat`, `station_lon`, `station_area`
 
@@ -134,7 +136,6 @@ Message display the counts of stations that are not found and found within the `
 It also breaks down the count of found stations into those that are found within and outside the `distance_limit`. When this 'distance_limit' is set as 0, it counts for perfectly mapped station.
 
 In addition to these counts message display, the function also returns histogram of found stations counts (y-axis) for every cell distance (x-axis)
-
 
 
 Implementation Example in Jupyter notebook
