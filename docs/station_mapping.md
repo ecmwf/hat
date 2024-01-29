@@ -7,7 +7,7 @@ The `station_mapping` library is designed for processing and mapping station dat
 Installation
 ------------
 
-Before using the `station_mapping` library, ensure you have all the required dependencies of HAT, see <installation.md>(installation.md) for installation instruction.
+Before using the `station_mapping` library, ensure you have all the required dependencies of HAT, see [installation.md](installation.md) for installation instruction.
 
 
 Usage
@@ -30,8 +30,6 @@ To use the `station_mapping` as command line, follow these steps:
 2. Create a configuration dictionary
 
 ```
-from hat.mapping.station_mapping import station_mapping
-
 config = {
     # Netcdf information
     "upstream_area_file": "upArea.nc", #file path to netcdf of upstream area
@@ -62,6 +60,9 @@ config = {
 Since in the above example, the out_directory is not empty/ None, i.e. hence geojson and csv output of the station mapping tool will be saved in the specified directory.
 
 ```
+# import station mapping 
+from hat.mapping.station_mapping import station_mapping 
+# call station_mapping function and apply on the created config dictionary
 df = station_mapping(config)
 ```
 
@@ -80,7 +81,7 @@ Output
 ------
 
 The following elements (column) will be written as dataframe as the expected `station_mapping` output.
-
+```
 return {
         # Station data
         'station_name': station[station_name_col],
@@ -113,6 +114,7 @@ return {
         'manual_lon_idx': manual_lon_idx,
         'manual_area' : manual_area,
         }
+```
 
 if the "out_directory" in the `configuration` is specified, then the following files will be written in the directory:
 
