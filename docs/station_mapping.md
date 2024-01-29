@@ -2,7 +2,14 @@
 Station Mapping Library Documentation
 =====================================
 
-The `station_mapping` library is designed for processing and mapping station data to a specified grid, calculating distances, area differences, and generating geographical representations of the data. This library utilizes Python packages such as Pandas, GeoPandas, NumPy, and others to handle spatial data and perform geospatial calculations.
+The `station_mapping` library is designed for mapping the location of hydrological station data onto the optimum grid cell location of a hydrological simulation result (netcdf).
+
+The optimum grid cell location is searched through optimising the upstream area error and the cell distance(s) between that of the station and the grid cell. In this tool, user can define their acceptable area difference/ error using the parameter `max_area_difference` (%) and the maximum cell radius to search for this optimum grid using the parameter `max_neighboring_cell` (number of cells). The tool can also be parameterised to ignore further searching cells with insignificant upstream area difference, i.e. when the uspteam area of the nearest cell to the station is already deemed acceptable by defining `min_area_diff`(%). 
+
+In conclusion, the tool only searches for grid cell with optimal upstream area between the user defined `min_area_diff` and `max_area_diff` that are within the `max_neighboring_cell` radius from the station location.
+
+
+This library utilizes Python packages such as Pandas, GeoPandas, NumPy, and others to handle spatial data and perform geospatial calculations.
 
 Installation
 ------------
@@ -71,7 +78,7 @@ Process Overview
 
 *   **Read and Validate Input Data**: Loads station metadata from the specified CSV file and grid data from the NetCDF file, applying any filters defined in the configuration.
 *   **Nearest Grid Cell Search**: For each station, calculates the nearest grid cell based on latitude and longitude. 
-*   **Optimum Grid Cell Search**: If enabled through `max_neighboring_cells`, searches within a specified radius for a grid cell that offers a closer match based on the upstream area difference until it reaches desired `max_area_difference`.
+*   **Optimum Grid Cell Search**: Searches each neighboring cell radius at a time until a specified maximum radius `max_neighboring_cells`,  for a grid cell that offers a closer match based on the upstream area difference until it reaches desired optimum of `max_area_diff`. When the optimum value of  `max_area_diff` is reached, the search will be stopped and the particular optimum cell location will be stored. It is also possible to ignore searching for optimum grid when the upstream area of nearest grid cell is already below or equal to `min_area_diff`.
 *   **Upstream Area and Distance Calculation**: For both nearest and optimum grids found for each station, upstream area is calculated. Cell distance(s) from optimum grid to the stations grid (same as nearest grid) is calculated.
 *   **Manual Mapping Output** (Optional): If manual mapping data is provided, it is also stored in to the station mapping result dataframe and later could be used as reference to compare automated mapping results to evaluate mapping performance. This can be done through `evaluation` module.
 *   **Save Results**: If an output directory is specified, saves the processed data as GeoJSON and CSV files for further analysis or visualization. Otherwise it only returns result as dataframe.
