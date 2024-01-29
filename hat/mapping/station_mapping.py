@@ -277,21 +277,18 @@ def save_geo_dataframes(df, out_dir, cell_size):
     df = df.drop(columns=['near_grid_polygon', 'optimum_grid_polygon'])
 
     # Create line between station and grids
-    lines = df.apply(lambda row: LineString([(row['station_lon'], row['station_lat']), (row['near_grid_lon'], row['near_grid_lat'])]), axis=1)
     optimum_lines = df.apply(lambda row: LineString([(row['station_lon'], row['station_lat']), (row['optimum_grid_lon'], row['optimum_grid_lat'])]), axis=1)
 
     # Create GeoDataFrames
     gdf_station_point = gpd.GeoDataFrame(df, geometry=[Point(xy) for xy in zip(df['station_lon'], df['station_lat'])])
     gdf_near_grid_polygon = gpd.GeoDataFrame(df, geometry=df['near_grid_polygon_wkt'].apply(loads))
     gdf_optimum_grid_polygon = gpd.GeoDataFrame(df, geometry=df['optimum_grid_polygon_wkt'].apply(loads))
-    gdf_line = gpd.GeoDataFrame(df, geometry=lines)
     gdf_line_new = gpd.GeoDataFrame(df, geometry=optimum_lines)
 
     # Save to files
     gdf_station_point.to_file(os.path.join(out_dir, "stations.geojson"), driver="GeoJSON")
     gdf_near_grid_polygon.to_file(os.path.join(out_dir, "near_grid.geojson"), driver="GeoJSON")
     gdf_optimum_grid_polygon.to_file(os.path.join(out_dir, "optimum_grid.geojson"), driver="GeoJSON")
-    gdf_line.to_file(os.path.join(out_dir, "stations2grid_line.geojson"), driver="GeoJSON")
     gdf_line_new.to_file(os.path.join(out_dir, "stations2grid_optimum_line.geojson"), driver="GeoJSON")
     gdf_station_point.to_csv(os.path.join(out_dir, "stations.csv"))
 
