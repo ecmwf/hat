@@ -78,7 +78,7 @@ Process Overview
 *   **Nearest Grid Cell Search**: For each station, calculates the nearest grid cell based on latitude and longitude of each station.
 *   **Optimum Grid Cell Search**: Searches each neighboring cells at a +1 cell radius at a time until a specified maximum radius `max_neighboring_cells` is reached. At every +1 cell radius this searches for grid where its upstream area difference from the recorded station metadata is minimum, or until it reaches desired value of `max_area_diff` (%). When this minimum value of `max_area_diff` is reached, the search will be stopped and the particular cell location will be stored. It is also possible to ignore searching for optimum grid when the upstream area of nearest grid cell is already below or equal to `min_area_diff`.
 *   **Upstream Area and Distance Calculation**: For both nearest and optimum grids found for each station, upstream area is retrieved. Cell distance(s) from optimum grid to the stations grid (same as nearest grid) is calculated.
-*   **Manual Mapping Output** (Optional): If manual mapping data is provided, it will be stored to the result dataframe and later could be used as reference to compare automated mapping results to evaluate mapping performance. This can be done through [`evaluation` module](#evaluation).
+*   **Manual Mapping Output** (Optional): If manual mapping data is provided, it will be stored to the result dataframe and later could be used as reference to compare automated mapping results to evaluate mapping performance. This can be done through evaluation module.
 *   **Save Results**: If an output directory is specified, saves the processed data as GeoJSON and CSV files for further analysis or visualization. Otherwise it only returns result as dataframe.
 
 
@@ -112,7 +112,7 @@ if the "out_directory" in the `configuration` is specified, then the following f
 
 Other Related Module
 --------------------
-(evaluation)=
+
 #### evaluation
 An additional module is available to evaluate the performance of the station mapping, in particular the optimum grid cell found for each station. The common case for this evaluation is to compare the resulting optimum grid cells with the manually mapped station, based on their upstream area difference (%), and cell distance(s).
 
