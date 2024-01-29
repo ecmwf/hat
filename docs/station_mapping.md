@@ -22,7 +22,7 @@ To use the `station_mapping` as command line, follow these steps:
 
 1.  Prepare your data input: station data and grid data in the appropriate format. Station data should be in a CSV file, and grid data should be in a NetCDF file.
     
-2.  Create a [JSON configuration](notebooks/examples/station_mapping_config_example.json) file specifying the paths to your data files, column names, and other relevant parameters.
+2.  Create a [JSON configuration](../notebooks/examples/station_mapping_config_example.json) file specifying the paths to your data files, column names, and other relevant parameters.
     
 3.  Run the `station_mapping.py` script with the path to your configuration file:
     
@@ -141,7 +141,7 @@ In addition to these counts message display, the function also returns histogram
 Implementation Example in Jupyter notebook
 ---------------------------
 
-For the implementation example of station mapping in Jupyter notebook, an example is created in [here](notebooks/examples/5a_station_mapping_evaluate.ipynb)
+For the implementation example of station mapping in Jupyter notebook, an example is created in [here](../notebooks/examples/5a_station_mapping_evaluate.ipynb)
 This configuration is based on DESTINE project, and you shall modify your netcdf and csv input file location accordingly.
 
 The example of evaluation module implementation is also attached to this jupyter notebook.
