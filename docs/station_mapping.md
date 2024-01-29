@@ -6,6 +6,9 @@ The `station_mapping` library is designed for mapping the location of hydrologic
 
 The optimum grid cell location is searched through optimising the upstream area error and the cell distance(s) from the station nearest grid cells. In this tool, users can define their acceptable area difference/ error using the parameter `max_area_difference` (%) and the maximum cell radius `max_neighboring_cell` (number of cells) to search for this optimum grid. The tool can also be parameterised to ignore further searching of optimum cells when upstream area difference of a station nearest grid is below, i.e. when the uspteam area of the nearest cell to the station is already deemed acceptable by defining `min_area_diff`(%). 
 
+![illustration of optimum grid search algorithm](station_mapping_search_algo.svg)
+<img src="station_mapping_search_algo.svg">
+
 In conclusion, the tool only searches for grid cell with optimal upstream area between the user defined `min_area_diff` and `max_area_diff` that are within the `max_neighboring_cell` radius from the station location.
 
 
