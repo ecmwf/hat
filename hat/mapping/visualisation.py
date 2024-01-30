@@ -1,10 +1,19 @@
-import numpy as np
 import geopandas as gpd
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import ipywidgets as widgets
-from ipyleaflet import Map, GeoJSON, Marker, LayersControl, Popup, basemaps, CircleMarker, LayerGroup, SearchControl
 import IPython.display as display
+import ipywidgets as widgets
+import matplotlib.colors as mcolors
+import numpy as np
+from ipyleaflet import (
+    CircleMarker,
+    GeoJSON,
+    LayerGroup,
+    LayersControl,
+    Map,
+    Marker,
+    Popup,
+    SearchControl,
+    basemaps,
+)
 from ipywidgets import Layout
 
 
@@ -18,9 +27,17 @@ class GeoJSONLayerManager:
 
     def add_to_map(self, map_object):
         if self.style_callback:
-            self.layer = GeoJSON(data=self.gdf.__geo_interface__, style_callback=self.style_callback, name=self.name)
+            self.layer = GeoJSON(
+                data=self.gdf.__geo_interface__,
+                style_callback=self.style_callback,
+                name=self.name,
+            )
         elif self.point_style:
-            self.layer = GeoJSON(data=self.gdf.__geo_interface__, point_style=self.point_style, name=self.name)
+            self.layer = GeoJSON(
+                data=self.gdf.__geo_interface__,
+                point_style=self.point_style,
+                name=self.name,
+            )
         else:
             self.layer = GeoJSON(data=self.gdf.__geo_interface__, name=self.name)
         map_object.add_layer(self.layer)
@@ -28,14 +45,20 @@ class GeoJSONLayerManager:
 
 class InteractiveMap:
     def __init__(self, center=(0, 0), zoom=2):
-        self.map = Map(basemap=basemaps.Esri.WorldImagery, center=center, zoom=zoom, layout=Layout(height='600px'), scroll_wheel_zoom=False)
+        self.map = Map(
+            basemap=basemaps.Esri.WorldImagery,
+            center=center,
+            zoom=zoom,
+            layout=Layout(height="600px"),
+            scroll_wheel_zoom=False,
+        )
         self.map.add_control(LayersControl())
 
         search = SearchControl(
-        position="topleft",
-        url='https://nominatim.openstreetmap.org/search?format=json&q={s}',
-        zoom=12,
-        marker=Marker()
+            position="topleft",
+            url="https://nominatim.openstreetmap.org/search?format=json&q={s}",
+            zoom=12,
+            marker=Marker(),
         )
         self.map.add_control(search)
 
@@ -44,6 +67,7 @@ class InteractiveMap:
 
     def show_map(self):  # Renamed from 'display' to 'show_map'
         display(self.map)
+
 
 # Util functions
 def create_gradient_legend(cmap, min_val, max_val):
@@ -66,6 +90,7 @@ def create_gradient_legend(cmap, min_val, max_val):
     """
     return widgets.HTML(legend_html)
 
+
 def create_polygon_legend(colors, labels):
     """Creates an HTML legend for polygon colors."""
     items = []
@@ -77,31 +102,40 @@ def create_polygon_legend(colors, labels):
         </div>
         """
         items.append(item_html)
-    legend_html = "<div style='padding:10px;background-color:white;opacity:0.8;'>" + "".join(items) + "</div>"
+    legend_html = (
+        "<div style='padding:10px;background-color:white;opacity:0.8;'>"
+        + "".join(items)
+        + "</div>"
+    )
     return widgets.HTML(legend_html)
 
 
-def make_line_click_handler(station_name_attr, station_area_attr, 
-                            near_area_attr, new_area_attr,
-                            near_dist_attr, new_dist_attr, 
-                            map_object):
+def make_line_click_handler(
+    station_name_attr,
+    station_area_attr,
+    near_area_attr,
+    optimum_area_attr,
+    near_dist_attr,
+    optimum_dist_attr,
+    map_object,
+):
     def line_click_handler(feature, **kwargs):
-        station_area = feature['properties'].get(station_area_attr, 'N/A')
-        near_area = feature['properties'].get(near_area_attr, 'N/A')
+        station_area = feature["properties"].get(station_area_attr, "N/A")
+        near_area = feature["properties"].get(near_area_attr, "N/A")
         # near_area_diff = feature['properties'].get(near_area_diff_attr, 'N/A')
-        new_area = feature['properties'].get(new_area_attr, 'N/A')
-        # new_area_diff = feature['properties'].get(new_area_diff_attr, 'N/A')
-        near_dist_km = feature['properties'].get(near_dist_attr, 'N/A')
-        new_dist_km = feature['properties'].get(new_dist_attr, 'N/A')
+        optimum_area = feature["properties"].get(optimum_area_attr, "N/A")
+        # optimum_area_diff = feature['properties'].get(optimum_area_diff_attr, 'N/A')
+        near_dist_km = feature["properties"].get(near_dist_attr, "N/A")
+        optimum_dist_km = feature["properties"].get(optimum_dist_attr, "N/A")
 
         # Format numbers with comma separators
-        station_area = f"{station_area:,.1f}" if station_area != 'N/A' else station_area
-        near_area = f"{near_area:,.1f}" if near_area != 'N/A' else near_area
+        station_area = f"{station_area:,.1f}" if station_area != "N/A" else station_area
+        near_area = f"{near_area:,.1f}" if near_area != "N/A" else near_area
         # near_area_diff = f"{near_area_diff:,.1f}" if near_area_diff != 'N/A' else near_area_diff
-        new_area = f"{new_area:,.1f}" if new_area != 'N/A' else new_area
-        # new_area_diff = f"{new_area_diff:,.1f}" if new_area_diff != 'N/A' else new_area_diff
-        near_dist_km = f"{near_dist_km:,.1f}" if near_dist_km != 'N/A' else near_dist_km
-        new_dist_km = f"{new_dist_km:,.1f}" if new_dist_km != 'N/A' else new_dist_km
+        optimum_area = f"{optimum_area:,.1f}" if optimum_area != "N/A" else optimum_area
+        # optimum_area_diff = f"{optimum_area_diff:,.1f}" if optimum_area_diff != 'N/A' else optimum_area_diff
+        near_dist_km = f"{near_dist_km:,.1f}" if near_dist_km != "N/A" else near_dist_km
+        optimum_dist_km = f"{optimum_dist_km:,.1f}" if optimum_dist_km != "N/A" else optimum_dist_km
 
         # Format the popup message with HTML
         message_html = f"""
@@ -123,7 +157,7 @@ def make_line_click_handler(station_name_attr, station_area_attr,
         </tr>
         <tr>
             <td class="tg-0lax"><b>New-Grid</b> Upstream Area</td>
-            <td class="tg-0lax">{new_area}km<sup>2</sup></td>
+            <td class="tg-0lax">{optimum_area}km<sup>2</sup></td>
         </tr>
         <tr>
             <td class="tg-0lax">Near-Grid Distance</td>
@@ -131,7 +165,7 @@ def make_line_click_handler(station_name_attr, station_area_attr,
         </tr>
         <tr>
             <td class="tg-0lax"><b>New-Grid</b> Distance</td>
-            <td class="tg-0lax">{new_dist_km}km</td>
+            <td class="tg-0lax">{optimum_dist_km}km</td>
         </tr>
         </tbody>
         </table>
@@ -139,9 +173,15 @@ def make_line_click_handler(station_name_attr, station_area_attr,
         message = widgets.HTML(message_html)
 
         # Extract latitude and longitude for the popup
-        coords = feature['geometry']['coordinates'][0]
+        coords = feature["geometry"]["coordinates"][0]
         latlng = (coords[1], coords[0])  # Convert to (lat, lon) format
-        popup = Popup(location=latlng, child=message, close_button=True, auto_close=True, close_on_escape_key=True)
+        popup = Popup(
+            location=latlng,
+            child=message,
+            close_button=True,
+            auto_close=True,
+            close_on_escape_key=True,
+        )
         map_object.add_layer(popup)
 
     return line_click_handler
@@ -150,17 +190,23 @@ def make_line_click_handler(station_name_attr, station_area_attr,
 def make_style_callback(attribute, cmap, norm):
     def style_callback(feature):
         """Style function for the GeoJSON layer based on a given attribute."""
-        area_diff = feature['properties'][attribute]
-        color = mcolors.to_hex(cmap(norm(area_diff))) if area_diff is not None else "#ffffff"
-        return {'color': color, 'weight': 4}
+        area_diff = feature["properties"][attribute]
+        color = (
+            mcolors.to_hex(cmap(norm(area_diff)))
+            if area_diff is not None
+            else "#ffffff"
+        )
+        return {"color": color, "weight": 4}
+
     return style_callback
+
 
 def vector_style(feature, color, opacity):
     return {
-        'fillColor': color,   # Fill color
-        'color': color,       # Border color
-        'weight': 1,          # Border width
-        'fillOpacity': opacity   # Opacity of the fill
+        "fillColor": color,  # Fill color
+        "color": color,  # Border color
+        "weight": 1,  # Border width
+        "fillOpacity": opacity,  # Opacity of the fill
     }
 
 
@@ -170,21 +216,23 @@ def attribute_based_style(row, attribute_name, threshold, color_above, color_bel
     if attribute_value is not None:
         color = color_above if attribute_value > threshold else color_below
         return {
-            'radius': 5,
-            'color': color,
-            'fillColor': color,
-            'fillOpacity': 0.5,
+            "radius": 5,
+            "color": color,
+            "fillColor": color,
+            "fillOpacity": 0.5,
         }
     else:
         return {
-            'radius': 5,
-            'color': 'gray',
-            'fillColor': 'gray',
-            'fillOpacity': 0.5,
+            "radius": 5,
+            "color": "gray",
+            "fillColor": "gray",
+            "fillOpacity": 0.5,
         }
 
 
-def create_circle_markers(feature, attribute_name, threshold, color_above, color_below, name):
+def create_circle_markers(
+    feature, attribute_name, threshold, color_above, color_below, name
+):
     """Create a CircleMarker for each feature in the GeoDataFrame."""
     # Create a layer group to hold the circle markers
     layer_group = LayerGroup(name=name)
@@ -193,19 +241,21 @@ def create_circle_markers(feature, attribute_name, threshold, color_above, color
     for _, row in feature.iterrows():
         # Get the coordinates (longitude, latitude)
         coords = row.geometry.coords[0]
-        
+
         # Determine the style of the feature
-        style = attribute_based_style(row, attribute_name, threshold, color_above, color_below)
-        
+        style = attribute_based_style(
+            row, attribute_name, threshold, color_above, color_below
+        )
+
         # Create a circle marker
         marker = CircleMarker()
         marker.location = (coords[1], coords[0])  # Note: Leaflet expects (lat, lon)
-        marker.radius = style['radius']
-        marker.color = style['color']
-        marker.fill_color = style['fillColor']
-        marker.fill_opacity = style['fillOpacity']
-        
+        marker.radius = style["radius"]
+        marker.color = style["color"]
+        marker.fill_color = style["fillColor"]
+        marker.fill_opacity = style["fillOpacity"]
+
         # Add the circle marker to the layer group
         layer_group.add_layer(marker)
-    
+
     return layer_group
