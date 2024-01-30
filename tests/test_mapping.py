@@ -203,8 +203,8 @@ def test_process_station_data(mock_station, mock_latitudes_longitudes, mock_nc_d
         "optimum_distance_cells" in processed_data
     ), "Optimum distance in cells is missing"
     assert isinstance(
-        processed_data["optimum_distance_cells"], float
-    ), "Optimum distance should be a float"
+        processed_data["optimum_distance_cells"], int
+    ), "Optimum distance should be an integer"
 
     # If manually mapping variables are used in your test, include them in assertions
     if "manual_lat" in processed_data:
