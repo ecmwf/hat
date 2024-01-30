@@ -11,26 +11,24 @@ from hat.mapping.station_mapping import (
 def calculate_mae(df, column_reference, column_evaluated):
     """
     Calculate the Mean Absolute Error (MAE) as
-    a relative percentage between two columns in a DataFrame.
+    mean difference between reference and evaluated columns in a DataFrame.
 
     :param df: Pandas DataFrame
     :param column_reference: Name of the reference column
     :param column_evaluated: Name of the column to be evaluated against the reference
-    :return: MAE value as a percentage
+    :return: MAE value as km2
     """
     mae = round(
         (
             np.abs(
                 (df[column_reference] - df[column_evaluated])
-                / df[column_reference]
-                * 100
             )
         ).mean(),
         2,
     )
     print(
-        "Mean Abs. Error (MAE) % between"
-        + f"{column_reference} & {column_evaluated}: {mae}%"
+        "Mean Abs. Error (MAE) between"
+        + f"{column_reference} & {column_evaluated}: {mae}km2"
     )
     return mae
 

@@ -19,8 +19,9 @@ def test_calculate_mae():
 def test_calculate_rmse():
     data = {"reference": [100, 200], "evaluated": [90, 195]}
     df = pd.DataFrame(data)
-    expected_rmse = 11.18 # Calculated manually
+    expected_rmse = 7.91  # Corrected manually calculated value
     assert calculate_rmse(df, "reference", "evaluated") == pytest.approx(expected_rmse)
+
 
 
 # Sample data for testing
