@@ -10,17 +10,17 @@ from hat.mapping.evaluation import (
 
 
 def test_calculate_mae():
-    data = {'reference': [100, 200, 300], 'evaluated': [90, 195, 305]}
+    data = {"reference": [100, 200, 300], "evaluated": [90, 195, 305]}
     df = pd.DataFrame(data)
     expected_mae = 2.33  # Calculated manually
-    assert calculate_mae(df, 'reference', 'evaluated') == pytest.approx(expected_mae)
+    assert calculate_mae(df, "reference", "evaluated") == pytest.approx(expected_mae)
 
 
 def test_calculate_rmse():
-    data = {'reference': [100, 200, 300], 'evaluated': [90, 195, 305]}
+    data = {"reference": [100, 200, 300], "evaluated": [90, 195, 305]}
     df = pd.DataFrame(data)
     expected_rmse = 5.77  # Calculated manually
-    assert calculate_rmse(df, 'reference', 'evaluated') == pytest.approx(expected_rmse)
+    assert calculate_rmse(df, "reference", "evaluated") == pytest.approx(expected_rmse)
 
 
 # Sample data for testing
@@ -40,8 +40,9 @@ def sample_dataframe():
 
 def test_count_and_analyze_area_distance(sample_dataframe):
     area_diff_limit = 10  # 10 percent
-    distance_limit = 2    # 2 grid cells
+    distance_limit = 2  # 2 grid cells
     fig = count_and_analyze_area_distance(
-        sample_dataframe, area_diff_limit, distance_limit)
+        sample_dataframe, area_diff_limit, distance_limit
+    )
 
     assert isinstance(fig, Figure), "The function should return a matplotlib figure."

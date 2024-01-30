@@ -55,9 +55,16 @@ def test_find_best_matching_grid():
     csv_value = 0.5
     max_neighboring_cells = 1
     max_area_diff = 10
-    lat_idx, lon_idx = find_best_matching_grid(lat, lon, latitudes, longitudes,
-                                               nc_data, csv_value,
-                                               max_neighboring_cells, max_area_diff)
+    lat_idx, lon_idx = find_best_matching_grid(
+        lat,
+        lon,
+        latitudes,
+        longitudes,
+        nc_data,
+        csv_value,
+        max_neighboring_cells,
+        max_area_diff,
+    )
     assert lat_idx == 3 and lon_idx == 3
 
 
@@ -71,13 +78,26 @@ def test_create_grid_polygon():
 
 # Test for process_station_data function
 def test_process_station_data():
-    station = {'lat_col': 2.5, 'lon_col': 2.5, 'csv_variable': 0.5}
+    station = {"lat_col": 2.5, "lon_col": 2.5, "csv_variable": 0.5}
     latitudes = np.array([0, 1, 2, 3, 4])
     longitudes = np.array([0, 1, 2, 3, 4])
     nc_data = np.full((5, 5), 0.5)  # Fixed mock data
     cell_size = 1
-    processed_data = process_station_data(station, latitudes, longitudes,
-                                          nc_data, 2, 10, 20, 'lat_col', 'lon_col',
-                                          'station_name_col', 'csv_variable', cell_size,
-                                          None, None, None)
-    assert 'station_name' in processed_data and 'near_grid_lat' in processed_data
+    processed_data = process_station_data(
+        station,
+        latitudes,
+        longitudes,
+        nc_data,
+        2,
+        10,
+        20,
+        "lat_col",
+        "lon_col",
+        "station_name_col",
+        "csv_variable",
+        cell_size,
+        None,
+        None,
+        None,
+    )
+    assert "station_name" in processed_data and "near_grid_lat" in processed_data

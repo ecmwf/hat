@@ -29,8 +29,8 @@ def calculate_mae(df, column_reference, column_evaluated):
         2,
     )
     print(
-        "Mean Abs. Error (MAE) % between" +
-        f"{column_reference} & {column_evaluated}: {mae}%"
+        "Mean Abs. Error (MAE) % between"
+        + f"{column_reference} & {column_evaluated}: {mae}%"
     )
     return mae
 
@@ -123,8 +123,8 @@ def count_and_analyze_area_distance(
     fig, ax = plt.subplots()
     ax.bar(distances, frequencies, color="blue", alpha=0.7, width=0.9)
     ax.set_title(
-        "Histogram of Distances" +
-        f"Found within Acceptable Area Differences of {area_diff_limit}%"
+        "Histogram of Distances"
+        + f"Found within Acceptable Area Differences of {area_diff_limit}%"
     )
     ax.set_xlabel("Grid Distance (Number of Cells)")
     ax.set_ylabel("Frequency")
