@@ -4,9 +4,7 @@ import ipywidgets as widgets
 import matplotlib.colors as mcolors
 import numpy as np
 from ipyleaflet import (
-    CircleMarker,
     GeoJSON,
-    LayerGroup,
     LayersControl,
     Map,
     Marker,
@@ -131,7 +129,9 @@ def make_line_click_handler(
         near_area = f"{near_area:,.1f}" if near_area != "N/A" else near_area
         optimum_area = f"{optimum_area:,.1f}" if optimum_area != "N/A" else optimum_area
         optimum_distance_cells = (
-            f"{optimum_distance_cells:,.1f}" if optimum_distance_cells != "N/A" else optimum_distance_cells
+            f"{optimum_distance_cells:,.1f}"
+            if optimum_distance_cells != "N/A"
+            else optimum_distance_cells
         )
 
         # Format the popup message with HTML
@@ -221,4 +221,3 @@ def attribute_based_style(row, attribute_name, threshold, color_above, color_bel
             "fillColor": "gray",
             "fillOpacity": 0.5,
         }
-
