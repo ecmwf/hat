@@ -18,8 +18,8 @@ from hat.observations import read_station_metadata_file
 
 def get_grid_index(lat, lon, latitudes, longitudes):
     """Find the index of the nearest grid cell to the given lat/lon."""
-    lat_idx = (np.abs(latitudes - lat)).argmin()
-    lon_idx = (np.abs(longitudes - lon)).argmin()
+    lat_idx = int(np.abs(latitudes - lat)).argmin()
+    lon_idx = int(np.abs(longitudes - lon)).argmin()
     return lat_idx, lon_idx
 
 
