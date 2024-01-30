@@ -136,13 +136,70 @@ It also breaks down the count of found stations into those that are found within
 
 In addition to these counts message display, the function also returns histogram of found stations counts (y-axis) for every cell distance (x-axis)
 
+#### `visualisation`
+A simple interactive map to be implemented on jupyter notebook to overlay the GIS output resulting from the `station_mapping` is also available.
+This module is based on ipyleaflet.
+
+Main function example of the module to overlay a geojson file as a map layer:
+```
+# Define map vector layer from geojson file
+map_layer = GeoJSONLayerManager(
+    "layer.geojson",  # geojson file
+    style_callback=lambda feature: vector_style(feature, "blue", 0.5), # constant style
+    name="<layer name>", # name for legend
+
+# Create an InteractiveMap instance
+my_map = InteractiveMap()
+
+# Overlay layer to the interactive map
+my_map.add_layer(map_layer)
+```
+
+Additional feature of this module include:
+* Modifying the style of the vector layer to a varying color (colormap) based on the specified variable. For choices of colormap classes, refer to [matplotlib doc](https://matplotlib.org/stable/users/explain/colors/colormaps.html)
+
+```
+# define color map and normalize values based on lower and upper limit
+cmap = cm["PRGn"] # define colormap class
+
+vmin, vmax = -10, 10
+norm = plt.Normalize(vmin=vmin, vmax=vmax) #normalize to lower & upper limit variable values
+
+map_layer = GeoJSONLayerManager(
+    "layer.geojson",  # geojson file
+    style_callback=make_style_callback("<variable name>", cmap, norm), # based on colormap instead of constant
+    name="<layer name>", # name for legend
+
+# ... add layer to interactive map
+```
+
+* Adding attribute table popup when clicked (line vector only)
+
+```
+# Add line click handlers after the layer has been added to the map
+if line_layer.layer:
+    line_layer.layer.on_click(
+        make_line_click_handler(
+            "station_name", # station name column name
+            "station_area", # station area column name
+            "near_grid_area", # near grid area column name
+            "optimum_grid_area", # optimum grid area column name
+            "optimum_distance_cells", # optimum distance column name
+            my_map.map,  # Pass the map object as an argument
+        )
+    )
+```
+
+* Create and adding customized legend to the map
+```
+legend_widget = create_gradient_legend(cmap, vmin, vmax)
+my_map.map.add_control(WidgetControl(widget=legend_widget, position="bottomright"))
+```
 
 Implementation Example in Jupyter notebook
 ---------------------------
 
-For the implementation example of station mapping in Jupyter notebook, an example is created in [here](../notebooks/examples/5a_station_mapping_evaluate.ipynb)
-This configuration is based on DESTINE project, and you shall modify your netcdf and csv input file location accordingly.
+For the implementation example of station mapping in Jupyter notebook, an example is created in [station mapping notebook](../notebooks/examples/5a_station_mapping_evaluate.ipynb)
+This configuration is based on DESTINE project, and you shall modify your netcdf and csv input file location accordingly. The example of evaluation module implementation is also attached to this jupyter notebook as well.
 
-The example of evaluation module implementation is also attached to this jupyter notebook.
-
-
+Additionally, please refer to this the [station mapping visualisation notebook example here](../notebooks/examples/5b_station_mapping_visualise.ipynb)
