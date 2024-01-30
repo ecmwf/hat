@@ -22,4 +22,3 @@ In your python code you can import the hat module
 
 For examples, please see these [jupyter notebooks](https://github.com/ecmwf-projects/hat/tree/main/notebooks)
 
-

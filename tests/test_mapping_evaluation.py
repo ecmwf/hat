@@ -1,6 +1,7 @@
-import pytest
 import pandas as pd
+import pytest
 from matplotlib.figure import Figure
+
 from hat.mapping.evaluation import (
     calculate_mae,
     calculate_rmse,

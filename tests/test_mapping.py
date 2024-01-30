@@ -1,6 +1,7 @@
-import pytest
 import numpy as np
+import pytest
 from geopy.distance import geodesic
+
 from hat.mapping.station_mapping import (
     calculate_area_diff_percentage,
     calculate_distance,

@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+
 from hat.mapping.station_mapping import (
     calculate_area_diff_percentage,
     calculate_distance_cells,
