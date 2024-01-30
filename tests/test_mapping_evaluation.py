@@ -1,7 +1,12 @@
 import pytest
 import pandas as pd
-import matplotlib.pyplot as plt
-from hat.mapping.evaluation import *
+from matplotlib.figure import Figure
+from hat.mapping.evaluation import (
+    calculate_mae,
+    calculate_rmse,
+    count_and_analyze_area_distance,
+)
+
 
 def test_calculate_mae():
     data = {'reference': [100, 200, 300], 'evaluated': [90, 195, 305]}
@@ -9,63 +14,33 @@ def test_calculate_mae():
     expected_mae = 2.33  # Calculated manually
     assert calculate_mae(df, 'reference', 'evaluated') == pytest.approx(expected_mae)
 
+
 def test_calculate_rmse():
     data = {'reference': [100, 200, 300], 'evaluated': [90, 195, 305]}
     df = pd.DataFrame(data)
     expected_rmse = 5.77  # Calculated manually
     assert calculate_rmse(df, 'reference', 'evaluated') == pytest.approx(expected_rmse)
 
+
+# Sample data for testing
 @pytest.fixture
-def example_dataframe():
-    return pd.DataFrame({
-        'reference': [100, 200, 300, 400],
-        'evaluated': [110, 190, 320, 380]
-    })
+def sample_dataframe():
+    data = {
+        "manual_area": [100, 200, 300],
+        "optimum_grid_area": [90, 210, 290],
+        "manual_lat_idx": [0, 0, 0],
+        "manual_lon_idx": [0, 1, 2],
+        "optimum_grid_lat_idx": [0, 0, 3],
+        "optimum_grid_lon_idx": [0, 2, 2],
+    }
+    df = pd.DataFrame(data)
+    return df
 
-def test_count_within_abs_error_range(example_dataframe):
-    expected_count = 2
-    result = count_within_abs_error_range(example_dataframe, 'reference', 'evaluated', 5, 10)
-    assert result == expected_count
 
-@pytest.fixture
-def example_geo_dataframe():
-    return pd.DataFrame({
-        'ref_lat': [0, 0, 0],
-        'ref_lon': [0, 0, 0],
-        'eval_lat': [0, 0.01, 0.02],
-        'eval_lon': [0, 0.01, 0.02]
-    })
+def test_count_and_analyze_area_distance(sample_dataframe):
+    area_diff_limit = 10  # 10 percent
+    distance_limit = 2    # 2 grid cells
+    fig = count_and_analyze_area_distance(
+        sample_dataframe, area_diff_limit, distance_limit)
 
-def test_count_perfect_mapping(example_geo_dataframe):
-    expected_count = 1
-    result = count_perfect_mapping(example_geo_dataframe, 'ref_lat', 'ref_lon', 'eval_lat', 'eval_lon', 0.01)
-    assert result == expected_count
-
-@pytest.fixture
-def area_distance_df():
-    return pd.DataFrame({
-        'ref_area': [100, 200, 300], 
-        'eval_area': [105, 195, 290],
-        'ref_lat_idx': [0, 1, 2], 
-        'ref_lon_idx': [0, 1, 2],
-        'eval_lat_idx': [0, 2, 4], 
-        'eval_lon_idx': [0, 2, 4]
-    })
-
-def test_count_within_area_and_distance(area_distance_df):
-    expected_count = 1  # Only the second row fits both criteria
-    result = count_within_area_and_distance(area_distance_df, 'ref_area', 'eval_area', 'ref_lat_idx', 'ref_lon_idx', 'eval_lat_idx', 'eval_lon_idx', 10, 2)
-    assert result == expected_count
-
-@pytest.fixture
-def distance_histogram_df():
-    return pd.DataFrame({
-        'ref_lat': [0, 1, 2], 
-        'ref_lon': [0, 1, 2],
-        'eval_lat': [0, 1.1, 2.2], 
-        'eval_lon': [0, 1.1, 2.2]
-    })
-
-def test_plot_distance_histogram(distance_histogram_df):
-    fig = plot_distance_histogram(distance_histogram_df, 'ref_lat', 'ref_lon', 'eval_lat', 'eval_lon', 0.1)
-    assert isinstance(fig, plt.Figure)  # Ensure a matplotlib figure is returned
+    assert isinstance(fig, Figure), "The function should return a matplotlib figure."

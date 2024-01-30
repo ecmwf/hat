@@ -97,7 +97,9 @@ def create_polygon_legend(colors, labels):
     for color, label in zip(colors, labels):
         item_html = f"""
         <div>
-            <span style='height:10px;width:10px;background-color:{color};display:inline-block;'></span>
+            <span style=
+            'height:10px;width:10px;background-color:{color};display:inline-block;'>
+            </span>
             {label}
         </div>
         """
@@ -122,20 +124,18 @@ def make_line_click_handler(
     def line_click_handler(feature, **kwargs):
         station_area = feature["properties"].get(station_area_attr, "N/A")
         near_area = feature["properties"].get(near_area_attr, "N/A")
-        # near_area_diff = feature['properties'].get(near_area_diff_attr, 'N/A')
         optimum_area = feature["properties"].get(optimum_area_attr, "N/A")
-        # optimum_area_diff = feature['properties'].get(optimum_area_diff_attr, 'N/A')
         near_dist_km = feature["properties"].get(near_dist_attr, "N/A")
         optimum_dist_km = feature["properties"].get(optimum_dist_attr, "N/A")
 
         # Format numbers with comma separators
         station_area = f"{station_area:,.1f}" if station_area != "N/A" else station_area
         near_area = f"{near_area:,.1f}" if near_area != "N/A" else near_area
-        # near_area_diff = f"{near_area_diff:,.1f}" if near_area_diff != 'N/A' else near_area_diff
         optimum_area = f"{optimum_area:,.1f}" if optimum_area != "N/A" else optimum_area
-        # optimum_area_diff = f"{optimum_area_diff:,.1f}" if optimum_area_diff != 'N/A' else optimum_area_diff
         near_dist_km = f"{near_dist_km:,.1f}" if near_dist_km != "N/A" else near_dist_km
-        optimum_dist_km = f"{optimum_dist_km:,.1f}" if optimum_dist_km != "N/A" else optimum_dist_km
+        optimum_dist_km = (
+            f"{optimum_dist_km:,.1f}" if optimum_dist_km != "N/A" else optimum_dist_km
+        )
 
         # Format the popup message with HTML
         message_html = f"""

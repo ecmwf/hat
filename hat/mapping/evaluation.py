@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
-
 from hat.mapping.station_mapping import (
     calculate_area_diff_percentage,
     calculate_distance_cells,
@@ -11,7 +9,8 @@ from hat.mapping.station_mapping import (
 # Function to calculate Mean Absolute Error
 def calculate_mae(df, column_reference, column_evaluated):
     """
-    Calculate the Mean Absolute Error (MAE) as a relative percentage between two columns in a DataFrame.
+    Calculate the Mean Absolute Error (MAE) as
+    a relative percentage between two columns in a DataFrame.
 
     :param df: Pandas DataFrame
     :param column_reference: Name of the reference column
@@ -29,7 +28,8 @@ def calculate_mae(df, column_reference, column_evaluated):
         2,
     )
     print(
-        f"Mean Abs. Error (MAE) % between {column_reference} & {column_evaluated}: {mae}%"
+        "Mean Abs. Error (MAE) % between" +
+        f"{column_reference} & {column_evaluated}: {mae}%"
     )
     return mae
 
@@ -49,7 +49,6 @@ def calculate_rmse(df, column_reference, column_evaluated):
     return rmse
 
 
-
 def count_and_analyze_area_distance(
     df,
     area_diff_limit,
@@ -59,15 +58,18 @@ def count_and_analyze_area_distance(
     y_scale="log",
 ):
     """
-    Count stations based on area difference and grid cell distance, and analyze grid distances
-    exceeding the area difference limit.
+    Count stations based on area difference and grid cell distance,
+    and analyze distances histogram exceeding the area difference limit.
 
     :param df: Pandas DataFrame
     :param area_diff_limit: Upper limit of area difference percentage.
     :param distance_limit: Upper limit of grid cell distance.
-    :param ref_area_col, eval_area_col: identification names for reference and evaluated data, options: 'manual', 'nearest_grid', 'optimum_grid'
+    :param ref_area_col, eval_area_col:
+        identification names for reference and evaluated data,
+        options are 'manual', 'nearest_grid', 'optimum_grid'
     :param y_scale: Scale of the y-axis ('linear' or 'log').
-    :return: Detailed messages about counts and a histogram figure of grid distances exceeding the area diff limit.
+    :return: Detailed messages about counts and a histogram figure
+        of grid distances exceeding the area diff limit.
     """
 
     ref_area_col, eval_area_col = (
@@ -120,7 +122,8 @@ def count_and_analyze_area_distance(
     fig, ax = plt.subplots()
     ax.bar(distances, frequencies, color="blue", alpha=0.7, width=0.9)
     ax.set_title(
-        f"Histogram of Distances Found within Acceptable Area Differences of {area_diff_limit}%"
+        "Histogram of Distances" +
+        f"Found within Acceptable Area Differences of {area_diff_limit}%"
     )
     ax.set_xlabel("Grid Distance (Number of Cells)")
     ax.set_ylabel("Frequency")

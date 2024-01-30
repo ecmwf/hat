@@ -125,20 +125,28 @@ def process_station_data(
         latitudes (numpy.ndarray): Array of latitude values for the grid cells.
         longitudes (numpy.ndarray): Array of longitude values for the grid cells.
         nc_data (numpy.ndarray): Array of grid cell data.
-        max_neighboring_cells (int): Maximum number of neighboring cells to consider for finding the best matching grid cell.
-        min_area_diff (float): Minimum area difference percentage to consider for finding the best matching grid cell.
-        max_area_diff (float): Maximum area difference percentage to consider for finding the best matching grid cell.
+        max_neighboring_cells (int):
+            Maximum number of neighboring cells to consider
+            for finding the best matching grid cell.
+        min_area_diff (float): Minimum area difference percentage to consider
+            for finding the best matching grid cell.
+        max_area_diff (float): Maximum area difference percentage to consider
+            for finding the best matching grid cell.
         lat_col (str): Column name for latitude in the station data.
         lon_col (str): Column name for longitude in the station data.
         station_name_col (str): Column name for station name in the station data.
         csv_variable (str): Column name for the variable in the station data.
         cell_size (float): Size of each grid cell in kilometers.
-        manual_lat_col (str): Column name for manually mapped latitude in the station data.
-        manual_lon_col (str): Column name for manually mapped longitude in the station data.
-        manual_area (str): Column name for manually mapped area in the station data.
+        manual_lat_col (str):
+            Column name for manually mapped latitude in the station data.
+        manual_lon_col (str):
+            Column name for manually mapped longitude in the station data.
+        manual_area (str):
+            Column name for manually mapped area in the station data.
 
     Returns:
-        dict: A dictionary containing processed data for the station, nearest grid cell, and best matching grid cell (if applicable).
+        dict: A dictionary containing processed data for the station,
+        nearest grid cell, and best matching grid cell (if applicable).
     """
     lat, lon = float(station[lat_col]), float(station[lon_col])
     station_area = float(station[csv_variable]) if station[csv_variable] else np.nan
@@ -180,7 +188,8 @@ def process_station_data(
         lat, lon, latitudes[lat_idx], longitudes[lon_idx]
     )
 
-    # if the area difference is greater than the minimum, find the best matching grid cell otherwise use the nearest grid cell
+    # if the area difference is greater than the minimum, find the best
+    # matching grid cell otherwise use the nearest grid cell
     if near_area_diff >= min_area_diff:
         # Best matching upstream area grid cell within the specified search radius
         optimum_lat_idx, optimum_lon_idx = find_best_matching_grid(
