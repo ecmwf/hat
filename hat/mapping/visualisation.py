@@ -117,7 +117,6 @@ def make_line_click_handler(
     station_area_attr,
     near_area_attr,
     optimum_area_attr,
-    near_dist_attr,
     optimum_dist_attr,
     map_object,
 ):
@@ -125,16 +124,14 @@ def make_line_click_handler(
         station_area = feature["properties"].get(station_area_attr, "N/A")
         near_area = feature["properties"].get(near_area_attr, "N/A")
         optimum_area = feature["properties"].get(optimum_area_attr, "N/A")
-        near_dist_km = feature["properties"].get(near_dist_attr, "N/A")
-        optimum_dist_km = feature["properties"].get(optimum_dist_attr, "N/A")
+        optimum_distance_cells = feature["properties"].get(optimum_dist_attr, "N/A")
 
         # Format numbers with comma separators
         station_area = f"{station_area:,.1f}" if station_area != "N/A" else station_area
         near_area = f"{near_area:,.1f}" if near_area != "N/A" else near_area
         optimum_area = f"{optimum_area:,.1f}" if optimum_area != "N/A" else optimum_area
-        near_dist_km = f"{near_dist_km:,.1f}" if near_dist_km != "N/A" else near_dist_km
-        optimum_dist_km = (
-            f"{optimum_dist_km:,.1f}" if optimum_dist_km != "N/A" else optimum_dist_km
+        optimum_distance_cells = (
+            f"{optimum_distance_cells:,.1f}" if optimum_distance_cells != "N/A" else optimum_distance_cells
         )
 
         # Format the popup message with HTML
@@ -148,24 +145,20 @@ def make_line_click_handler(
         </thead>
         <tbody>
         <tr>
-            <td class="tg-0lax">Station Upstream Area</td>
+            <td class="tg-0lax">Station Ups. Area</td>
             <td class="tg-0lax">{station_area}km<sup>2</sup></td>
         </tr>
         <tr>
-            <td class="tg-0lax">Near-Grid Upstream Area</td>
+            <td class="tg-0lax">Nearest-Grid Ups. Area</td>
             <td class="tg-0lax">{near_area}km<sup>2</sup></td>
         </tr>
         <tr>
-            <td class="tg-0lax"><b>New-Grid</b> Upstream Area</td>
+            <td class="tg-0lax"><b>Optimum-Grid</b> Ups. Area</td>
             <td class="tg-0lax">{optimum_area}km<sup>2</sup></td>
         </tr>
         <tr>
-            <td class="tg-0lax">Near-Grid Distance</td>
-            <td class="tg-0lax">{near_dist_km}km</td>
-        </tr>
-        <tr>
-            <td class="tg-0lax"><b>New-Grid</b> Distance</td>
-            <td class="tg-0lax">{optimum_dist_km}km</td>
+            <td class="tg-0lax"><b>Optimum-Grid</b> Distance</td>
+            <td class="tg-0lax">{optimum_distance_cells} cells</td>
         </tr>
         </tbody>
         </table>
@@ -201,11 +194,11 @@ def make_style_callback(attribute, cmap, norm):
     return style_callback
 
 
-def vector_style(feature, color, opacity):
+def vector_style(feature, color, opacity=0.5, weight=1):
     return {
         "fillColor": color,  # Fill color
         "color": color,  # Border color
-        "weight": 1,  # Border width
+        "weight": weight,  # Border width
         "fillOpacity": opacity,  # Opacity of the fill
     }
 

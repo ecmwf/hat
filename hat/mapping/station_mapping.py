@@ -184,9 +184,6 @@ def process_station_data(
     near_grid_polygon = create_grid_polygon(
         latitudes[lat_idx], longitudes[lon_idx], cell_size
     )
-    near_distance_km = calculate_distance(
-        lat, lon, latitudes[lat_idx], longitudes[lon_idx]
-    )
 
     # if the area difference is greater than the minimum, find the best
     # matching grid cell otherwise use the nearest grid cell
@@ -212,8 +209,8 @@ def process_station_data(
         optimum_grid_polygon = create_grid_polygon(
             latitudes[optimum_lat_idx], longitudes[optimum_lon_idx], cell_size
         )
-        optimum_distance_km = calculate_distance(
-            lat, lon, latitudes[optimum_lat_idx], longitudes[optimum_lon_idx]
+        optimum_distance_cells = calculate_distance_cells(
+            lat_idx, lon_idx, optimum_lat_idx, optimum_lon_idx
         )
     else:
         # Use the nearest grid cell as the best matching grid cell
@@ -221,7 +218,7 @@ def process_station_data(
         optimum_grid_area = near_grid_area
         optimum_area_diff = near_area_diff
         optimum_grid_polygon = near_grid_polygon
-        optimum_distance_km = near_distance_km
+        optimum_distance_cells = 0
 
     return {
         # Station data
@@ -244,7 +241,7 @@ def process_station_data(
         "optimum_grid_lon": longitudes[optimum_lon_idx],
         "optimum_grid_area": optimum_grid_area,
         "optimum_area_diff": optimum_area_diff,
-        "optimum_distance_km": optimum_distance_km,
+        "optimum_distance_cells": optimum_distance_cells,
         "optimum_grid_polygon": optimum_grid_polygon,
         # Manually mapped variable
         "manual_lat": manual_lat,
