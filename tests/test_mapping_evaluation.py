@@ -20,7 +20,9 @@ def test_calculate_rmse():
     data = {"reference": [100, 200], "evaluated": [90, 195]}
     df = pd.DataFrame(data)
     expected_rmse = 7.91
-    assert calculate_rmse(df, "reference", "evaluated") == pytest.approx(expected_rmse, abs=1e-2)
+    assert calculate_rmse(df, "reference", "evaluated") == pytest.approx(
+        expected_rmse, abs=1e-2
+    )
 
 
 # Sample data for testing
@@ -42,8 +44,12 @@ def test_count_and_analyze_area_distance(sample_dataframe):
     area_diff_limit = 10  # 10 percent
     distance_limit = 2  # 2 grid cells
     fig = count_and_analyze_area_distance(
-        sample_dataframe, area_diff_limit, distance_limit, "manual", "optimum_grid", "log"
+        sample_dataframe,
+        area_diff_limit,
+        distance_limit,
+        "manual",
+        "optimum_grid",
+        "log",
     )
 
     assert isinstance(fig, Figure), "The function should return a matplotlib figure."
-
