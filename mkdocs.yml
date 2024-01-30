@@ -5,6 +5,9 @@ nav:
     - Welcome: index.md
     - Installation: installation.md
     - Usage: usage.md
-    - Reference: reference.md
+    - Reference: 
+        - station_mapping: station_mapping.md
+        - hat-extract-timeseries: hat-extract-timeseries.md
+        - hat-hydrostats: hat-hydrostats.md
 
 theme: readthedocs

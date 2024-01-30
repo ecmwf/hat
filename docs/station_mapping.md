@@ -2,7 +2,8 @@
 Station Mapping Library Documentation
 =====================================
 
-The `station_mapping` library is designed for mapping the location of hydrological station data onto the optimum grid cell location of a hydrological simulation result (netcdf).
+The `station_mapping` library is designed for mapping the location of hydrological station data onto the optimum location of a hydrological model grid (netcdf).
+This tool is available as both [command line](#station-mapping-with-command-line) and [Python API](#station-mapping-as-python-script-eg-called-within-jupyter-notebook-or-python-file)
 
 The optimum grid cell location is searched through optimising the upstream area error and the cell distance(s) from the station nearest grid cells. In this tool, users can define their acceptable area difference/ error using the parameter `max_area_difference` (%) and the maximum cell radius `max_neighboring_cell` (number of cells) to search for this optimum grid. The tool can also be parameterised to ignore further searching of optimum cells when upstream area difference of a station nearest grid is below, i.e. when the uspteam area of the nearest cell to the station is already deemed acceptable by defining `min_area_diff`(%). 
 
@@ -11,12 +12,6 @@ For instance, refer to illustration example below, if the specified `max_area_di
 <img src="station_mapping_search_algo.svg" alt="illustration of optimum grid search algorithm" width="400"/>
 
 In conclusion, the tool only searches for grid cell with optimal upstream area between the user defined `min_area_diff` and `max_area_diff` that are within the `max_neighboring_cell` radius from the station location.
-
-
-Installation
-------------
-
-Before using the `station_mapping` library, ensure you have all the required dependencies of HAT, see [installation.md](installation.md) for installation instruction.
 
 
 Usage
@@ -117,7 +112,7 @@ if the "out_directory" in the `configuration` is specified, then the following f
 Other Related Module
 --------------------
 
-#### evaluation
+#### `evaluation`
 An additional module is available to evaluate the performance of the station mapping, in particular the optimum grid cell found for each station. The common case for this evaluation is to compare the resulting optimum grid cells with the manually mapped station, based on their upstream area difference (%), and cell distance(s).
 
 * Main function: `def count_and_analyze_area_distance`
