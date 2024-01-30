@@ -1,6 +1,6 @@
 
-Station Mapping Library Documentation
-=====================================
+`station_mapping` documentation
+===============================
 
 The `station_mapping` library is designed for mapping the location of hydrological station data onto the optimum location of a hydrological model grid (netcdf).
 This tool is available as both [command line](#station-mapping-with-command-line) and [Python API](#station-mapping-as-python-script-eg-called-within-jupyter-notebook-or-python-file)
@@ -14,7 +14,7 @@ For instance, refer to illustration example below, if the specified `max_area_di
 In conclusion, the tool only searches for grid cell with optimal upstream area between the user defined `min_area_diff` and `max_area_diff` that are within the `max_neighboring_cell` radius from the station location.
 
 
-Usage
+How to use
 -----
 #### Station Mapping with Command Line
 To use the `station_mapping` as command line, follow these steps:
