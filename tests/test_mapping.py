@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 import pytest
 from geopy.distance import geodesic
 
@@ -78,12 +77,6 @@ def test_create_grid_polygon():
     assert polygon.bounds == (2, 2, 3, 3)  # Check if the polygon bounds are as expected
 
 
-# Mock function to simulate netCDF data access
-def mock_nc_data(lat_idx, lon_idx):
-    """Simulate netCDF data access"""
-    return np.random.rand()
-
-
 @pytest.fixture
 def mock_station():
     """Provides a mock station dictionary"""
@@ -96,6 +89,7 @@ def mock_station():
 
 
 @pytest.fixture
+# Mock function to simulate netCDF data access
 def mock_latitudes_longitudes():
     """Provides mock latitudes and longitudes arrays"""
     return np.array([0.0, 1.0, 2.0, 3.0, 4.0]), np.array([0.0, 1.0, 2.0, 3.0, 4.0])
