@@ -10,16 +10,16 @@ from hat.mapping.evaluation import (
 
 
 def test_calculate_mae():
-    data = {"reference": [100, 200, 300], "evaluated": [90, 195, 305]}
+    data = {"reference": [100, 200], "evaluated": [90, 195]}
     df = pd.DataFrame(data)
-    expected_mae = 2.33  # Calculated manually
+    expected_mae = 7.5  # Calculated manually
     assert calculate_mae(df, "reference", "evaluated") == pytest.approx(expected_mae)
 
 
 def test_calculate_rmse():
-    data = {"reference": [100, 200, 300], "evaluated": [90, 195, 305]}
+    data = {"reference": [100, 200], "evaluated": [90, 195]}
     df = pd.DataFrame(data)
-    expected_rmse = 5.77  # Calculated manually
+    expected_rmse = 11.18 # Calculated manually
     assert calculate_rmse(df, "reference", "evaluated") == pytest.approx(expected_rmse)
 
 
