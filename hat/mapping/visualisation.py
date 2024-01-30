@@ -222,33 +222,3 @@ def attribute_based_style(row, attribute_name, threshold, color_above, color_bel
             "fillOpacity": 0.5,
         }
 
-
-def create_circle_markers(
-    feature, attribute_name, threshold, color_above, color_below, name
-):
-    """Create a CircleMarker for each feature in the GeoDataFrame."""
-    # Create a layer group to hold the circle markers
-    layer_group = LayerGroup(name=name)
-
-    # Iterate over GeoDataFrame rows and create a circle marker for each row
-    for _, row in feature.iterrows():
-        # Get the coordinates (longitude, latitude)
-        coords = row.geometry.coords[0]
-
-        # Determine the style of the feature
-        style = attribute_based_style(
-            row, attribute_name, threshold, color_above, color_below
-        )
-
-        # Create a circle marker
-        marker = CircleMarker()
-        marker.location = (coords[1], coords[0])  # Note: Leaflet expects (lat, lon)
-        marker.radius = style["radius"]
-        marker.color = style["color"]
-        marker.fill_color = style["fillColor"]
-        marker.fill_opacity = style["fillOpacity"]
-
-        # Add the circle marker to the layer group
-        layer_group.add_layer(marker)
-
-    return layer_group
