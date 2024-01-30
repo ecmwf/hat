@@ -235,6 +235,7 @@ def process_station_data(
         "near_grid_lat": latitudes[lat_idx],
         "near_grid_lon": longitudes[lon_idx],
         "near_grid_area": near_grid_area,
+        "near_area_diff": near_area_diff,
         "near_grid_polygon": near_grid_polygon,
         # Optimum grid from search
         "optimum_grid_lat_idx": optimum_lat_idx,

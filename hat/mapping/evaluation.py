@@ -43,7 +43,7 @@ def calculate_rmse(df, column_reference, column_evaluated):
     :param column_evaluated: Name of the column to be evaluated against the reference
     :return: RMSE value
     """
-    rmse = round(np.sqrt(((df[column_reference] - df[column_evaluated]) ** 2).mean()))
+    rmse = round(np.sqrt(((df[column_reference] - df[column_evaluated]) ** 2).mean()),2)
     print(f"RMSE between {column_reference} and {column_evaluated}: {rmse} km2")
     return rmse
 
