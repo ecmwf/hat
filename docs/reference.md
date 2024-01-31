@@ -1,6 +1,20 @@
 ## Reference
 
+### Python API
+
+#### `station_mapping`
+Map the location of hydrological station data onto the optimum cell location of a hydrological model grid (netcdf).
+This is usually done prior to analysing the hydrological simulation result.
+
+There are also additional module related to this station mapping such as `evaluation` and `visualisation`.
+* `evaluation` is used to evaluate the result of the station mapping
+* while the `visualisation` is a simplistic interactive map built on Jupyter Notebook (as an alternative to QGIS) to show the result of the `station_mapping`
+
 ### Command Line Tools
+
+#### `station_mapping`
+Same as the `station_mapping` python API but executed in command line.
+More info can be seen in this [doc](station_mapping.md)
 
 #### `hat-extract-timeseries`
 
