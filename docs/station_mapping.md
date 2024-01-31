@@ -197,7 +197,7 @@ my_map.map.add_control(WidgetControl(widget=legend_widget, position="bottomright
 ```
 
 Screenshot below is the example of the visualisation output in the notebook example:
-<img src="station_mapping_visualisation.png" alt="station mapping interactive map example" width="450"/><br>
+<img src="station_mapping_visualisation.jpg" alt="station mapping interactive map example" width="450"/><br>
 In this example the station is indicated by the blue marker, with the dark grey rectangle as its nearest grid, and the other grid with varying color based on area difference colormap (legend, i.e. currently white) is the optimum grid. The black line connects the station location and the centroid of the optimum grid, and can be clickable to show the result attributes if the click handler is added.
 
 
