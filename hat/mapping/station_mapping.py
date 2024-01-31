@@ -144,6 +144,9 @@ def process_station_data(
         manual_area (str):
             Column name for manually mapped area in the station data.
 
+    Note:
+        All lattitude and longitude values must be in decimal degrees (DD).
+
     Returns:
         dict: A dictionary containing processed data for the station,
         nearest grid cell, and best matching grid cell (if applicable).
@@ -282,8 +285,8 @@ def station_mapping(config):
     csv_file = config["csv_file"]
     csv_ups_col = config["csv_ups_col"]
     station_name_col = config["csv_station_name_col"]
-    lat_col = config["csv_lat_col"]
-    lon_col = config["csv_lon_col"]
+    lat_col = config["csv_lat_col"]  # values must be in DD (Decimal Degrees)
+    lon_col = config["csv_lon_col"]  # values must be in DD (Decimal Degrees)
     stations_epsg = config.get("stations_epsg", "4326")
     stations_filter = config.get("stations_filter", "")
 

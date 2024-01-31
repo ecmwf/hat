@@ -6,8 +6,10 @@ nav:
     - Installation: installation.md
     - Usage: usage.md
     - Reference: 
-        Command Line Interface:
+        Python API:
         - station_mapping: station_mapping.md
+        Command Line Interface:
+        - station_mapping: station_mapping.md#command-line-interface
         - hat-extract-timeseries: hat_extract-timeseries.md
         - hat-hydrostats: hat_hydrostats.md
 
