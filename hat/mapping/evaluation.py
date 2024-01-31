@@ -119,7 +119,7 @@ def count_and_analyze_area_distance(
     fig, ax = plt.subplots()
     ax.bar(distances, frequencies, color="blue", alpha=0.7, width=0.9)
     ax.set_title(
-        "Histogram of Distances"
+        "Histogram of Distances "
         + f"Found within Acceptable Area Differences of {area_diff_limit}%"
     )
     ax.set_xlabel("Grid Distance (Number of Cells)")

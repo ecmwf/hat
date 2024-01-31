@@ -73,7 +73,7 @@ def create_gradient_legend(cmap, min_val, max_val):
     rgb_values = [mcolors.rgb2hex(cmap(i)) for i in np.linspace(0, 1, 256)]
     gradient_style = ", ".join(rgb_values)
     legend_html = f"""
-    <div style="text-align: center; font-weight: bold;">Optimum Grid Area Difference (%)</div>
+    <div style="text-align: center; font-weight: bold;">Optimum Grid Area Diff.(%)</div>
     <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="
             background: linear-gradient(to right, {gradient_style});
