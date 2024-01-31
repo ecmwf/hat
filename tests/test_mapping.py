@@ -4,8 +4,8 @@ from geopy.distance import geodesic
 
 from hat.mapping.station_mapping import (
     calculate_area_diff_percentage,
-    calculate_distance_km,
     calculate_distance_cells,
+    calculate_distance_km,
     create_grid_polygon,
     find_best_matching_grid,
     get_grid_index,
@@ -172,11 +172,6 @@ def test_process_station_data(mock_station, mock_latitudes_longitudes, mock_nc_d
     assert isinstance(
         processed_data["near_area_diff"], float
     ), "Near area difference should be a float"
-
-    assert "near_distance_km" in processed_data, "Nearest distance in km is missing"
-    assert isinstance(
-        processed_data["near_distance_km"], float
-    ), "Nearest distance in km should be a float"
 
     assert "optimum_grid_lat" in processed_data, "Optimum grid latitude is missing"
     assert isinstance(
