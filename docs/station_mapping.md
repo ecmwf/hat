@@ -20,6 +20,7 @@ How to use
 To use the `station_mapping` as command line, follow these steps:
 
 1.  Prepare your data input: station data and grid data in the appropriate format. Station data should be in a CSV file, and grid data should be in a NetCDF file.
+    PLease ensure all lattitudes and longitude values in [<b> decimal degree format/ DD</b>](https://en.wikipedia.org/wiki/Decimal_degrees).
     
 2.  Create a [JSON configuration](notebooks/examples/station_mapping_config_example.json) file specifying the paths to your data files, column names, and other relevant parameters.
     
