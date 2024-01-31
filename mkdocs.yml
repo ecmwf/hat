@@ -9,7 +9,7 @@ nav:
         Python API:
         - station_mapping: station_mapping.md
         Command Line Interface:
-        - station_mapping: station_mapping.md
+        - station_mapping: station_mapping.md#command-line-interface
         - hat-extract-timeseries: hat-extract-timeseries.md
         - hat-hydrostats: hat-hydrostats.md
 
