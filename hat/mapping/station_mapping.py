@@ -285,8 +285,8 @@ def station_mapping(config):
     csv_file = config["csv_file"]
     csv_ups_col = config["csv_ups_col"]
     station_name_col = config["csv_station_name_col"]
-    lat_col = config["csv_lat_col"] # values must be in DD (Decimal Degrees)
-    lon_col = config["csv_lon_col"] # values must be in DD (Decimal Degrees)
+    lat_col = config["csv_lat_col"]  # values must be in DD (Decimal Degrees)
+    lon_col = config["csv_lon_col"]  # values must be in DD (Decimal Degrees)
     stations_epsg = config.get("stations_epsg", "4326")
     stations_filter = config.get("stations_filter", "")
 
