@@ -21,7 +21,7 @@ To use the `station_mapping` as command line, follow these steps:
 
 1.  Prepare your data input: station data and grid data in the appropriate format. Station data should be in a CSV file, and grid data should be in a NetCDF file.
     
-2.  Create a [JSON configuration](../notebooks/examples/station_mapping_config_example.json) file specifying the paths to your data files, column names, and other relevant parameters.
+2.  Create a [JSON configuration](notebooks/examples/station_mapping_config_example.json) file specifying the paths to your data files, column names, and other relevant parameters.
     
 3.  Run the `station_mapping.py` script with the path to your configuration file:
     
@@ -137,7 +137,7 @@ It also breaks down the count of found stations into those that are found within
 
 In addition to these counts message display, the function also returns histogram of found stations counts (y-axis) for every cell distance (x-axis), see example screenshot below.
 
-<img src="station_mapping_histogram.jpg" alt="station mapping evaluation histogram" width="450"/><br>
+<img src="docs/station_mapping_histogram.jpg" alt="station mapping evaluation histogram" width="450"/><br>
 
 
 
@@ -202,14 +202,14 @@ my_map.map.add_control(WidgetControl(widget=legend_widget, position="bottomright
 ```
 
 Screenshot below is the example of the visualisation output in the notebook example:
-<img src="station_mapping_visualisation.jpg" alt="station mapping interactive map example" width="450"/><br>
+<img src="docs/station_mapping_visualisation.jpg" alt="station mapping interactive map example" width="450"/><br>
 In this example the station is indicated by the blue marker, with the dark grey rectangle as its nearest grid, and the other grid with varying color based on area difference colormap (legend, i.e. currently white) is the optimum grid. The black line connects the station location and the centroid of the optimum grid, and can be clickable to show the result attributes if the click handler is added.
 
 
 Implementation Example in Jupyter notebook
 ---------------------------
 
-For the implementation example of station mapping in Jupyter notebook, an example is created in [station mapping notebook](../notebooks/examples/5a_station_mapping_evaluate.ipynb)
+For the implementation example of station mapping in Jupyter notebook, an example is created in [station mapping notebook](notebooks/examples/5a_station_mapping_evaluate.ipynb)
 This configuration is based on DESTINE project, and you shall modify your netcdf and csv input file location accordingly. The example of evaluation module implementation is also attached to this jupyter notebook as well.
 
-Additionally, please refer to this the [station mapping visualisation notebook example here](../notebooks/examples/5b_station_mapping_visualise.ipynb)
+Additionally, please refer to this the [station mapping visualisation notebook example here](notebooks/examples/5b_station_mapping_visualise.ipynb)
