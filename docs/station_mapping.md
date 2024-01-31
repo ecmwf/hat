@@ -134,7 +134,11 @@ fig = count_and_analyze_area_distance(df, area_diff_limit, distance_limit, ref_n
 Message display the counts of stations that are not found and found within the `error_margin`.
 It also breaks down the count of found stations into those that are found within and outside the `distance_limit`. When this 'distance_limit' is set as 0, it counts for perfectly mapped station.
 
-In addition to these counts message display, the function also returns histogram of found stations counts (y-axis) for every cell distance (x-axis)
+In addition to these counts message display, the function also returns histogram of found stations counts (y-axis) for every cell distance (x-axis), see example screenshot below.
+
+<img src="station_mapping_histogram.jpg" alt="station mapping evaluation histogram" width="450"/><br>
+
+
 
 #### `visualisation`
 A simple interactive map to be implemented on jupyter notebook to overlay the GIS output resulting from the `station_mapping` is also available.
