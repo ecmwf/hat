@@ -4,7 +4,7 @@ from geopy.distance import geodesic
 
 from hat.mapping.station_mapping import (
     calculate_area_diff_percentage,
-    calculate_distance,
+    calculate_distance_km,
     calculate_distance_cells,
     create_grid_polygon,
     find_best_matching_grid,
@@ -23,11 +23,11 @@ def test_get_grid_index():
 
 
 # Test for calculate_distance function
-def test_calculate_distance():
+def test_calculate_distance_km():
     lat1, lon1 = 0, 0
     lat2, lon2 = 1, 1
     expected_distance = geodesic((lat1, lon1), (lat2, lon2)).kilometers
-    distance = calculate_distance(lat1, lon1, lat2, lon2)
+    distance = calculate_distance_km(lat1, lon1, lat2, lon2)
     assert pytest.approx(distance) == expected_distance
 
 
@@ -173,6 +173,11 @@ def test_process_station_data(mock_station, mock_latitudes_longitudes, mock_nc_d
         processed_data["near_area_diff"], float
     ), "Near area difference should be a float"
 
+    assert "near_distance_km" in processed_data, "Nearest distance in km is missing"
+    assert isinstance(
+        processed_data["near_distance_km"], float
+    ), "Nearest distance in km should be a float"
+
     assert "optimum_grid_lat" in processed_data, "Optimum grid latitude is missing"
     assert isinstance(
         processed_data["optimum_grid_lat"], float
@@ -199,6 +204,11 @@ def test_process_station_data(mock_station, mock_latitudes_longitudes, mock_nc_d
     assert isinstance(
         processed_data["optimum_distance_cells"], int
     ), "Optimum distance should be an integer"
+
+    assert "optimum_distance_km" in processed_data, "Optimium distance in km is missing"
+    assert isinstance(
+        processed_data["optimum_distance_km"], float
+    ), "Nearest distance in km should be a float"
 
     # If manually mapping variables are used in your test, include them in assertions
     if "manual_lat" in processed_data:
