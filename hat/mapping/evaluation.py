@@ -4,6 +4,7 @@ import numpy as np
 from hat.mapping.station_mapping import (
     calculate_area_diff_percentage,
     calculate_distance_cells,
+    calculate_distance_km,
 )
 
 
@@ -53,6 +54,7 @@ def count_and_analyze_area_distance(
     ref_name="manual",
     eval_name="optimum_grid",
     y_scale="log",
+    distance_unit="cells",
 ):
     """
     Count stations based on area difference and grid cell distance,
@@ -77,10 +79,18 @@ def count_and_analyze_area_distance(
         ref_name + "_lat_idx",
         ref_name + "_lon_idx",
     )  # column name for reference grid indices
+    ref_lat_col, ref_lon_col = (
+        ref_name + "_lat",
+        ref_name + "_lon",
+    )  # column name for reference grid lat and lon
     eval_lat_idx_col, eval_lon_idx_col = (
         eval_name + "_lat_idx",
         eval_name + "_lon_idx",
     )  # column name for evaluated grid indices
+    eval_lat_col, eval_lon_col = (
+        eval_name + "_lat",
+        eval_name + "_lon",
+    )  # column name for evaluated grid lat and lon
 
     # Initialise counters for counting stations and distances frequencies
     count_outside_area_limit = 0
@@ -95,14 +105,24 @@ def count_and_analyze_area_distance(
         )
 
         if area_diff <= area_diff_limit:
-            grid_distance = round(
-                calculate_distance_cells(
-                    row[ref_lat_idx_col],
-                    row[ref_lon_idx_col],
-                    row[eval_lat_idx_col],
-                    row[eval_lon_idx_col],
+            if distance_unit == "cells":
+                grid_distance = round(
+                    calculate_distance_cells(
+                        row[ref_lat_idx_col],
+                        row[ref_lon_idx_col],
+                        row[eval_lat_idx_col],
+                        row[eval_lon_idx_col],
+                    )
                 )
-            )
+            elif distance_unit == "km":
+                grid_distance = round(
+                    calculate_distance_km(
+                        row[ref_lat_col],
+                        row[ref_lon_col],
+                        row[eval_lat_col],
+                        row[eval_lon_col],
+                    )
+                )
             distance_freq[grid_distance] = distance_freq.get(grid_distance, 0) + 1
             count_inside_area_limit += 1
 
@@ -122,7 +142,7 @@ def count_and_analyze_area_distance(
         "Histogram of Distances "
         + f"Found within Acceptable Area Differences of {area_diff_limit}%"
     )
-    ax.set_xlabel("Grid Distance (Number of Cells)")
+    ax.set_xlabel(f"Grid Distance ({distance_unit})")
     ax.set_ylabel("Frequency")
     ax.set_yscale(y_scale)
     ax.yaxis.grid(True)

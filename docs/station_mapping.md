@@ -30,6 +30,7 @@ To use the `station_mapping` as command line, follow these steps:
 
 #### Station Mapping as python script, e.g. called within jupyter notebook or python file
 1. Prepare your data input: station data and grid data in the appropriate format. Station data should be in a CSV file, and grid data should be in a NetCDF file.
+Ensure that all the values of the lattitude and longitude in CSV files columns are in [<b> decimal degree format/ DD</b>](https://en.wikipedia.org/wiki/Decimal_degrees) (NOT Degree Minute Seconds/ DMS). These affect both stations and manual mapping locations.
 
 2. Create a configuration dictionary
 
