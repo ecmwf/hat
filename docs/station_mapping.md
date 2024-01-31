@@ -9,7 +9,7 @@ The optimum grid cell location is searched through optimising the upstream area 
 
 For instance, refer to illustration example below, if the specified `max_area_difference` is 10%, then the optimum grid to be returned when specified `max_neighboring_cell` = 1 cell, is the one with 7% upstream area difference (blue). While if the `max_neighboring_cell` = 2 cell, then the cell with 5% upstream area difference will be returned as the optimum grid instead. 
 
-<img src="station_mapping_search_algo.svg" alt="illustration of optimum grid search algorithm" width="400"/>
+<img src="station_mapping_search_algo.svg" alt="illustration of optimum grid search algorithm" width="450"/>
 
 In conclusion, the tool only searches for grid cell with optimal upstream area between the user defined `min_area_diff` and `max_area_diff` that are within the `max_neighboring_cell` radius from the station location.
 
@@ -197,7 +197,7 @@ my_map.map.add_control(WidgetControl(widget=legend_widget, position="bottomright
 ```
 
 Screenshot below is the example of the visualisation output in the notebook example:
-<img src="station_mapping_search_algo.svg" alt="illustration of optimum grid search algorithm" width="500"/>
+<img src="station_mapping_visualisation.png" alt="station mapping interactive map example" width="450"/><br>
 In this example the station is indicated by the blue marker, with the dark grey rectangle as its nearest grid, and the other grid with varying color based on area difference colormap (legend, i.e. currently white) is the optimum grid. The black line connects the station location and the centroid of the optimum grid, and can be clickable to show the result attributes if the click handler is added.
 
 
