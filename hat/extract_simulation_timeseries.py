@@ -26,7 +26,7 @@ def extract_timeseries(
     config = valid_custom_config(config)
 
     # infer coordinates for all grids from first the grid
-    coords = latlon_coords(simulations_da, names=config.get("station_coordinates", []))
+    coords = latlon_coords(simulations_da)
 
     # numpy array of station locations
     station_mask = geopoints_to_array(stations, coords)

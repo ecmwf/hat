@@ -347,14 +347,10 @@ def get_latlon_keys(ds):
     return lat_key, lon_key
 
 
-def latlon_coords(ds, names: list = []):
+def latlon_coords(ds):
     """Latitude and longitude coordinates of an xarray"""
 
-    if not names:
-        lat_key, lon_key = get_latlon_keys(ds)
-    else:
-        assert len(names) == 2, "Must provide two names for lat and lon"
-    lat_key, lon_key = names
+    lat_key, lon_key = get_latlon_keys(ds)
     lat_coords = ds.coords.get(lat_key).data
     lon_coords = ds.coords.get(lon_key).data
     coords = {"x": lon_coords, "y": lat_coords}
