@@ -130,6 +130,8 @@ def filter_dataframe(df, filters: str):
 
     # apply each filter in turn
     for filter_str in filters:
+        if filter_str == "":
+            continue
         parts = filter_str.split()
         if len(parts) != 3:
             raise ValueError("Invalid filter format. Expected 'key operator value'.")

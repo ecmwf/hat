@@ -18,11 +18,13 @@ dependencies:
   - ipyleaflet
   - ipywidgets
   - pip
-  # - pytest
-  # - mkdocs
-  # - black
-  # - flake8
-  # - isort
-  # - pre-commit
+  - pytest
+  - mkdocs
+  - black
+  - flake8
+  - isort
+  - pre-commit
+  - geopy
+  - pandas
   - pip:
      - earthkit.data

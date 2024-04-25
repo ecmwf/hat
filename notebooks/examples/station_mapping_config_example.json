@@ -1,0 +1,19 @@
+{
+    "upstream_area_file": "/path/to/upstream/area/file.nc",
+    
+    "csv_file": "/path/to/station/metadata.csv",
+    "csv_lat_col": "latitude_column_name",
+    "csv_lon_col": "longitude_column_name",
+    "csv_station_name_col": "station_name_column_name",
+    "csv_ups_col": "upstream_area_metadata_column_name",
+    
+    "max_neighboring_cells": 5,
+    "max_area_diff": 20,
+    "min_area_diff": 0,
+    
+    "manual_lat_col": "manual_latitude_column_name",
+    "manual_lon_col": "manual_longitude_column_name",
+    "manual_area": "manual_area_column_name",
+    
+    "out_directory": "/path/to/output/directory"
+}
