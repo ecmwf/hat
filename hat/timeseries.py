@@ -40,8 +40,6 @@ def extract_timeseries_using_mask(
     core_dims = get_latlon_keys(da)
 
     # dask computational graph (i.e. lazy)
-    print(core_dims)
-    print(station_dim)
     task = xr.apply_ufunc(
         mask_array_np,
         da,

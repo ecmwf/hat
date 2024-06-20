@@ -289,7 +289,6 @@ def read_simulation_as_xarray(options):
 
     # earthkit data file source
     fs = earthkit.data.from_source(src_type, *args)
-    print(str(type(fs)))
 
     xarray_kwargs = {}
     if isinstance(fs, earthkit.data.readers.netcdf.fieldlist.NetCDFMultiFieldList):
@@ -298,7 +297,6 @@ def read_simulation_as_xarray(options):
         xarray_kwargs["xarray_open_dataset_kwargs"] = {"chunks": {"time": "auto"}}
 
     # xarray dataset
-    print(xarray_kwargs)
     ds = fs.to_xarray(**xarray_kwargs)
 
     var = find_main_var(ds)
