@@ -51,7 +51,7 @@ def extract_timeseries_using_mask(
         dask="parallelized",
         dask_gufunc_kwargs={
             "output_sizes": {station_dim: int(mask.sum())},
-            "allow_rechunk": True
+            "allow_rechunk": True,
         },
     )
 
