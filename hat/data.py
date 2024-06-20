@@ -273,14 +273,14 @@ def find_main_var(ds, min_dim=3):
 
 def read_simulation_as_xarray(options):
     if options["type"] == "file":
-        type = "file"
+        src_type = "file"
         # find station files
         files = find_files(
             options["files"],
         )
         args = [files]
     elif options["type"] in ["mars", "fdb"]:
-        type = options["type"]
+        src_type = options["type"]
         args = [options["request"]]
     else:
         raise Exception(
@@ -288,15 +288,17 @@ def read_simulation_as_xarray(options):
         )
 
     # earthkit data file source
-    fs = earthkit.data.from_source(type, *args)
+    fs = earthkit.data.from_source(src_type, *args)
+    print(str(type(fs)))
 
     xarray_kwargs = {}
-    if isinstance(fs, earthkit.data.readers.netcdf.NetCDFFieldListReader):
+    if isinstance(fs, earthkit.data.readers.netcdf.fieldlist.NetCDFMultiFieldList):
         xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {"time": "auto"}}
     else:
         xarray_kwargs["xarray_open_dataset_kwargs"] = {"chunks": {"time": "auto"}}
 
     # xarray dataset
+    print(xarray_kwargs)
     ds = fs.to_xarray(**xarray_kwargs)
 
     var = find_main_var(ds)
