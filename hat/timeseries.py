@@ -49,7 +49,10 @@ def extract_timeseries_using_mask(
         output_dtypes=[da.dtype],
         exclude_dims=set(core_dims),
         dask="parallelized",
-        dask_gufunc_kwargs={"output_sizes": {station_dim: int(mask.sum())}},
+        dask_gufunc_kwargs={
+            "output_sizes": {station_dim: int(mask.sum())},
+            "allow_rechunk": True,
+        },
     )
 
     # extract timeseries (i.e. compute graph)
