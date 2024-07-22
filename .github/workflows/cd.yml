@@ -1,10 +1,9 @@
 on:
-  pull_request:
-    branches: [ "main", "develop" ]
-# on:
-#   push:
-#     tags:
-#     - "*"
+  push:
+    tags:
+    - '[0-9]+.[0-9]+.[0-9]+'
+    tags-ignore:
+    - 'unstable-*'
 jobs:
   install_module:
     runs-on: [hpc]
@@ -36,6 +35,12 @@ jobs:
             cat > $PREFIX/README.txt << EOF
             -- [hat] ($HAT_VERSION) [$HAT_VERSION]
             EOF
+
+            software-sync -s local -p hat
+            module load modulemgr
+            modulemgr -m all sync hat
+            modulemgr -m all tag hat 1.2.0 default
+
           sbatch_options: |
             #SBATCH --job-name=cd_hat
             #SBATCH --time=00:10:00
