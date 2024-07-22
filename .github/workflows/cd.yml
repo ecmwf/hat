@@ -10,7 +10,6 @@ on:
   push:
     tags:
     - '[0-9]+.[0-9]+.[0-9]+'
-    - 'unstable-[0-9]+.[0-9]+.[0-9]+'
 jobs:
   install_module:
     runs-on: [hpc]
@@ -22,8 +21,8 @@ jobs:
             # Declare an array to store the module versions
             python3_versions=("3.10.10-01" "3.11.8-01")
 
-            HAT_VERSION=${{ inputs.module-name github.ref_name }}
-            ${{ github.event_name == 'workflow_dispatch' && 'unstable' || github.ref_name }}
+            
+            HAT_VERSION=${{ github.event_name == 'workflow_dispatch' && inputs.module-name || github.ref_name }}
 
             PREFIX=/usr/local/apps/hat/${HAT_VERSION}
             rm -rf $PREFIX
@@ -46,8 +45,7 @@ jobs:
 
             software-sync -s local -p hat
             module load modulemgr
-            modulemgr -m all sync hat
-            modulemgr -m all tag hat 1.2.0 default
+            modulemgr -f -m all sync hat
 
           sbatch_options: |
             #SBATCH --job-name=cd_hat
