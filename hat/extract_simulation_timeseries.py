@@ -36,7 +36,11 @@ def extract_timeseries(
 
     # all timeseries (i.e. handle proximal and duplicate stations)
     da_stations = assign_stations(
-        stations, station_mask, da_points, coords, config["station_id_column_name"]
+        stations,
+        station_mask,
+        da_points,
+        coords,
+        config["station_id_column_name"],
     )
 
     return da_stations

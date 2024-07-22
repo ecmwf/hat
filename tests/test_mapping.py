@@ -74,7 +74,12 @@ def test_create_grid_polygon():
     lat, lon = 2.5, 2.5
     cell_size = 1
     polygon = create_grid_polygon(lat, lon, cell_size)
-    assert polygon.bounds == (2, 2, 3, 3)  # Check if the polygon bounds are as expected
+    assert polygon.bounds == (
+        2,
+        2,
+        3,
+        3,
+    )  # Check if the polygon bounds are as expected
 
 
 @pytest.fixture
@@ -92,7 +97,9 @@ def mock_station():
 # Mock function to simulate netCDF data access
 def mock_latitudes_longitudes():
     """Provides mock latitudes and longitudes arrays"""
-    return np.array([0.0, 1.0, 2.0, 3.0, 4.0]), np.array([0.0, 1.0, 2.0, 3.0, 4.0])
+    return np.array([0.0, 1.0, 2.0, 3.0, 4.0]), np.array(
+        [0.0, 1.0, 2.0, 3.0, 4.0]
+    )
 
 
 @pytest.fixture
@@ -105,7 +112,9 @@ def mock_nc_data():
     return mock_nc
 
 
-def test_process_station_data(mock_station, mock_latitudes_longitudes, mock_nc_data):
+def test_process_station_data(
+    mock_station, mock_latitudes_longitudes, mock_nc_data
+):
     max_neighboring_cells = 1
     min_area_diff = 10
     max_area_diff = 20
@@ -168,27 +177,37 @@ def test_process_station_data(mock_station, mock_latitudes_longitudes, mock_nc_d
         processed_data["near_grid_area"], float
     ), "Near grid area should be a float"
 
-    assert "near_area_diff" in processed_data, "Near area difference is missing"
+    assert (
+        "near_area_diff" in processed_data
+    ), "Near area difference is missing"
     assert isinstance(
         processed_data["near_area_diff"], float
     ), "Near area difference should be a float"
 
-    assert "optimum_grid_lat" in processed_data, "Optimum grid latitude is missing"
+    assert (
+        "optimum_grid_lat" in processed_data
+    ), "Optimum grid latitude is missing"
     assert isinstance(
         processed_data["optimum_grid_lat"], float
     ), "Optimum grid latitude should be a float"
 
-    assert "optimum_grid_lon" in processed_data, "Optimum grid longitude is missing"
+    assert (
+        "optimum_grid_lon" in processed_data
+    ), "Optimum grid longitude is missing"
     assert isinstance(
         processed_data["optimum_grid_lon"], float
     ), "Optimum grid longitude should be a float"
 
-    assert "optimum_grid_area" in processed_data, "Optimum grid area is missing"
+    assert (
+        "optimum_grid_area" in processed_data
+    ), "Optimum grid area is missing"
     assert isinstance(
         processed_data["optimum_grid_area"], float
     ), "Optimum grid area should be a float"
 
-    assert "optimum_area_diff" in processed_data, "Optimum area difference is missing"
+    assert (
+        "optimum_area_diff" in processed_data
+    ), "Optimum area difference is missing"
     assert isinstance(
         processed_data["optimum_area_diff"], float
     ), "Optimum area difference should be a float"
@@ -200,7 +219,9 @@ def test_process_station_data(mock_station, mock_latitudes_longitudes, mock_nc_d
         processed_data["optimum_distance_cells"], int
     ), "Optimum distance should be an integer"
 
-    assert "optimum_distance_km" in processed_data, "Optimium distance in km is missing"
+    assert (
+        "optimum_distance_km" in processed_data
+    ), "Optimium distance in km is missing"
     assert isinstance(
         processed_data["optimum_distance_km"], float
     ), "Nearest distance in km should be a float"

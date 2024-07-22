@@ -13,7 +13,9 @@ def test_calculate_mae():
     data = {"reference": [100, 200], "evaluated": [90, 195]}
     df = pd.DataFrame(data)
     expected_mae = 7.5  # Calculated manually
-    assert calculate_mae(df, "reference", "evaluated") == pytest.approx(expected_mae)
+    assert calculate_mae(df, "reference", "evaluated") == pytest.approx(
+        expected_mae
+    )
 
 
 def test_calculate_rmse():
@@ -52,4 +54,6 @@ def test_count_and_analyze_area_distance(sample_dataframe):
         "log",
     )
 
-    assert isinstance(fig, Figure), "The function should return a matplotlib figure."
+    assert isinstance(
+        fig, Figure
+    ), "The function should return a matplotlib figure."

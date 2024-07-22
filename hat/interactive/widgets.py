@@ -156,7 +156,9 @@ def _filter_nan_values(dates, data_values):
     assert len(dates) == len(
         data_values
     ), "Dates and data values must be the same length."
-    valid_dates = [date for date, val in zip(dates, data_values) if not np.isnan(val)]
+    valid_dates = [
+        date for date, val in zip(dates, data_values) if not np.isnan(val)
+    ]
     valid_data = [val for val in data_values if not np.isnan(val)]
 
     return valid_dates, valid_data
@@ -192,7 +194,11 @@ class PlotlyWidget(Widget):
                 height=350,
                 margin=dict(l=120),
                 legend=dict(
-                    orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1,
                 ),
                 xaxis_title="Date",
                 xaxis_tickformat="%d-%m-%Y",
@@ -214,7 +220,9 @@ class PlotlyWidget(Widget):
         date_picker_box = HBox([self.start_date_picker, self.end_date_picker])
 
         layout = Layout(justify_content="center", align_items="center")
-        output = VBox([self.figure, date_label, date_picker_box], layout=layout)
+        output = VBox(
+            [self.figure, date_label, date_picker_box], layout=layout
+        )
         super().__init__(output)
 
     def _update_plot_dates(self):
@@ -262,9 +270,7 @@ class PlotlyWidget(Widget):
         """
         station_id = metadata["station_id"]
         station_name = metadata["StationName"]
-        updated_title = (
-            f"<b>Selected station:<br>ID: {station_id}, name: {station_name}</b> "
-        )
+        updated_title = f"<b>Selected station:<br>ID: {station_id}, name: {station_name}</b> "  # noqa: E501
         self.figure.update_layout(
             title={
                 "text": updated_title,
@@ -435,7 +441,9 @@ class MetaDataWidget(HTMLTableWidget):
 
     def _extract_dataframe(self, station_id):
         stations_df = self.dataframe
-        selected_station_df = stations_df[stations_df[self.station_index] == station_id]
+        selected_station_df = stations_df[
+            stations_df[self.station_index] == station_id
+        ]
         return selected_station_df
 
 
@@ -489,7 +497,11 @@ class StatisticsWidget(HTMLTableWidget):
         statistics_df = pd.DataFrame(data, columns=columns)
 
         # Round the numerical columns to 2 decimal places
-        numerical_columns = [col for col in statistics_df.columns if col != "Exp. name"]
-        statistics_df[numerical_columns] = statistics_df[numerical_columns].round(2)
+        numerical_columns = [
+            col for col in statistics_df.columns if col != "Exp. name"
+        ]
+        statistics_df[numerical_columns] = statistics_df[
+            numerical_columns
+        ].round(2)
 
         return statistics_df

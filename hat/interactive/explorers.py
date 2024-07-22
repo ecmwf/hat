@@ -106,7 +106,9 @@ def prepare_observations_data(observations, sim_ds, obs_var_name):
     return obs_ds
 
 
-def find_common_stations(station_index, stations_metadata, obs_ds, sim_ds, statistics):
+def find_common_stations(
+    station_index, stations_metadata, obs_ds, sim_ds, statistics
+):
     """
     Find common stations between observations, simulations and station
     metadata.
@@ -260,7 +262,11 @@ class TimeSeriesExplorer:
         self.title_label = ipywidgets.Label(
             "Interactive Map Visualisation for Hydrological Model Performance",
             layout=ipywidgets.Layout(justify_content="center"),
-            style={"font_weight": "bold", "font_size": "24px", "font_family": "Arial"},
+            style={
+                "font_weight": "bold",
+                "font_size": "24px",
+                "font_family": "Arial",
+            },
         )
 
         # Create the interactive widgets
@@ -269,7 +275,9 @@ class TimeSeriesExplorer:
         widgets = {}
         widgets["plot"] = PlotlyWidget(datasets)
         widgets["stats"] = StatisticsWidget(self.statistics)
-        widgets["meta"] = MetaDataWidget(self.stations_metadata, self.station_index)
+        widgets["meta"] = MetaDataWidget(
+            self.stations_metadata, self.station_index
+        )
         self.widgets = WidgetsManager(
             widgets, config["station_id_column_name"], self.loading_widget
         )
@@ -302,7 +310,10 @@ class TimeSeriesExplorer:
             width="40%",
         )
         right_layout = ipywidgets.Layout(
-            justify_content="center", align_items="center", spacing="2px", width="60%"
+            justify_content="center",
+            align_items="center",
+            spacing="2px",
+            width="60%",
         )
 
         # Frames

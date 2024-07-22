@@ -22,7 +22,10 @@ def add_geometry_column(gdf: gpd.GeoDataFrame, coord_names):
 
     # Filter rows that do not plot on Earth (e.g. -9999)
     gdf = gdf[
-        (gdf["x"] >= -180) & (gdf["x"] <= 180) & (gdf["y"] >= -90) & (gdf["y"] <= 90)
+        (gdf["x"] >= -180)
+        & (gdf["x"] <= 180)
+        & (gdf["y"] >= -90)
+        & (gdf["y"] <= 90)
     ]
 
     # Create a geometry column

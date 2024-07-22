@@ -32,7 +32,9 @@ class DummyWidget(wd.Widget):
 class TestWidgetsManager:
     def test_update(self):
         dummy = DummyWidget()
-        widgets = wd.WidgetsManager(widgets={"dummy": dummy}, index_column="station")
+        widgets = wd.WidgetsManager(
+            widgets={"dummy": dummy}, index_column="station"
+        )
         feature = {
             "properties": {
                 "station": "A",
@@ -92,7 +94,11 @@ class TestPlotlyWidget:
 class TestMetaDataWidget:
     def test_update(self):
         df = pd.DataFrame(
-            {"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [0.1, 0.2, 0.3]}
+            {
+                "col1": [1, 2, 3],
+                "col2": ["a", "b", "c"],
+                "col3": [0.1, 0.2, 0.3],
+            }
         )
         widget = wd.MetaDataWidget(df, "col2")
         assert widget.update("a") is True
@@ -183,7 +189,9 @@ class TestPyleafletColormap:
                 "station": 4,
             }
         }
-        colormap = lf.PyleafletColormap(self.config, self.stats, empty_color="black")
+        colormap = lf.PyleafletColormap(
+            self.config, self.stats, empty_color="black"
+        )
         style_fct = colormap.style_callback()
         style = style_fct(feature)
         assert style["fillColor"] == "black"

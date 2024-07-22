@@ -8,7 +8,12 @@ import pytest
 # See https://setuptools.pypa.io/en/latest/pkg_resources.html
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from hat.config import DEFAULT_CONFIG, booleanify, read_config, valid_custom_config
+    from hat.config import (
+        DEFAULT_CONFIG,
+        booleanify,
+        read_config,
+        valid_custom_config,
+    )
 
 
 def test_DEFAULT_CONFIG():
@@ -39,7 +44,9 @@ def test_valid_custom_config():
 
     assert valid_custom_config(empty_dict) == DEFAULT_CONFIG
     assert valid_custom_config(invalid_keys) == DEFAULT_CONFIG
-    assert valid_custom_config(partially_complete).keys() == DEFAULT_CONFIG.keys()
+    assert (
+        valid_custom_config(partially_complete).keys() == DEFAULT_CONFIG.keys()
+    )
 
 
 def test_read_config():

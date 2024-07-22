@@ -97,7 +97,9 @@ def find_best_matching_grid(
 def create_grid_polygon(lat, lon, cell_size):
     """Create a rectangular polygon around the given lat/lon based on cell size."""
     half_cell = cell_size / 2
-    return box(lon - half_cell, lat - half_cell, lon + half_cell, lat + half_cell)
+    return box(
+        lon - half_cell, lat - half_cell, lon + half_cell, lat + half_cell
+    )
 
 
 def process_station_data(
@@ -152,7 +154,9 @@ def process_station_data(
         nearest grid cell, and best matching grid cell (if applicable).
     """
     lat, lon = float(station[lat_col]), float(station[lon_col])
-    station_area = float(station[csv_variable]) if station[csv_variable] else np.nan
+    station_area = (
+        float(station[csv_variable]) if station[csv_variable] else np.nan
+    )
 
     # manually mapped variable
     if manual_area is not None:
@@ -171,7 +175,9 @@ def process_station_data(
         manual_lat_idx, manual_lon_idx = get_grid_index(
             manual_lat, manual_lon, latitudes, longitudes
         )
-        manual_area = float(station[manual_area]) if station[manual_area] else np.nan
+        manual_area = (
+            float(station[manual_area]) if station[manual_area] else np.nan
+        )
 
     else:
         manual_lat = np.nan
@@ -182,8 +188,12 @@ def process_station_data(
     # Nearest grid cell
     lat_idx, lon_idx = get_grid_index(lat, lon, latitudes, longitudes)
     near_grid_area = nc_data[lat_idx, lon_idx]
-    near_grid_area = float(near_grid_area) if not is_masked(near_grid_area) else np.nan
-    near_area_diff = calculate_area_diff_percentage(near_grid_area, station_area)
+    near_grid_area = (
+        float(near_grid_area) if not is_masked(near_grid_area) else np.nan
+    )
+    near_area_diff = calculate_area_diff_percentage(
+        near_grid_area, station_area
+    )
     near_distance_km = calculate_distance_km(
         lat, lon, latitudes[lat_idx], longitudes[lon_idx]
     )
@@ -207,7 +217,9 @@ def process_station_data(
         )
         optimum_grid_area = nc_data[optimum_lat_idx, optimum_lon_idx]
         optimum_grid_area = (
-            float(optimum_grid_area) if not is_masked(optimum_grid_area) else np.nan
+            float(optimum_grid_area)
+            if not is_masked(optimum_grid_area)
+            else np.nan
         )
         optimum_area_diff = calculate_area_diff_percentage(
             optimum_grid_area, station_area
@@ -368,8 +380,12 @@ def save_geo_dataframes(df, out_dir, cell_size):
     )
 
     # Convert any additional geometry columns to WKT for serialization
-    df["near_grid_polygon_wkt"] = df["near_grid_polygon"].apply(lambda x: x.wkt)
-    df["optimum_grid_polygon_wkt"] = df["optimum_grid_polygon"].apply(lambda x: x.wkt)
+    df["near_grid_polygon_wkt"] = df["near_grid_polygon"].apply(
+        lambda x: x.wkt
+    )
+    df["optimum_grid_polygon_wkt"] = df["optimum_grid_polygon"].apply(
+        lambda x: x.wkt
+    )
 
     # Drop the Shapely object columns that were replaced by wkts
     df = df.drop(columns=["near_grid_polygon", "optimum_grid_polygon"])
@@ -387,7 +403,10 @@ def save_geo_dataframes(df, out_dir, cell_size):
 
     # Create GeoDataFrames
     gdf_station_point = gpd.GeoDataFrame(
-        df, geometry=[Point(xy) for xy in zip(df["station_lon"], df["station_lat"])]
+        df,
+        geometry=[
+            Point(xy) for xy in zip(df["station_lon"], df["station_lat"])
+        ],
     )
     gdf_near_grid_polygon = gpd.GeoDataFrame(
         df, geometry=df["near_grid_polygon_wkt"].apply(loads)
@@ -408,7 +427,8 @@ def save_geo_dataframes(df, out_dir, cell_size):
         os.path.join(out_dir, "optimum_grid.geojson"), driver="GeoJSON"
     )
     gdf_line_optimum.to_file(
-        os.path.join(out_dir, "stations2grid_optimum_line.geojson"), driver="GeoJSON"
+        os.path.join(out_dir, "stations2grid_optimum_line.geojson"),
+        driver="GeoJSON",
     )
     gdf_station_point.to_csv(os.path.join(out_dir, "stations.csv"))
 

@@ -29,10 +29,14 @@ def check_inputs(functions, sims, obs):
         )
 
     if not sims.endswith(".nc"):
-        raise UserError(f"Simulation filepath must end with .nc was given: {sims}")
+        raise UserError(
+            f"Simulation filepath must end with .nc was given: {sims}"
+        )
 
     if not obs.endswith(".nc"):
-        raise UserError(f"Observation filepath must end with .nc was given: {obs}")
+        raise UserError(
+            f"Observation filepath must end with .nc was given: {obs}"
+        )
 
     return True
 
@@ -91,7 +95,9 @@ def hydrostats_cli(
     obs_da = obs_ds[var]
 
     # clean timeseries
-    sims_da, obs_da = filter_timeseries(sims_da, obs_da, threshold=obs_threshold)
+    sims_da, obs_da = filter_timeseries(
+        sims_da, obs_da, threshold=obs_threshold
+    )
 
     # calculate statistics
     statistics_ds = run_analysis(functions, sims_da, obs_da)
