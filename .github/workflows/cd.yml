@@ -6,11 +6,31 @@ jobs:
     steps:
       - uses: ecmwf-actions/reusable-workflows/ci-hpc-generic@v2
         with:
-          # site: hpc    # optional input
           troika_user: ${{ secrets.HPC_CI_SSH_USER }}
           template: |
-            echo "Hello {{ name }}!"
-            mkdir -p /usr/local/apps/hat/test_module
+            # Declare an array to store the module versions
+            python3_versions=("3.10.10-01" "3.11.8-01")
+
+            HAT_VERSION=feature/module_action
+
+            PREFIX=/usr/local/apps/hat/${HAT_VERSION}
+            rm -rf $PREFIX
+            mkdir -p $PREFIX
+
+            # Loop through the module versions
+            for version in "${python3_versions[@]}"
+            do
+                # Load the module for the current version
+                module load python3/$version
+
+                PYTHONUSERBASE=$PREFIX pip3 install --user git+https://github.com/ecmwf/hat.git@${HAT_VERSION}
+
+                module unload python3
+            done
+
+            cat > $PREFIX/README.txt << EOF
+            -- [hat] ($HAT_VERSION) [$HAT_VERSION]
+            EOF
           sbatch_options: |
             #SBATCH --job-name=cd_hat
             #SBATCH --time=00:10:00
