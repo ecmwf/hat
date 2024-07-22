@@ -116,7 +116,9 @@ def river_network_geometry(metadata, river_network, version=1):
     if river_network == "EPSG:4326":
         return metadata
 
-    lon_name, lat_name = name_of_adjusted_coords(river_network, version=version)
+    lon_name, lat_name = name_of_adjusted_coords(
+        river_network, version=version
+    )
 
     gdf = metadata.copy(deep=True)
     gdf["geometry"] = gpd.points_from_xy(gdf[lon_name], gdf[lat_name])
@@ -157,7 +159,9 @@ def river_network_to_coord_names(river_network: str = "") -> dict:
         x, y = river_network_to_coords[river_network]
         return {"x": x, "y": y}
     else:
-        print(f"River network '{river_network}' not in: {valid_river_networks}")
+        print(
+            f"River network '{river_network}' not in: {valid_river_networks}"
+        )
 
 
 def geojson_schema():
@@ -230,7 +234,9 @@ def geojson_schema():
                             {"$ref": "#/definitions/pointCoordinates"},
                             {"$ref": "#/definitions/multiPointCoordinates"},
                             {"$ref": "#/definitions/lineStringCoordinates"},
-                            {"$ref": "#/definitions/multiLineStringCoordinates"},
+                            {
+                                "$ref": "#/definitions/multiLineStringCoordinates"
+                            },
                             {"$ref": "#/definitions/polygonCoordinates"},
                             {"$ref": "#/definitions/multiPolygonCoordinates"},
                         ]
@@ -307,8 +313,12 @@ def geopoints_to_array(gdf, array_coords) -> np.ndarray:
     point_ys = np.array([point.y for point in points])
 
     # nearest neighbour indices of the points in the array
-    x_indices = [(np.abs(array_coords["x"] - point_x)).argmin() for point_x in point_xs]
-    y_indices = [(np.abs(array_coords["y"] - point_y)).argmin() for point_y in point_ys]
+    x_indices = [
+        (np.abs(array_coords["x"] - point_x)).argmin() for point_x in point_xs
+    ]
+    y_indices = [
+        (np.abs(array_coords["y"] - point_y)).argmin() for point_y in point_ys
+    ]
 
     # create an empty boolean array
     shape = (len(array_coords["y"]), len(array_coords["x"]))
@@ -320,7 +330,9 @@ def geopoints_to_array(gdf, array_coords) -> np.ndarray:
     return arr
 
 
-def geopoints_from_csv(fpath: str, lat_name: str, lon_name: str) -> gpd.GeoDataFrame:
+def geopoints_from_csv(
+    fpath: str, lat_name: str, lon_name: str
+) -> gpd.GeoDataFrame:
     """Load georeferenced points from file.
     Requires name of latitude and longitude columns"""
 

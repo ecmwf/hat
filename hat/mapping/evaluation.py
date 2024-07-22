@@ -43,7 +43,9 @@ def calculate_rmse(df, column_reference, column_evaluated):
     rmse = round(
         np.sqrt(((df[column_reference] - df[column_evaluated]) ** 2).mean()), 2
     )
-    print(f"RMSE between {column_reference} and {column_evaluated}: {rmse} km2")
+    print(
+        f"RMSE between {column_reference} and {column_evaluated}: {rmse} km2"
+    )
     return rmse
 
 
@@ -101,7 +103,9 @@ def count_and_analyze_area_distance(
 
     for index, row in df.iterrows():
         area_diff = abs(
-            calculate_area_diff_percentage(row[eval_area_col], row[ref_area_col])
+            calculate_area_diff_percentage(
+                row[eval_area_col], row[ref_area_col]
+            )
         )
 
         if area_diff <= area_diff_limit:
@@ -123,7 +127,9 @@ def count_and_analyze_area_distance(
                         row[eval_lon_col],
                     )
                 )
-            distance_freq[grid_distance] = distance_freq.get(grid_distance, 0) + 1
+            distance_freq[grid_distance] = (
+                distance_freq.get(grid_distance, 0) + 1
+            )
             count_inside_area_limit += 1
 
             if grid_distance <= distance_limit:

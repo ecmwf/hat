@@ -1,3 +1,105 @@
-# required for isort and black to play nicely
+
+[build-system]
+requires = ["setuptools>=65", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hydro_analysis_toolkit"
+requires-python = ">=3.8"
+authors = [
+    {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"},
+]
+maintainers = [
+    {name = "Corentin Carton de Wiart", email = "corentin.carton@ecmwf.int"},
+]
+description = "ECMWF Hydrological Analysis Tools"
+license = {file = "LICENSE"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering",
+]
+dynamic = ["version", "readme"]
+
+dependencies = [
+    "numpy",
+    "pandas",
+    "xarray",
+    "matplotlib",
+    "geopandas",
+    "typer",
+    "humanize",
+    "tqdm",
+    "ipyleaflet",
+    "ipywidgets",
+    "earthkit-data",
+    "cfgrib"
+]
+
+[project.urls]
+    repository = "https://github.com/ecmwf/hat"
+    documentation = "https://hydro-analysis-toolkit.readthedocs.io"
+    issues = "https://github.com/ecmwf/hat/issues"
+
+[project.optional-dependencies]
+    test = [
+        "pytest",
+    ]
+    docs = [
+        "mkdocs",
+        "mkdocs-material",
+        "mkdocstrings-python",
+        "mkdocs-autorefs",
+        "mkdocs-gen-files",
+        "pymdown-extensions",
+        "markdown-exec[ansi]",
+    ]
+
+[project.scripts]
+    hat-extract-timeseries = "hat.tools.extract_simulation_timeseries_cli:main"
+    hat-hydrostats = "hat.tools.hydrostats_cli:main"
+    hat-stations-mapping = "hat.mapping.station_mapping:main"
+
+# Code inspection
+[tool.black] 
+line-length = 79
+
 [tool.isort]
-profile = "black"
+profile="black"
+
+# Testing
+[tool.pytest]
+addopts = "--pdbcls=IPython.terminal.debugger:Pdb"
+testpaths = [
+    "tests",
+]
+
+# Packaging/setuptools options
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+readme = {file = ["README.md"], content-type = "text/markdown"}
+
+# [tool.setuptools.package_data]
+# hat = ["config_json/*.json"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+exclude = ["tests"]
+
+[tool.setuptools_scm]
+write_to = "hat/_version.py"
+write_to_template = '''
+# Do not change! Do not track in version control!
+__version__ = "{version}"
+'''
+parentdir_prefix_version='hat-'  # get version from GitHub-like tarballs
+fallback_version='0.7.1'

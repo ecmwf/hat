@@ -16,7 +16,9 @@ from ipywidgets import Layout
 
 
 class GeoJSONLayerManager:
-    def __init__(self, path, style_callback=None, point_style=None, name="Layer"):
+    def __init__(
+        self, path, style_callback=None, point_style=None, name="Layer"
+    ):
         self.gdf = gpd.read_file(path)
         self.style_callback = style_callback
         self.point_style = point_style
@@ -37,7 +39,9 @@ class GeoJSONLayerManager:
                 name=self.name,
             )
         else:
-            self.layer = GeoJSON(data=self.gdf.__geo_interface__, name=self.name)
+            self.layer = GeoJSON(
+                data=self.gdf.__geo_interface__, name=self.name
+            )
         map_object.add_layer(self.layer)
 
 
@@ -122,12 +126,18 @@ def make_line_click_handler(
         station_area = feature["properties"].get(station_area_attr, "N/A")
         near_area = feature["properties"].get(near_area_attr, "N/A")
         optimum_area = feature["properties"].get(optimum_area_attr, "N/A")
-        optimum_distance_cells = feature["properties"].get(optimum_dist_attr, "N/A")
+        optimum_distance_cells = feature["properties"].get(
+            optimum_dist_attr, "N/A"
+        )
 
         # Format numbers with comma separators
-        station_area = f"{station_area:,.1f}" if station_area != "N/A" else station_area
+        station_area = (
+            f"{station_area:,.1f}" if station_area != "N/A" else station_area
+        )
         near_area = f"{near_area:,.1f}" if near_area != "N/A" else near_area
-        optimum_area = f"{optimum_area:,.1f}" if optimum_area != "N/A" else optimum_area
+        optimum_area = (
+            f"{optimum_area:,.1f}" if optimum_area != "N/A" else optimum_area
+        )
         optimum_distance_cells = (
             f"{optimum_distance_cells:,.1f}"
             if optimum_distance_cells != "N/A"
@@ -203,7 +213,9 @@ def vector_style(feature, color, opacity=0.5, weight=1):
     }
 
 
-def attribute_based_style(row, attribute_name, threshold, color_above, color_below):
+def attribute_based_style(
+    row, attribute_name, threshold, color_above, color_below
+):
     """Style function for GeoJSON features based on an attribute value."""
     attribute_value = row.get(attribute_name)
     if attribute_value is not None:

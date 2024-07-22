@@ -13,7 +13,9 @@ def load_package_config(fname):
     resource_package = "hat"
     resource_path = os.path.join("config_json", fname)
 
-    config_string = pkg_resources.resource_string(resource_package, resource_path)
+    config_string = pkg_resources.resource_string(
+        resource_package, resource_path
+    )
     config = json.loads(config_string.decode())
 
     return config
@@ -50,7 +52,9 @@ def booleanify(config, key):
         return
 
     if str(config[key]).lower() not in ["true", "false"]:
-        raise ValueError(f'"{key}" configuration variable must be "True" or "False"')
+        raise ValueError(
+            f'"{key}" configuration variable must be "True" or "False"'
+        )
 
     if config[key].lower() == "true":
         config[key] = True
