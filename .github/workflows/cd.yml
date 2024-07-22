@@ -1,0 +1,17 @@
+on:
+  push
+jobs:
+  install_module:
+    runs-on: [hpc]
+    steps:
+      - uses: ecmwf-actions/reusable-workflows/ci-hpc-generic@v2
+        with:
+          # site: hpc    # optional input
+          troika_user: ${{ secrets.HPC_DEV_CI_SSH_USER }}
+          template: |
+            echo "Hello {{ name }}!"
+            mkdir -p /usr/local/apps/hat/test_module
+          sbatch_options: |
+            #SBATCH --job-name=cd_hat
+            #SBATCH --time=00:10:00
+            #SBATCH --qos=deploy
