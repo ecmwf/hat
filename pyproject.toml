@@ -88,8 +88,8 @@ include-package-data = true
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"], content-type = "text/markdown"}
 
-[tool.setuptools.package_data]
-hat = "config_json/*.json"
+# [tool.setuptools.package_data]
+# hat = "config_json/*.json"
 
 [tool.setuptools.packages.find]
 where = ["."]
