@@ -7,7 +7,7 @@ jobs:
       - uses: ecmwf-actions/reusable-workflows/ci-hpc-generic@v2
         with:
           # site: hpc    # optional input
-          troika_user: ${{ secrets.HPC_DEV_CI_SSH_USER }}
+          troika-user: ${{ secrets.HPC_DEV_CI_SSH_USER }}
           template: |
             echo "Hello {{ name }}!"
             mkdir -p /usr/local/apps/hat/test_module
