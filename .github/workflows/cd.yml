@@ -1,3 +1,5 @@
+name: cd-module
+
 on:
   workflow_dispatch:
       inputs:
@@ -20,7 +22,8 @@ jobs:
             # Declare an array to store the module versions
             python3_versions=("3.10.10-01" "3.11.8-01")
 
-            HAT_VERSION=${{ github.ref_name }}
+            HAT_VERSION=${{ inputs.module-name github.ref_name }}
+            ${{ github.event_name == 'workflow_dispatch' && 'unstable' || github.ref_name }}
 
             PREFIX=/usr/local/apps/hat/${HAT_VERSION}
             rm -rf $PREFIX
