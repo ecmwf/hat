@@ -1,6 +1,10 @@
 on:
   pull_request:
     branches: [ "main", "develop" ]
+# on:
+#   push:
+#     tags:
+#     - "*"
 jobs:
   install_module:
     runs-on: [hpc]
@@ -12,7 +16,7 @@ jobs:
             # Declare an array to store the module versions
             python3_versions=("3.10.10-01" "3.11.8-01")
 
-            HAT_VERSION=feature/module_action
+            HAT_VERSION=${{ github.ref_name }}
 
             PREFIX=/usr/local/apps/hat/${HAT_VERSION}
             rm -rf $PREFIX
