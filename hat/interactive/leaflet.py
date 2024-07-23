@@ -225,8 +225,7 @@ class PyleafletColormap:
         """
         # Convert the colormap to a list of RGB values
         rgb_values = [
-            mpl.colors.rgb2hex(self.colormap(i))
-            for i in np.linspace(0, 1, 256)
+            mpl.colors.rgb2hex(self.colormap(i)) for i in np.linspace(0, 1, 256)
         ]
 
         # Create a gradient style using the RGB values

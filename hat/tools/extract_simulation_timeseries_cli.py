@@ -19,16 +19,11 @@ from hat.config import read_config
 
 # hat modules
 from hat.data import read_simulation_as_xarray, save_dataset_to_netcdf
-from hat.extract_simulation_timeseries import (
-    DEFAULT_CONFIG,
-    extract_timeseries,
-)
+from hat.extract_simulation_timeseries import DEFAULT_CONFIG, extract_timeseries
 from hat.observations import read_station_metadata_file
 
 
-def print_overview(
-    config: dict, station_metadata: gpd.GeoDataFrame, simulation
-):
+def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, simulation):
     """Print overview of relevant information for user"""
 
     title("Configuration", color="cyan")

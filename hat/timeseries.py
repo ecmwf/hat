@@ -114,9 +114,7 @@ def assign_stations(
         station_id = station[station_dim]
 
         # timeseries index for a given station
-        timeseries_index = station_timeseries_index(
-            station, lon_in_mask, lat_in_mask
-        )
+        timeseries_index = station_timeseries_index(station, lon_in_mask, lat_in_mask)
 
         # add to the list
         stations_id += [station_id]

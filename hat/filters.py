@@ -92,9 +92,7 @@ def stations_with_discharge(obs, timeperiod, metadata):
     return metadata, obsdis
 
 
-def apply_filter(
-    df: pd.DataFrame, key: str, operator: str, value: str
-) -> pd.DataFrame:
+def apply_filter(df: pd.DataFrame, key: str, operator: str, value: str) -> pd.DataFrame:
     """
     Apply the filter on the DataFrame based on the provided
     key, operator, and value.
@@ -109,9 +107,7 @@ def apply_filter(
     }
 
     if key not in df.columns:
-        raise ValueError(
-            f"Key '{key}' does not exist as column name in dataframe"
-        )
+        raise ValueError(f"Key '{key}' does not exist as column name in dataframe")
 
     if operator not in operators:
         raise ValueError(f"Operator '{operator}' is not supported")
@@ -141,25 +137,19 @@ def filter_dataframe(df, filters: str):
             continue
         parts = filter_str.split()
         if len(parts) != 3:
-            raise ValueError(
-                "Invalid filter format. Expected 'key operator value'."
-            )
+            raise ValueError("Invalid filter format. Expected 'key operator value'.")
 
         key, operator, value = parts
 
         df = apply_filter(df, key, operator, value)
 
     if len(df) == 0:
-        raise ValueError(
-            "There are no remaining rows (try different filters?)"
-        )
+        raise ValueError("There are no remaining rows (try different filters?)")
 
     return df
 
 
-def filter_timeseries(
-    sims_ds: xr.DataArray, obs_ds: xr.DataArray, threshold=80
-):
+def filter_timeseries(sims_ds: xr.DataArray, obs_ds: xr.DataArray, threshold=80):
     """Clean the simulation and observation timeseries
 
     Only keep..

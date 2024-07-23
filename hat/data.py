@@ -77,9 +77,7 @@ def find_files(simulation_files):
     fpaths = glob.glob(simulation_files)
 
     if not fpaths:
-        raise Exception(
-            f"Could not find any file from regex {simulation_files}"
-        )
+        raise Exception(f"Could not find any file from regex {simulation_files}")
     else:
         print("Found following simulation files:")
         print(*fpaths, sep="\n")
@@ -115,9 +113,7 @@ def dirsize(simulation_datadir, bytesize=False):
     """given a root directory return total size of all files
     in a directory in human readable format"""
 
-    if not os.path.exists(simulation_datadir) or not os.path.isdir(
-        simulation_datadir
-    ):
+    if not os.path.exists(simulation_datadir) or not os.path.isdir(simulation_datadir):
         print("Not a directory", simulation_datadir)
         return
 
@@ -182,9 +178,7 @@ def raster_loader(fpath: str, epsg: int = 4326, engine=None):
     xarr.attrs["fname"] = os.path.basename(fpath)
     xarr.attrs["experiment_name"] = pathlib.Path(fpath).stem
     xarr.attrs["file_extension"] = pathlib.Path(fpath).suffix
-    xarr.attrs["river_network"] = river_network_from_filename(
-        xarr.attrs["fname"]
-    )
+    xarr.attrs["river_network"] = river_network_from_filename(xarr.attrs["fname"])
 
     return xarr
 
@@ -267,9 +261,7 @@ def save_dataset_to_netcdf(ds: xr.Dataset, fpath: str):
 
 
 def find_main_var(ds, min_dim=3):
-    variable_names = [
-        k for k in ds.variables if len(ds.variables[k].dims) >= min_dim
-    ]
+    variable_names = [k for k in ds.variables if len(ds.variables[k].dims) >= min_dim]
     if len(variable_names) > 1:
         raise Exception("More than one variable in dataset")
     elif len(variable_names) == 0:
@@ -299,16 +291,10 @@ def read_simulation_as_xarray(options):
     fs = earthkit.data.from_source(src_type, *args)
 
     xarray_kwargs = {}
-    if isinstance(
-        fs, earthkit.data.readers.netcdf.fieldlist.NetCDFMultiFieldList
-    ):
-        xarray_kwargs["xarray_open_mfdataset_kwargs"] = {
-            "chunks": {"time": "auto"}
-        }
+    if isinstance(fs, earthkit.data.readers.netcdf.fieldlist.NetCDFMultiFieldList):
+        xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {"time": "auto"}}
     else:
-        xarray_kwargs["xarray_open_dataset_kwargs"] = {
-            "chunks": {"time": "auto"}
-        }
+        xarray_kwargs["xarray_open_dataset_kwargs"] = {"chunks": {"time": "auto"}}
 
     # xarray dataset
     ds = fs.to_xarray(**xarray_kwargs)

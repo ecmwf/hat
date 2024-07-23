@@ -67,10 +67,6 @@ dependencies = [
     hat-hydrostats = "hat.tools.hydrostats_cli:main"
     hat-stations-mapping = "hat.mapping.station_mapping:main"
 
-# Code inspection
-[tool.black] 
-line-length = 79
-
 [tool.isort]
 profile="black"
 

@@ -156,9 +156,7 @@ def _filter_nan_values(dates, data_values):
     assert len(dates) == len(
         data_values
     ), "Dates and data values must be the same length."
-    valid_dates = [
-        date for date, val in zip(dates, data_values) if not np.isnan(val)
-    ]
+    valid_dates = [date for date, val in zip(dates, data_values) if not np.isnan(val)]
     valid_data = [val for val in data_values if not np.isnan(val)]
 
     return valid_dates, valid_data
@@ -220,9 +218,7 @@ class PlotlyWidget(Widget):
         date_picker_box = HBox([self.start_date_picker, self.end_date_picker])
 
         layout = Layout(justify_content="center", align_items="center")
-        output = VBox(
-            [self.figure, date_label, date_picker_box], layout=layout
-        )
+        output = VBox([self.figure, date_label, date_picker_box], layout=layout)
         super().__init__(output)
 
     def _update_plot_dates(self):
@@ -441,9 +437,7 @@ class MetaDataWidget(HTMLTableWidget):
 
     def _extract_dataframe(self, station_id):
         stations_df = self.dataframe
-        selected_station_df = stations_df[
-            stations_df[self.station_index] == station_id
-        ]
+        selected_station_df = stations_df[stations_df[self.station_index] == station_id]
         return selected_station_df
 
 
@@ -497,11 +491,7 @@ class StatisticsWidget(HTMLTableWidget):
         statistics_df = pd.DataFrame(data, columns=columns)
 
         # Round the numerical columns to 2 decimal places
-        numerical_columns = [
-            col for col in statistics_df.columns if col != "Exp. name"
-        ]
-        statistics_df[numerical_columns] = statistics_df[
-            numerical_columns
-        ].round(2)
+        numerical_columns = [col for col in statistics_df.columns if col != "Exp. name"]
+        statistics_df[numerical_columns] = statistics_df[numerical_columns].round(2)
 
         return statistics_df

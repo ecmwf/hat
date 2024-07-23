@@ -32,9 +32,7 @@ class DummyWidget(wd.Widget):
 class TestWidgetsManager:
     def test_update(self):
         dummy = DummyWidget()
-        widgets = wd.WidgetsManager(
-            widgets={"dummy": dummy}, index_column="station"
-        )
+        widgets = wd.WidgetsManager(widgets={"dummy": dummy}, index_column="station")
         feature = {
             "properties": {
                 "station": "A",
@@ -189,9 +187,7 @@ class TestPyleafletColormap:
                 "station": 4,
             }
         }
-        colormap = lf.PyleafletColormap(
-            self.config, self.stats, empty_color="black"
-        )
+        colormap = lf.PyleafletColormap(self.config, self.stats, empty_color="black")
         style_fct = colormap.style_callback()
         style = style_fct(feature)
         assert style["fillColor"] == "black"
