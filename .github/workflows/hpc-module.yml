@@ -7,11 +7,11 @@ on:
           description: 'Module name'
           required: true
           type: string
-      module-tag:
-        description: 'Module tag'
-        required: false
-        default: 'NOT_DEFINED'
-        type: string
+        module-tag:
+          description: 'Module tag'
+          required: false
+          default: 'NOT_DEFINED'
+          type: string
   push:
     tags:
     - '[0-9]+.[0-9]+.[0-9]+'
@@ -50,7 +50,7 @@ jobs:
 
             if [ $MODULE_TAG != 'NOT_DEFINED' ]
             then
-                modulemgr -f -m all tag hat $MODULE_VERSION $MODULE_TAG
+                modulemgr -f -o -m all tag hat $MODULE_VERSION $MODULE_TAG
             fi
 
           sbatch_options: |
