@@ -387,7 +387,8 @@ def save_geo_dataframes(df, out_dir, cell_size):
 
     # Create GeoDataFrames
     gdf_station_point = gpd.GeoDataFrame(
-        df, geometry=[Point(xy) for xy in zip(df["station_lon"], df["station_lat"])]
+        df,
+        geometry=[Point(xy) for xy in zip(df["station_lon"], df["station_lat"])],
     )
     gdf_near_grid_polygon = gpd.GeoDataFrame(
         df, geometry=df["near_grid_polygon_wkt"].apply(loads)
@@ -408,7 +409,8 @@ def save_geo_dataframes(df, out_dir, cell_size):
         os.path.join(out_dir, "optimum_grid.geojson"), driver="GeoJSON"
     )
     gdf_line_optimum.to_file(
-        os.path.join(out_dir, "stations2grid_optimum_line.geojson"), driver="GeoJSON"
+        os.path.join(out_dir, "stations2grid_optimum_line.geojson"),
+        driver="GeoJSON",
     )
     gdf_station_point.to_csv(os.path.join(out_dir, "stations.csv"))
 

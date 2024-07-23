@@ -192,7 +192,11 @@ class PlotlyWidget(Widget):
                 height=350,
                 margin=dict(l=120),
                 legend=dict(
-                    orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1,
                 ),
                 xaxis_title="Date",
                 xaxis_tickformat="%d-%m-%Y",
@@ -262,9 +266,7 @@ class PlotlyWidget(Widget):
         """
         station_id = metadata["station_id"]
         station_name = metadata["StationName"]
-        updated_title = (
-            f"<b>Selected station:<br>ID: {station_id}, name: {station_name}</b> "
-        )
+        updated_title = f"<b>Selected station:<br>ID: {station_id}, name: {station_name}</b> "  # noqa: E501
         self.figure.update_layout(
             title={
                 "text": updated_title,

@@ -39,7 +39,8 @@ class LeafletMap:
         basemap=ipyleaflet.basemaps.OpenStreetMap.Mapnik,
     ):
         self.map = ipyleaflet.Map(
-            basemap=basemap, layout=ipywidgets.Layout(width="100%", height="600px")
+            basemap=basemap,
+            layout=ipywidgets.Layout(width="100%", height="600px"),
         )
         self.legend_widget = ipywidgets.Output()
 
@@ -56,7 +57,10 @@ class LeafletMap:
         min_lat, max_lat = min(lats), max(lats)
         min_lon, max_lon = min(lons), max(lons)
 
-        bounds = [(float(min_lat), float(min_lon)), (float(max_lat), float(max_lon))]
+        bounds = [
+            (float(min_lat), float(min_lon)),
+            (float(max_lat), float(max_lon)),
+        ]
         self.map.fit_bounds(bounds)
 
     def add_geolayer(self, geodata, colormap, widgets, coord_names=None):

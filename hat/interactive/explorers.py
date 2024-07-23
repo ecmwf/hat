@@ -260,7 +260,11 @@ class TimeSeriesExplorer:
         self.title_label = ipywidgets.Label(
             "Interactive Map Visualisation for Hydrological Model Performance",
             layout=ipywidgets.Layout(justify_content="center"),
-            style={"font_weight": "bold", "font_size": "24px", "font_family": "Arial"},
+            style={
+                "font_weight": "bold",
+                "font_size": "24px",
+                "font_family": "Arial",
+            },
         )
 
         # Create the interactive widgets
@@ -302,7 +306,10 @@ class TimeSeriesExplorer:
             width="40%",
         )
         right_layout = ipywidgets.Layout(
-            justify_content="center", align_items="center", spacing="2px", width="60%"
+            justify_content="center",
+            align_items="center",
+            spacing="2px",
+            width="60%",
         )
 
         # Frames

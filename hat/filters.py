@@ -4,7 +4,10 @@ import xarray as xr
 
 # @st.cache_data
 def temporal_filter(
-    _metadata, _observations: pd.DataFrame, timeperiod, station_id_name="station_id"
+    _metadata,
+    _observations: pd.DataFrame,
+    timeperiod,
+    station_id_name="station_id",
 ):
     """
     filter station metadata and timeseries by timeperiod

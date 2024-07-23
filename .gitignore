@@ -1,6 +1,6 @@
 
 
-# Added by Sam Murphy
+# project specific
 .DS_Store
 *.png
 *.nc
@@ -11,7 +11,7 @@
 notebooks/untracked/*
 **/data/
 .vscode/launch.json
-
+hat/_version.py
 
 # GENERIC PYTHON GITIGNORE FROM GIT HUB
 #

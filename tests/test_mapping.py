@@ -74,7 +74,12 @@ def test_create_grid_polygon():
     lat, lon = 2.5, 2.5
     cell_size = 1
     polygon = create_grid_polygon(lat, lon, cell_size)
-    assert polygon.bounds == (2, 2, 3, 3)  # Check if the polygon bounds are as expected
+    assert polygon.bounds == (
+        2,
+        2,
+        3,
+        3,
+    )  # Check if the polygon bounds are as expected
 
 
 @pytest.fixture
