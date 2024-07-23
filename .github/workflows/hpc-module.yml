@@ -36,7 +36,7 @@ jobs:
             module load python3
 
             PYTHONUSERBASE=$PREFIX pip3 install --user git+https://github.com/ecmwf/hat.git@${HAT_BRANCH}
-            HAT_VERSION=$(python3 -c "import hat; print(hat._version.__version__)")
+            HAT_VERSION=$(python3 -c 'import hat; print(hat._version.__version__)')
 
             module unload python3
 
