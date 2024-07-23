@@ -45,7 +45,7 @@ jobs:
 
             if [ $MODULE_TAG != 'NOT_DEFINED' ]
             then
-                modulemgr -f -o -m all tag hat $MODULE_VERSION $MODULE_TAG
+                modulemgr -f -m all tag -o hat $MODULE_VERSION $MODULE_TAG
             fi
 
           sbatch_options: |
