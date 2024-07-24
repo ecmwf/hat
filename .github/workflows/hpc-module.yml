@@ -28,7 +28,7 @@ jobs:
             MODULE_TAG=${{ github.event_name == 'workflow_dispatch' && inputs.module-tag || 'default'}}
             HAT_BRANCH=${{ github.ref_name }}
 
-            PREFIX=/usr/local/apps/hat/${MODULE_VERSION}
+            PREFIX=${{ secrets.HPC_APPS_DIR }}/hat/${MODULE_VERSION}
             rm -rf $PREFIX
             mkdir -p $PREFIX
 
