@@ -17,7 +17,7 @@ Clone source code repository
 
 Create and activate conda environment
 
-    $ conda env create  -n hat python<=3.10
+    $ conda env create  -n hat python=3.10
     $ conda activate hat
 
 For default installation, run
@@ -34,7 +34,7 @@ If you plan to build a source and a wheel distribution, it is additionally requi
     $ pip install build
 
 ### Usage
-    
+
 Run a command line tool
 
     $ hat-extract-timeseries --help
