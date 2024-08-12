@@ -7,23 +7,23 @@ on:
     branches: [ "main", "develop" ]
 
 jobs:
-  
+
   quality_assurance:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: pip install black flake8 isort
+      - run: pip install black ruff isort
       - run: isort --check .
       - run: black --check .
       - run: ruff check
-  
+
   docs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - run: pip install -r docs/requirements.txt
       - run: mkdocs build
-  
+
   setup_and_test:
     runs-on: ubuntu-latest
     steps:
