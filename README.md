@@ -14,6 +14,7 @@ Interfaces and functionality are likely to change, and the project itself may be
 Clone source code repository
 
     $ git clone https://github.com/ecmwf/hat.git
+    $ cd hat
 
 Create and activate conda environment
 
@@ -28,6 +29,10 @@ For a developer installation (includes linting and test libraries), run
 
     $ pip install .[dev]
     $ pre-commit install
+
+If you only plan to run the tests, instead run
+
+    $ pip install .[test]
 
 If you plan to build a source and a wheel distribution, it is additionally required to run
 

@@ -10,15 +10,6 @@ repos:
           - id: ruff
             args: [ --fix ]
           - id: ruff-format
-    - repo: https://github.com/psf/black
-      rev: 24.8.0
-      hooks:
-          - id: black
-    - repo: https://github.com/PyCQA/isort
-      rev: 5.13.2
-      hooks:
-          - id: isort
-            args: ["--profile", "black", "--filter-files"]
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v4.4.0
       hooks:

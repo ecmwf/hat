@@ -58,9 +58,7 @@ dependencies = [
     ]
     dev = [
         "pytest",
-        "black",
         "ruff",
-        "isort",
         "pre-commit"
     ]
 
@@ -70,8 +68,17 @@ dependencies = [
     hat-stations-mapping = "hat.mapping.station_mapping:main"
 
 # Code inspection
-[tool.isort]
-profile = "black"
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F403", "F401"]
+"**/{tests}/*" = ["E402"]
 
 # Testing
 [tool.pytest]
