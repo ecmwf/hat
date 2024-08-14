@@ -1,6 +1,9 @@
 # HAT - Hydrological Analysis Toolkit
 
-HAT is a suite of tools to perform data analysis on hydrological datasets.
+The Hydrological Analysis Toolkit (HAT) is a software suite for hydrologists working with simulated and observed river discharge. HAT performs data analysis on hydrological datasets, with its main features being:
+- mapping station locations into hydrological model grids
+- extraction of timeseries
+- statistical analysis of hydrological timeseries
 
 The documentation can be found at https://hydro-analysis-toolkit.readthedocs.io
 
@@ -18,7 +21,7 @@ Clone source code repository
 
 Create and activate conda environment
 
-    $ conda env create  -n hat python=3.10
+    $ conda env create -n hat python=3.10
     $ conda activate hat
 
 For default installation, run
