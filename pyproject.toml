@@ -67,7 +67,7 @@ dependencies = [
     hat-hydrostats = "hat.tools.hydrostats_cli:main"
     hat-stations-mapping = "hat.mapping.station_mapping:main"
 
-# Code inspection
+# Linting settings
 [tool.ruff]
 line-length = 120
 indent-width = 4
@@ -75,10 +75,6 @@ indent-width = 4
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
-
-[tool.ruff.lint.per-file-ignores]
-"__init__.py" = ["E402", "F403", "F401"]
-"**/{tests}/*" = ["E402"]
 
 # Testing
 [tool.pytest]
