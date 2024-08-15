@@ -2,20 +2,16 @@
 
 Clone source code repository
 
-    git clone git@github.com:ecmwf-projects/hat.git
+    git clone https://github.com/ecmwf/hat.git
+    cd hat
 
 Create conda python environment
 
-    cd hat
-
     # If on HPC..
     # module load conda
-
-    conda env create -f environment.yml
+    conda env create -n hat python=3.10
     conda activate hat
 
-Install HAT software
+Installation of required dependencies
 
     pip install .
-
-Open a new terminal to start

@@ -23,40 +23,41 @@ jobs:
     name: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v2
-      - run: python -m pip install .
+      - name: install hat package
+        shell: bash -l {0}
+        run: pip install .
 
   test:
     name: test
     runs-on: ubuntu-latest
+    needs: [setup]
     steps:
-      - uses: actions/checkout@v2
-      - uses: mamba-org/setup-micromamba@v1
-        with:
-          activate-environment: test
-          environment-file: environment.yml
-          auto-activate-base: false
-      - name: install hat package
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v2
+      - name: developer install of hat package
         shell: bash -l {0}
-        run: pip install .
+        run: pip install .[test]
       - name: run tests
         shell: bash -l {0}
-        run: |
-          pip install pytest
-          pytest
+        run: pytest
 
   distribution:
+    name: distribution
     runs-on: ubuntu-latest
-    needs: [setup, test]
-
+    needs: [setup]
     steps:
     - uses: actions/checkout@v3
-    - name: Build distributions
+    - uses: actions/setup-python@v2
+    - name: install hat package
+      shell: bash -l {0}
+      run: pip install .
+    - name: build distributions
       run: |
-        $CONDA/bin/python -m pip install build
-        $CONDA/bin/python -m build
-    - name: Publish a Python distribution to PyPI
+        pip install build
+        python build
+    - name: publish a Python distribution to PyPI
       if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
