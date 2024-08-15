@@ -2,7 +2,7 @@
 
 If you have already [installed](installation.md) hat then
 
-#### Activate environment
+#### Activate Environment
 
     $ conda activate hat
 
@@ -21,4 +21,3 @@ In your python code you can import the hat module
     import hat
 
 For examples, please see these [jupyter notebooks](https://github.com/ecmwf-projects/hat/tree/main/notebooks)
-
