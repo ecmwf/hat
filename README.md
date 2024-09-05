@@ -21,7 +21,7 @@ Clone source code repository
 
 Create and activate conda environment
 
-    $ conda env create -n hat python=3.10
+    $ conda create -n hat python=3.10
     $ conda activate hat
 
 For default installation, run
@@ -30,12 +30,12 @@ For default installation, run
 
 For a developer installation (includes linting and test libraries), run
 
-    $ pip install .[dev]
+    $ pip install -e .[dev]
     $ pre-commit install
 
 If you only plan to run the tests, instead run
 
-    $ pip install .[test]
+    $ pip install -e .[test]
 
 If you plan to build a source and a wheel distribution, it is additionally required to run
 
