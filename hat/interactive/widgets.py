@@ -113,9 +113,7 @@ class WidgetsManager:
             return
 
         if self.loading_widget is not None:
-            self.loading_widget.value = (
-                "Loading..."  # Indicate that data is being loaded
-            )
+            self.loading_widget.value = "Loading..."  # Indicate that data is being loaded
 
         # Extract station_id from the selected feature
         if isinstance(feature, dict):
@@ -163,9 +161,7 @@ def _filter_nan_values(dates, data_values):
     """
     Filters out NaN values and their associated dates.
     """
-    assert len(dates) == len(
-        data_values
-    ), "Dates and data values must be the same length."
+    assert len(dates) == len(data_values), "Dates and data values must be the same length."
     valid_dates = [date for date, val in zip(dates, data_values) if not np.isnan(val)]
     valid_data = [val for val in data_values if not np.isnan(val)]
 
@@ -202,7 +198,11 @@ class PlotlyWidget(Widget):
                 height=350,
                 margin=dict(l=120),
                 legend=dict(
-                    orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1,
                 ),
                 xaxis_title="Date",
                 xaxis_tickformat="%d-%m-%Y",
@@ -218,9 +218,7 @@ class PlotlyWidget(Widget):
         self.start_date_picker.observe(self._update_plot_dates, names="value")
         self.end_date_picker.observe(self._update_plot_dates, names="value")
 
-        date_label = Label(
-            "Please select the date to accurately change the date axis of the plot"
-        )
+        date_label = Label("Please select the date to accurately change the date axis of the plot")
         date_picker_box = HBox([self.start_date_picker, self.end_date_picker])
 
         layout = Layout(justify_content="center", align_items="center")
@@ -242,9 +240,7 @@ class PlotlyWidget(Widget):
         for name, ds in self.datasets.items():
             if station_id in ds["station"].values:
                 ds_time_series_data = ds.sel(station=station_id).values
-                valid_dates_ds, valid_data_ds = _filter_nan_values(
-                    self.ds_time_str, ds_time_series_data
-                )
+                valid_dates_ds, valid_data_ds = _filter_nan_values(self.ds_time_str, ds_time_series_data)
                 self._update_trace(valid_dates_ds, valid_data_ds, name)
             else:
                 print(f"Station ID: {station_id} not found in dataset {name}.")
@@ -262,9 +258,7 @@ class PlotlyWidget(Widget):
                     trace.x = x_data
                     trace.y = y_data
         else:
-            self.figure.add_trace(
-                go.Scatter(x=x_data, y=y_data, mode="lines", name=name)
-            )
+            self.figure.add_trace(go.Scatter(x=x_data, y=y_data, mode="lines", name=name))
 
     def _update_title(self, metadata):
         """
@@ -272,9 +266,7 @@ class PlotlyWidget(Widget):
         """
         station_id = metadata["station_id"]
         station_name = metadata["StationName"]
-        updated_title = (
-            f"<b>Selected station:<br>ID: {station_id}, name: {station_name}</b> "
-        )
+        updated_title = f"<b>Selected station:<br>ID: {station_id}, name: {station_name}</b> "  # noqa: E501
         self.figure.update_layout(
             title={
                 "text": updated_title,
@@ -346,9 +338,7 @@ class HTMLTableWidget(Widget):
                 }
             </style>
             """
-        self.stat_title_style = (
-            "style='font-size: 18px; font-weight: bold; text-align: center;'"
-        )
+        self.stat_title_style = "style='font-size: 18px; font-weight: bold; text-align: center;'"
         # Initialize the stat_table_html and station_table_html with empty tables
         empty_df = pd.DataFrame()
         self._display_dataframe_with_scroll(empty_df, title=self.title)
@@ -465,9 +455,7 @@ class StatisticsWidget(HTMLTableWidget):
         title = "Model Performance Statistics Overview"
         self.statistics = statistics
         for stat in self.statistics.values():
-            assert (
-                "station" in stat.dims
-            ), 'Dimension "station" not found in statistics datasets.'  # noqa: E501
+            assert "station" in stat.dims, 'Dimension "station" not found in statistics datasets.'  # noqa: E501
         super().__init__(title)
 
     def _extract_dataframe(self, station_id):
@@ -522,13 +510,13 @@ def crps(x, y):
 
     # construct alpha and beta, size nens+1
     n_ens = x.shape[0]
-    shape = (n_ens+1,)+x.shape[1:]
+    shape = (n_ens + 1,) + x.shape[1:]
     alpha = np.zeros(shape)
     beta = np.zeros(shape)
 
     # x[i+1]-x[i] and x[i]-y[i] arrays
-    diffxy = x-y.reshape(1, *(y.shape))
-    diffxx = x[1:]-x[:-1]  # x[i+1]-x[i], size ens-1
+    diffxy = x - y.reshape(1, *(y.shape))
+    diffxx = x[1:] - x[:-1]  # x[i+1]-x[i], size ens-1
 
     # if i == 0
     alpha[0] = 0
@@ -541,8 +529,8 @@ def crps(x, y):
     beta[1:-1] = np.fmin(diffxx, np.fmax(diffxy[1:], 0))  # 0 or x(i+1)-y or x(i+1)-x(i)
 
     # compute crps
-    p_exp = (np.arange(n_ens+1)/float(n_ens)).reshape(n_ens+1, *([1]*y.ndim))
-    crps = np.sum(alpha*(p_exp**2) + beta*((1-p_exp)**2), axis=0)
+    p_exp = (np.arange(n_ens + 1) / float(n_ens)).reshape(n_ens + 1, *([1] * y.ndim))
+    crps = np.sum(alpha * (p_exp**2) + beta * ((1 - p_exp) ** 2), axis=0)
 
     return crps
 
@@ -604,10 +592,10 @@ class PPForecastPlotWidget(Widget):
             layout=Layout(width="1000px", align_items="center"),
         )
 
-        lower_crps_file = os.path.join(self.config['climatology'], 'crps_obs_fcst.csv')
-        upper_crps_file = os.path.join(self.config['climatology'], 'crps_obs_mcp.csv')
-        self.crps_lower = pd.read_csv(lower_crps_file, index_col='Unnamed: 0')
-        self.crps_upper = pd.read_csv(upper_crps_file, index_col='Unnamed: 0')
+        lower_crps_file = os.path.join(self.config["climatology"], "crps_obs_fcst.csv")
+        upper_crps_file = os.path.join(self.config["climatology"], "crps_obs_mcp.csv")
+        self.crps_lower = pd.read_csv(lower_crps_file, index_col="Unnamed: 0")
+        self.crps_upper = pd.read_csv(upper_crps_file, index_col="Unnamed: 0")
 
         super().__init__(output)
 
@@ -618,9 +606,7 @@ class PPForecastPlotWidget(Widget):
             self.index = index
 
         # station metadata
-        metadata = self.stations_metadata.loc[
-            self.stations_metadata[self.station_index] == index
-        ]
+        metadata = self.stations_metadata.loc[self.stations_metadata[self.station_index] == index]
         if metadata.empty:
             with self.figure:
                 print(f"Station ID: {index} not found in the stations metadata.")
@@ -662,12 +648,12 @@ class PPForecastPlotWidget(Widget):
         obs_dates = []
         obs_values = []
         for date in valid_dates:  # dates are backwards
-            date_obj = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+            date_obj = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
             if date_obj in obs_station.index and date_obj >= self.date:
                 obs_dates.append(date_obj)
                 obs_values.append(obs_station.loc[date_obj])
         if not obs_dates:
-            print('No observations available for this station, skipping observations plot')
+            print("No observations available for this station, skipping observations plot")
             rt_obs = None
             fc_crps = None
         else:
@@ -681,14 +667,12 @@ class PPForecastPlotWidget(Widget):
 
         with self.figure:
             clear_output(wait=True)
-            self.psf.plot_site_forecast(
-                pp_objects, display=True, rt_observations=rt_obs
-            )
+            self.psf.plot_site_forecast(pp_objects, display=True, rt_observations=rt_obs)
             if index in self.crps_lower:
                 fc_crps = np.flip(fc_crps[1:])
                 self.psf.plot_crps(self.crps_lower[str(index)], self.crps_upper[str(index)], fc_crps)
             else:
-                print(f'No CRPS data available for station {index}')
+                print(f"No CRPS data available for station {index}")
 
     def _update_date(self, *args, **kwargs):
         """

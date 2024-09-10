@@ -43,7 +43,8 @@ class LeafletMap:
         basemap=ipyleaflet.basemaps.OpenStreetMap.Mapnik,
     ):
         self.map = ipyleaflet.Map(
-            basemap=basemap, layout=ipywidgets.Layout(width="100%", height="600px")
+            basemap=basemap,
+            layout=ipywidgets.Layout(width="100%", height="600px"),
         )
         self.legend_widget = ipywidgets.Output()
 
@@ -60,7 +61,10 @@ class LeafletMap:
         min_lat, max_lat = min(lats), max(lats)
         min_lon, max_lon = min(lons), max(lons)
 
-        bounds = [(float(min_lat), float(min_lon)), (float(max_lat), float(max_lon))]
+        bounds = [
+            (float(min_lat), float(min_lon)),
+            (float(max_lat), float(max_lon)),
+        ]
         self.map.fit_bounds(bounds)
 
     def _update_boundaries_from_station(self, station_id, metadata, coord_names):
@@ -70,7 +74,7 @@ class LeafletMap:
         lon_column = coord_names[0]
         lat_column = coord_names[1]
 
-        station_metadata = metadata[metadata['station_id'] == station_id]
+        station_metadata = metadata[metadata["station_id"] == station_id]
         lon = float(station_metadata[lon_column].values[0])
         lat = float(station_metadata[lat_column].values[0])
 
@@ -133,12 +137,12 @@ class LeafletMap:
             point_style={"radius": 5},
             style_callback=colormap.style_callback(),
         )
-        
+
         def update_widgets_from_click(*args, **kwargs):
             widgets.update(*args, **kwargs)
             # station_id = kwargs["feature"]["properties"]["station_id"]
             # self._update_boundaries_from_station(station_id, geodata, coord_names)
-        
+
         geojson.on_click(update_widgets_from_click)
         geojson.on_hover(self.create_hover(widgets))
         self.map.add(geojson)
@@ -158,7 +162,7 @@ class LeafletMap:
         def update_widgets_from_text(*args, **kwargs):
             station_id = text_input.value
             widgets.update(station_id)
-            self._update_boundaries_from_station(station_id, geodata, coord_names)            
+            self._update_boundaries_from_station(station_id, geodata, coord_names)
 
         text_button.on_click(update_widgets_from_text)
 
@@ -194,9 +198,7 @@ class PyleafletColormap:
             An HTML widget containing the colormap legend.
         """
         # Convert the colormap to a list of RGB values
-        rgb_values = [
-            mpl.colors.rgb2hex(self.colormap(i)) for i in np.linspace(0, 1, 256)
-        ]
+        rgb_values = [mpl.colors.rgb2hex(self.colormap(i)) for i in np.linspace(0, 1, 256)]
 
         # Create a gradient style using the RGB values
         gradient_style = ", ".join(rgb_values)
@@ -272,9 +274,7 @@ class StatsColormap(PyleafletColormap):
         self.empty_color = empty_color
         self.default_color = default_color
         if self.stats is not None:
-            assert (
-                "station_id_column_name" in self.config
-            ), 'Config must contain "station_id_column_name"'
+            assert "station_id_column_name" in self.config, 'Config must contain "station_id_column_name"'
             # Normalize the data for coloring
             if range is None:
                 self.min_val = self.stats.values.min()
@@ -289,10 +289,7 @@ class StatsColormap(PyleafletColormap):
         try:
             colormap = mpl.colormaps[colormap_style]
         except KeyError:
-            raise KeyError(
-                f"Colormap {colormap_style} not found. "
-                f"Available colormaps are: {mpl.colormaps}"
-            )
+            raise KeyError(f"Colormap {colormap_style} not found. " f"Available colormaps are: {mpl.colormaps}")
 
         super().__init__(colormap)
 
@@ -301,14 +298,10 @@ class StatsColormap(PyleafletColormap):
             norm = plt.Normalize(self.min_val, self.max_val)
 
             def map_color(feature):
-                station_id = feature["properties"][
-                    self.config["station_id_column_name"]
-                ]
+                station_id = feature["properties"][self.config["station_id_column_name"]]
                 if station_id in self.stats.station.values:
                     station_stats = self.stats.sel(station=station_id)
-                    color = mpl.colors.rgb2hex(
-                        self.colormap(norm(station_stats.values))
-                    )
+                    color = mpl.colors.rgb2hex(self.colormap(norm(station_stats.values)))
                 else:
                     color = self.empty_color
                 style = {
@@ -357,11 +350,7 @@ class PPColormap(PyleafletColormap):
         for file_path in file_paths:
             with open(file_path, "r") as file:
                 contents = file.read()
-                numbers = [
-                    number.strip()
-                    for number in contents.split(",")
-                    if number.strip() != ""
-                ]
+                numbers = [number.strip() for number in contents.split(",") if number.strip() != ""]
                 numbers_set.update(numbers)
 
         return numbers_set

@@ -92,7 +92,11 @@ class TestPlotlyWidget:
 class TestMetaDataWidget:
     def test_update(self):
         df = pd.DataFrame(
-            {"col1": [1, 2, 3], "col2": ["a", "b", "c"], "col3": [0.1, 0.2, 0.3]}
+            {
+                "col1": [1, 2, 3],
+                "col2": ["a", "b", "c"],
+                "col3": [0.1, 0.2, 0.3],
+            }
         )
         widget = wd.MetaDataWidget(df, "col2")
         assert widget.update("a") is True

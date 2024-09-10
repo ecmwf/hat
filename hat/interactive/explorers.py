@@ -8,7 +8,6 @@ from IPython.display import display
 from hat.interactive.leaflet import (
     LeafletMap,
     PPColormap,
-    PyleafletColormap,
     StatsColormap,
 )
 from hat.interactive.widgets import (
@@ -87,9 +86,7 @@ def prepare_observations_data(observations, sim_ds, obs_var_name):
 
     if file_extension == ".csv":
         obs_df = pd.read_csv(observations, parse_dates=["Timestamp"])
-        obs_melted = obs_df.melt(
-            id_vars="Timestamp", var_name="station", value_name=obs_var_name
-        )
+        obs_melted = obs_df.melt(id_vars="Timestamp", var_name="station", value_name=obs_var_name)
         # Convert the melted DataFrame to xarray Dataset
         obs_ds = obs_melted.set_index(["Timestamp", "station"]).to_xarray()
         obs_ds = obs_ds.rename({"Timestamp": "time"})
@@ -256,12 +253,8 @@ class TimeSeriesExplorer(StationsExplorer):
         super().__init__(config, title)
 
         # Use the external functions to prepare data
-        sim_ds = prepare_simulations_data(
-            config["simulations"], config["sims_var_name"]
-        )
-        obs_ds = prepare_observations_data(
-            config["observations"], sim_ds, config["obs_var_name"]
-        )
+        sim_ds = prepare_simulations_data(config["simulations"], config["sims_var_name"])
+        obs_ds = prepare_observations_data(config["observations"], sim_ds, config["obs_var_name"])
 
         # set station index
         self.station_index = config["station_id_column_name"]
@@ -274,9 +267,7 @@ class TimeSeriesExplorer(StationsExplorer):
                 self.statistics[name] = xr.open_dataset(path)
 
         # Ensure the keys of self.statistics match the keys of self.sim_ds
-        assert set(self.statistics.keys()) == set(
-            sim_ds.keys()
-        ), "Mismatch between statistics and simulations keys."
+        assert set(self.statistics.keys()) == set(sim_ds.keys()), "Mismatch between statistics and simulations keys."
 
         # find common station ids between metadata, observation and simulations
         common_ids = find_common_stations(
@@ -288,12 +279,24 @@ class TimeSeriesExplorer(StationsExplorer):
         )
 
         print(f"Found {len(common_ids)} common stations")
-        self.stations_metadata = self.stations_metadata.loc[
-            self.stations_metadata[self.station_index].isin(common_ids)
-        ]
+        self.stations_metadata = self.stations_metadata.loc[self.stations_metadata[self.station_index].isin(common_ids)]
         obs_ds = obs_ds.sel(station=common_ids)
         for sim, ds in sim_ds.items():
             sim_ds[sim] = ds.sel(station=common_ids)
+
+        # Create loading widget
+        self.loading_widget = ipywidgets.Label(value="")
+
+        # Title label
+        self.title_label = ipywidgets.Label(
+            "Interactive Map Visualisation for Hydrological Model Performance",
+            layout=ipywidgets.Layout(justify_content="center"),
+            style={
+                "font_weight": "bold",
+                "font_size": "24px",
+                "font_family": "Arial",
+            },
+        )
 
         # Create the interactive widgets
         datasets = sim_ds
@@ -302,9 +305,7 @@ class TimeSeriesExplorer(StationsExplorer):
         widgets["plot"] = PlotlyWidget(datasets)
         widgets["stats"] = StatisticsWidget(self.statistics)
         widgets["meta"] = MetaDataWidget(self.stations_metadata, self.station_index)
-        self.widgets = WidgetsManager(
-            widgets, config["station_id_column_name"], self.loading_widget
-        )
+        self.widgets = WidgetsManager(widgets, config["station_id_column_name"], self.loading_widget)
 
     def create_frame(self):
         """
@@ -331,7 +332,10 @@ class TimeSeriesExplorer(StationsExplorer):
             width="40%",
         )
         right_layout = ipywidgets.Layout(
-            justify_content="center", align_items="center", spacing="2px", width="60%"
+            justify_content="center",
+            align_items="center",
+            spacing="2px",
+            width="60%",
         )
 
         # Frames
@@ -398,12 +402,8 @@ class PPForecastExplorer(StationsExplorer):
         # Create loading widget
         self.loading_widget = ipywidgets.Label(value="")
         widgets["meta"] = MetaDataWidget(self.stations_metadata, self.station_index)
-        widgets["plot"] = PPForecastPlotWidget(
-            config["pp"], self.stations_metadata, self.station_index
-        )
-        self.widgets = WidgetsManager(
-            widgets, config["station_id_column_name"], self.loading_widget
-        )
+        widgets["plot"] = PPForecastPlotWidget(config["pp"], self.stations_metadata, self.station_index)
+        self.widgets = WidgetsManager(widgets, config["station_id_column_name"], self.loading_widget)
 
     def create_frame(self):
         """

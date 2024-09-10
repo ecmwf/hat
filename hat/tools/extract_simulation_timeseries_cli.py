@@ -92,7 +92,7 @@ def command_line_tool(
     print_overview(cfg, stations, simulation)
 
     # Extract time series
-    timeseries = extract_timeseries(stations, simulation)
+    timeseries = extract_timeseries(stations, simulation, cfg)
     title("Timeseries extracted")
     print(timeseries)
 
