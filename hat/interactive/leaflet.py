@@ -339,50 +339,51 @@ class StatsColormap(PyleafletColormap):
 
         return map_color
 
-    class PPColormap(PyleafletColormap):
-        def __init__(self, config):
-            self.station_id_column_name = config["station_id_column_name"]
-            date = config["pp"]["date"]
-            fc_dir = os.path.join(
-                config["pp"]["forecast"],
-                date.strftime("%Y%m"),
-                f"PPR{date.strftime('%Y%m%d%H')}",
-            )
 
-            # Create a custom colormap with two colors: red and blue
-            cmap_colors = ["red", "blue"]
-            colormap = mpl.colors.ListedColormap(cmap_colors)
-            self.min_val = 0
-            self.max_val = 1
+class PPColormap(PyleafletColormap):
+    def __init__(self, config):
+        self.station_id_column_name = config["station_id_column_name"]
+        date = config["pp"]["date"]
+        fc_dir = os.path.join(
+            config["pp"]["forecast"],
+            date.strftime("%Y%m"),
+            f"PPR{date.strftime('%Y%m%d%H')}",
+        )
 
-            degraded_file = os.path.join(fc_dir, "fail_list_*.txt")
-            self.degraded_stations = self._get_degraded_stations(degraded_file)
+        # Create a custom colormap with two colors: red and blue
+        cmap_colors = ["red", "blue"]
+        colormap = mpl.colors.ListedColormap(cmap_colors)
+        self.min_val = 0
+        self.max_val = 1
 
-            super().__init__(colormap)
+        degraded_file = os.path.join(fc_dir, "fail_list_*.txt")
+        self.degraded_stations = self._get_degraded_stations(degraded_file)
 
-        def _get_degraded_stations(self, files_regex):
-            file_paths = glob.glob(files_regex)
-            numbers_set = set()
+        super().__init__(colormap)
 
-            for file_path in file_paths:
-                with open(file_path, "r") as file:
-                    contents = file.read()
-                    numbers = [number.strip() for number in contents.split(",") if number.strip() != ""]
-                    numbers_set.update(numbers)
+    def _get_degraded_stations(self, files_regex):
+        file_paths = glob.glob(files_regex)
+        numbers_set = set()
 
-            return numbers_set
+        for file_path in file_paths:
+            with open(file_path, "r") as file:
+                contents = file.read()
+                numbers = [number.strip() for number in contents.split(",") if number.strip() != ""]
+                numbers_set.update(numbers)
 
-        def style_callback(self):
-            def map_style(feature):
-                station_id = feature["properties"][self.station_id_column_name]
-                if station_id in self.degraded_stations:
-                    color = "red"
-                else:
-                    color = "green"
-                style = {
-                    "color": "black",
-                    "fillColor": color,
-                }
-                return style
+        return numbers_set
 
-            return map_style
+    def style_callback(self):
+        def map_style(feature):
+            station_id = feature["properties"][self.station_id_column_name]
+            if station_id in self.degraded_stations:
+                color = "red"
+            else:
+                color = "green"
+            style = {
+                "color": "black",
+                "fillColor": color,
+            }
+            return style
+
+        return map_style
