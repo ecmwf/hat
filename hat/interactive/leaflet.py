@@ -89,22 +89,23 @@ class LeafletMap:
 
     def create_hover(self, widgets):
         def hover_handler(feature, **kwargs):
-            index = widgets.index(feature, **kwargs)
-            # Create a popup with the index as its content
-            message = HTML()
-            message.value = f"ID {index}"
-            self.popup = Popup(
-                location=(
-                    feature["geometry"]["coordinates"][1],
-                    feature["geometry"]["coordinates"][0],
-                ),
-                child=message,
-                close_button=False,
-                auto_close=True,
-                close_on_escape_key=False,
-            )
-            # Add the popup to the map
-            self.map.add_layer(self.popup)
+            if self.map.zoom >= 7:
+                index = widgets.index(feature, **kwargs)
+                # Create a popup with the index as its content
+                message = HTML()
+                message.value = index
+                self.popup = Popup(
+                    location=(
+                        feature["geometry"]["coordinates"][1],
+                        feature["geometry"]["coordinates"][0],
+                    ),
+                    child=message,
+                    close_button=False,
+                    auto_close=True,
+                    close_on_escape_key=False,
+                )
+                # Add the popup to the map
+                self.map.add_layer(self.popup)
 
         return hover_handler
 
@@ -224,18 +225,18 @@ class PyleafletColormap:
         <div style="
             background: linear-gradient(to right, {gradient_style});
             height: 30px;
-            width: 200px;
+            width: 250px;
             border: 1px solid black;
         "></div>
         """
-
+        if hasattr(self, "min_val"):
+            self.vals = [f"{self.min_val:.1f}", f"{self.max_val:.1f}"]
         # Create labels
-        labels_html = f"""
-        <div style="display: flex; justify-content: space-between;">
-            <span>Low: {self.min_val:.1f}</span>
-            <span>High: {self.max_val:.1f}</span>
-        </div>
-        """
+        labels_html = (
+            '<div style="display: flex; justify-content: space-between;">'
+            + "".join([f"<span>{x}</span>" for x in self.vals])
+            + "</div>"
+        )
         # Combine gradient and labels
         legend_html = gradient_html + labels_html
 
@@ -423,8 +424,7 @@ class ReportingPointsColormap(PyleafletColormap):
         cmap_colors = ["black", "gray", "yellow", "red", "purple"]
         colormap = mpl.colors.ListedColormap(cmap_colors)
 
-        self.min_val = 0
-        self.max_val = 1
+        self.vals = ["Invalid", "Inactive", "Medium", "High", "Extreme"]
 
         super().__init__(colormap)
 

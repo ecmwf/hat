@@ -701,7 +701,7 @@ class UpdatingHTML(Widget):
             spacing="2px",
             overflow="auto",
             height="600px",
-            width="50%",
+            width="100%",
             margin="0px 0px 0px 5px",
         )
 

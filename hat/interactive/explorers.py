@@ -500,19 +500,19 @@ class ReportingPointsExplorer(StationsExplorer):
             justify_content="space-around",
             align_items="stretch",
             spacing="2px",
-            width="1000px",
+            width="100%",
         )
         left_layout = ipywidgets.Layout(
             justify_content="space-around",
             align_items="center",
             spacing="2px",
-            width="50%",
+            width="100%",
         )
 
         top_left_frame = self.leafletmap.output(left_layout)
 
         # Main layout
-        main_top_frame = ipywidgets.HBox(
+        main_top_frame = ipywidgets.VBox(
             [top_left_frame, self.widgets["html"].output],
         )
         main_frame = ipywidgets.VBox(
