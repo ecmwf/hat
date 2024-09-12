@@ -1,12 +1,18 @@
 import time
 import datetime
 import os
+import json
 
 import numpy as np
 import pandas as pd
 import plotly.graph_objs as go
 from IPython.display import clear_output, display
 from ipywidgets import HTML, Button, DatePicker, HBox, Label, Layout, Output, Text, VBox
+
+import sys
+
+sys.path.append("../../../floods-html")
+from floods_html import floods_html
 
 
 class ThrottledClick:
@@ -544,6 +550,7 @@ class PPForecastPlotWidget(Widget):
         self.date = config["date"]
         self.assets = config["assets"]
         obs_dir = config["observations"]
+        print(config["source"])
         os.sys.path.append(config["source"])
         import plot_site_forecast as psf
         import pp_helper_functions as phf
@@ -681,3 +688,34 @@ class PPForecastPlotWidget(Widget):
 
         self.date = datetime.strptime(self.date_input.value, "%Y%m%d%H")
         self.update()
+
+
+class UpdatingHTML(Widget):
+    def __init__(self, config):
+        self.config = config
+        self.content = "Select a point to begin."
+
+        right_layout = Layout(
+            justify_content="space-around",
+            align_items="center",
+            spacing="2px",
+            overflow="auto",
+            height="600px",
+            width="50%",
+            margin="0px 0px 0px 5px",
+        )
+
+        self.HTML_object = HTML(self.content, layout=right_layout)
+
+        out = self.HTML_object
+        super().__init__(out)
+
+    def update(self, new_station, *args, **kwargs):
+        json_path = self.config["json"].format(date=self.config["date"]) + new_station + f"_{self.config['date']}.json"
+        svg_path = self.config["svg"].format(date=self.config["date"])
+        with open(json_path, "r") as f:
+            json_info = json.load(f)
+
+        htmls = floods_html.json_to_html(json_info["data"], svg_location=svg_path)
+        large_html_string = "".join(htmls)
+        self.HTML_object.value = large_html_string

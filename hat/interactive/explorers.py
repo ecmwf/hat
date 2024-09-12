@@ -5,17 +5,14 @@ import pandas as pd
 import xarray as xr
 from IPython.display import display
 
-from hat.interactive.leaflet import (
-    LeafletMap,
-    StatsColormap,
-    PPColormap,
-)
+from hat.interactive.leaflet import LeafletMap, StatsColormap, PPColormap, ReportingPointsColormap
 from hat.interactive.widgets import (
     MetaDataWidget,
     PlotlyWidget,
     PPForecastPlotWidget,
     StatisticsWidget,
     WidgetsManager,
+    UpdatingHTML,
 )
 from hat.observations import read_station_metadata_file
 
@@ -456,6 +453,94 @@ class PPForecastExplorer(StationsExplorer):
         """
         # create colormap from statistics
         colormap = PPColormap(self.config)
+
+        # add layer to the leaflet map
+        self.leafletmap.add_geolayer(
+            self.stations_metadata,
+            colormap,
+            self.widgets,
+            self.config["station_coordinates"],
+        )
+
+        # Initialize frame elements
+        frame = self.create_frame()
+
+        # Display the main layout
+        display(frame)
+
+
+class ReportingPointsExplorer(StationsExplorer):
+    def __init__(self, config):
+        # Initialise base class
+        self.config = config
+        title = "Interactive Map Visualisation of Reporting Points"
+        config["stations"] = self.config["stations"].format(date=self.config["date"])
+        super().__init__(config, title)
+
+        # Create the interactive widgets
+        widgets = {}
+        # Create loading widget
+        self.loading_widget = ipywidgets.Label(value="")
+        widgets["html"] = UpdatingHTML(self.config)
+        self.widgets = WidgetsManager(widgets, config["station_id_column_name"], self.loading_widget)
+
+    def create_frame(self):
+        """
+        Initialize the layout of the widgets for the map visualization.
+
+        Returns
+        -------
+        ipywidgets.VBox
+            A vertical box containing the layout elements for the map
+            visualization.
+
+        """
+
+        main_layout = ipywidgets.Layout(
+            justify_content="space-around",
+            align_items="stretch",
+            spacing="2px",
+            width="1000px",
+        )
+        left_layout = ipywidgets.Layout(
+            justify_content="space-around",
+            align_items="center",
+            spacing="2px",
+            width="50%",
+        )
+
+        top_left_frame = self.leafletmap.output(left_layout)
+
+        # Main layout
+        main_top_frame = ipywidgets.HBox(
+            [top_left_frame, self.widgets["html"].output],
+        )
+        main_frame = ipywidgets.VBox(
+            [self.title_label, main_top_frame],
+            layout=main_layout,
+        )
+        return main_frame
+
+    def plot(self):
+        """
+        Plot the stations markers colored by a given metric.
+
+        Parameters
+        ----------
+        colorby : str, optional
+            The name of the metric to color the stations by.
+        sim : str, optional
+            The name of the simulation to use for the metric.
+        limits : list, optional
+            A list of two values representing the minimum and maximum values
+            for the color bar.
+        mp_colormap : str, optional
+            The name of the matplotlib colormap to use for the color bar.
+
+        """
+
+        # create colormap from statistics
+        colormap = ReportingPointsColormap(self.config)
 
         # add layer to the leaflet map
         self.leafletmap.add_geolayer(

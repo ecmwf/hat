@@ -155,7 +155,7 @@ class LeafletMap:
         self.map.add_control(legend_control)
 
         # Add station selector with update button
-        text_input = Text(placeholder="ID", description="Station:", disabled=False)
+        text_input = Text(placeholder="ID", description="Station:", disabled=False, layout=Layout(width="200px"))
         text_button = Button(description="Update", layout=Layout(width="100px"))
 
         # Define the update function
@@ -387,3 +387,64 @@ class PPColormap(PyleafletColormap):
             return style
 
         return map_style
+
+
+class ReportingPointsColormap(PyleafletColormap):
+    """
+    A class handling the colormap of a pyleaflet map colored by a statistic.
+
+    Parameters
+    ----------
+    config : dict
+        A dictionary containing configuration options for the map.
+    stats : xarray.Dataset or None, optional
+        A dataset containing the data to be plotted on the map.
+        If None, a default constant colormap will be used.
+    colormap_style : str, optional
+        The name of the matplotlib colormap to use. Default is 'viridis'.
+    range : tuple of float, optional
+        The minimum and maximum values of the colormap. If None, the
+        minimum and maximum values in `stats` will be used.
+    empty_color : str, optional
+        The color to use for stations that are not in `stats`. Default is
+        'white'.
+    default_color : str, optional
+        The color to use when statistics are not provided. Default is 'blue'.
+    """
+
+    def __init__(
+        self,
+        config={},
+        empty_color="black",
+    ):
+        self.config = config
+        self.empty_color = empty_color
+
+        cmap_colors = ["black", "gray", "yellow", "red", "purple"]
+        colormap = mpl.colors.ListedColormap(cmap_colors)
+
+        self.min_val = 0
+        self.max_val = 1
+
+        super().__init__(colormap)
+
+    def style_callback(self):
+        def map_color(feature):
+            station_id = feature["properties"][self.config["station_id_column_name"]]
+            if station_id[1] == "I":  # inactive
+                color = "gray"
+            elif station_id[1] == "M":  # medium
+                color = "yellow"
+            elif station_id[1] == "H":  # high
+                color = "red"
+            elif station_id[1] == "E":  # extreme
+                color = "purple"
+            else:
+                color = self.empty_color
+            style = {
+                "color": "black",
+                "fillColor": color,
+            }
+            return style
+
+        return map_color
