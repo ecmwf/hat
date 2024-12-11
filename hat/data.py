@@ -291,10 +291,7 @@ def read_simulation_as_xarray(options):
     fs = earthkit.data.from_source(src_type, *args)
 
     xarray_kwargs = {}
-    if isinstance(fs, earthkit.data.readers.netcdf.fieldlist.NetCDFMultiFieldList):
-        xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {"time": "auto"}}
-    else:
-        xarray_kwargs["xarray_open_dataset_kwargs"] = {"chunks": {"time": "auto"}}
+    xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {"time": "auto"}}
 
     # xarray dataset
     ds = fs.to_xarray(**xarray_kwargs)
