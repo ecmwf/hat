@@ -7,9 +7,7 @@ from tempfile import TemporaryDirectory
 from typing import List, Union
 
 import earthkit.data
-import geopandas as gpd
 import humanize
-import pandas as pd
 import xarray as xr
 
 """filepaths"""
@@ -43,9 +41,7 @@ def get_tmpdir():
     return tmpdir
 
 
-def get_tmp_filepath(
-    filename_components: Union[List[str], str] = "file", extension=".txt"
-) -> str:
+def get_tmp_filepath(filename_components: Union[List[str], str] = "file", extension=".txt") -> str:
     """HPC friendly temporary file path
 
     usage:
