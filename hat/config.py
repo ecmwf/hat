@@ -84,16 +84,13 @@ def read_config(custom_config_filepath: str):
     """(optional) read config from a .json file.
     Will otherwise use default config and/or any user defined"""
 
-    # check file exists
     if not os.path.exists(custom_config_filepath):
         print("Custom config file not found. Returning default configuration")
         return DEFAULT_CONFIG
 
-    # check for .json extention
     if Path(custom_config_filepath).suffix.lower() != ".json":
         raise ValueError("Custom configuration file must be .json")
 
-    # read config from json
     with open(custom_config_filepath) as file:
         custom_config = json.load(file)
 
@@ -105,7 +102,6 @@ def read_config(custom_config_filepath: str):
     # include custom config filepath to config dict
     custom_config["config_fpath"] = custom_config_filepath
 
-    # valid configurations are complete
-    config = valid_custom_config(custom_config)
+    config = valid_custom_config(custom_config) # remove extra keys and give defaults to missing ones
 
     return config

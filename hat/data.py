@@ -245,9 +245,6 @@ def read_csv_and_cache(fpath: str) -> gpd.GeoDataFrame:
     return gdf
 
 
-""" other data (e.g. non geospatial)"""
-
-
 def read_json_to_dict(fpath: str) -> dict:
     """read json to dict"""
 
@@ -295,7 +292,6 @@ def read_simulation_as_xarray(options):
             f"Simulation type {options['type']} not supported. Currently supported: file, mars, fdb"  # noqa: E501
         )
 
-    # earthkit data file source
     fs = earthkit.data.from_source(src_type, *args)
 
     xarray_kwargs = {}
@@ -304,7 +300,6 @@ def read_simulation_as_xarray(options):
     else:
         xarray_kwargs["xarray_open_dataset_kwargs"] = {"chunks": {"time": "auto"}}
 
-    # xarray dataset
     ds = fs.to_xarray(**xarray_kwargs)
 
     var = find_main_var(ds)

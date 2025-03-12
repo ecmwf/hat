@@ -8,7 +8,8 @@ from hat.mapping.station_mapping import (
 )
 
 
-# Function to calculate Mean Absolute Error
+# TODO: we already have MAE, RMSE in hydrostats. This is duplication, merge logic.
+
 def calculate_mae(df, column_reference, column_evaluated):
     """
     Calculate the Mean Absolute Error (MAE) as
@@ -29,8 +30,8 @@ def calculate_mae(df, column_reference, column_evaluated):
     )
     return mae
 
+# TODO: decide on docstring style. Maybe change the docstrings here to numpy-style.
 
-# Function to calculate Average Error
 def calculate_rmse(df, column_reference, column_evaluated):
     """
     Calculate the Root Mean Square Error (RMSE) between two columns in a DataFrame.
