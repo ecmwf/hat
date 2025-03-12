@@ -1,7 +1,7 @@
 import geopandas as gpd
 import pandas as pd
 
-from hat.data import is_csv, read_csv_and_cache
+from hat.data import is_csv
 from hat.filters import filter_dataframe
 
 
@@ -37,7 +37,7 @@ def add_geometry_column(gdf: gpd.GeoDataFrame, coord_names):
 
     gdf["geometry"] = gpd.points_from_xy(gdf[x_coord_name], gdf[y_coord_name])
 
-    return gdf
+    return gpd.GeoDataFrame(gdf, geometry="geometry")
 
 
 def read_station_metadata_file(
@@ -50,7 +50,7 @@ def read_station_metadata_file(
 
     try:
         if is_csv(fpath):
-            gdf = read_csv_and_cache(fpath)
+            gdf = gpd.read_file(fpath)
             gdf = add_geometry_column(gdf, coord_names)
             gdf = gdf.set_crs(epsg=epsg)
         else:

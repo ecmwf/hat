@@ -1,4 +1,3 @@
-
 [build-system]
 requires = ["setuptools>=65", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
@@ -40,7 +39,12 @@ dependencies = [
     "ipyleaflet",
     "ipywidgets",
     "earthkit-data",
-    "cfgrib"
+    "cfgrib",
+    "netCDF4",
+    "eccodes",
+    "plotly",
+    "jupyter",
+    "geopy"
 ]
 
 [project.urls]
@@ -50,16 +54,12 @@ dependencies = [
 
 [project.optional-dependencies]
     test = [
-        "pytest",
+        "pytest"
     ]
-    docs = [
-        "mkdocs",
-        "mkdocs-material",
-        "mkdocstrings-python",
-        "mkdocs-autorefs",
-        "mkdocs-gen-files",
-        "pymdown-extensions",
-        "markdown-exec[ansi]",
+    dev = [
+        "pytest",
+        "ruff",
+        "pre-commit"
     ]
 
 [project.scripts]
@@ -67,8 +67,14 @@ dependencies = [
     hat-hydrostats = "hat.tools.hydrostats_cli:main"
     hat-stations-mapping = "hat.mapping.station_mapping:main"
 
-[tool.isort]
-profile="black"
+# Linting settings
+[tool.ruff]
+line-length = 120
+indent-width = 4
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
 
 # Testing
 [tool.pytest]
