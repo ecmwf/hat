@@ -10,7 +10,7 @@ from numpy.ma import is_masked
 from shapely.geometry import LineString, Point, box
 from shapely.wkt import loads
 
-import hat
+from hat.data import find_main_var
 from hat.observations import read_station_metadata_file
 
 
@@ -260,83 +260,6 @@ def process_station_data(
         "manual_area": manual_area,
     }
 
-
-def station_mapping(config):
-    # grid and upstream area file
-    upstream_area_file = config["upstream_area_file"]
-
-    # stations file
-    csv_file = config["csv_file"]
-    csv_ups_col = config["csv_ups_col"]
-    station_name_col = config["csv_station_name_col"]
-    lat_col = config["csv_lat_col"]  # values must be in DD (Decimal Degrees)
-    lon_col = config["csv_lon_col"]  # values must be in DD (Decimal Degrees)
-    stations_epsg = config.get("stations_epsg", "4326")
-    stations_filter = config.get("stations_filter", "")
-
-    # mapping parameters
-    max_neighboring_cells = config["max_neighboring_cells"]
-    max_area_diff = config["max_area_diff"]
-    min_area_diff = config["min_area_diff"]
-
-    # manually mapped stations - for testing
-    manual_lat_col = config.get("manual_lat_col")
-    manual_lon_col = config.get("manual_lon_col")
-    manual_area = config.get("manual_area")
-
-    # Read station CSV and filter out invalid data
-    stations_filter += f",{csv_ups_col} > 0"
-    stations = read_station_metadata_file(
-        csv_file,
-        [lon_col, lat_col],
-        stations_epsg,
-        stations_filter,
-    )
-
-    # Load netCDF data
-    dataset = xr.open_dataset(upstream_area_file)
-    nc_variable = hat.data.find_main_var(dataset, min_dim=2)
-    nc_data = dataset[nc_variable] * 1e-6  # Convert from m^2 to km^2
-    latitudes = dataset["lat"].values
-    longitudes = dataset["lon"].values
-    dataset.close()
-
-    # extract cell size from coordinates
-    cell_size = abs(latitudes[0] - latitudes[1])
-
-    # Process each station and collect data in a list
-    data_list = []
-    for index, station in stations.iterrows():
-        # print(index)
-        station_data = process_station_data(
-            station,
-            latitudes,
-            longitudes,
-            nc_data,
-            max_neighboring_cells,
-            min_area_diff,
-            max_area_diff,
-            lat_col,
-            lon_col,
-            station_name_col,
-            csv_ups_col,
-            cell_size,
-            manual_lat_col,
-            manual_lon_col,
-            manual_area,
-        )
-        data_list.append(station_data)
-    df = pd.DataFrame(data_list)
-
-    if config["out_directory"]:
-        out_dir = config["out_directory"]
-        # Create output directory if it doesn't exist
-        os.makedirs(out_dir, exist_ok=True)
-        save_geo_dataframes(df, out_dir, cell_size)
-
-    return df
-
-
 def save_geo_dataframes(df, out_dir, cell_size):
     df["near_grid_polygon"] = df.apply(
         lambda row: create_grid_polygon(
@@ -397,3 +320,77 @@ def save_geo_dataframes(df, out_dir, cell_size):
         driver="GeoJSON",
     )
     gdf_station_point.to_csv(os.path.join(out_dir, "stations.csv"))
+
+
+
+def station_mapping(config):
+    # READ FROM CONFIG
+
+    # grid and upstream area file
+    upstream_area_file = config["upstream_area_file"]
+    # stations file
+    csv_file = config["csv_file"]
+    csv_ups_col = config["csv_ups_col"]
+    station_name_col = config["csv_station_name_col"]
+    lat_col = config["csv_lat_col"]  # values must be in DD (Decimal Degrees)
+    lon_col = config["csv_lon_col"]  # values must be in DD (Decimal Degrees)
+    stations_epsg = config.get("stations_epsg", "4326")
+    stations_filter = config.get("stations_filter", "")
+    # mapping parameters
+    max_neighboring_cells = config["max_neighboring_cells"]
+    max_area_diff = config["max_area_diff"]
+    min_area_diff = config["min_area_diff"]
+    # manually mapped stations - for testing
+    manual_lat_col = config.get("manual_lat_col")
+    manual_lon_col = config.get("manual_lon_col")
+    manual_area = config.get("manual_area")
+
+    # Read station CSV and filter out invalid data
+    stations_filter += f",{csv_ups_col} > 0"
+    # TODO: see if we can simplify this function
+    stations = read_station_metadata_file(
+        csv_file,
+        [lon_col, lat_col],
+        stations_epsg,
+        stations_filter,
+    )
+
+    # Load netCDF data
+    dataset = xr.open_dataset(upstream_area_file)
+    nc_variable = find_main_var(dataset, min_dim=2)
+    nc_data = dataset[nc_variable] * 1e-6  # Convert from m^2 to km^2
+    latitudes = dataset["lat"].values
+    longitudes = dataset["lon"].values
+    dataset.close()
+
+    # extract cell size from coordinates
+    cell_size = abs(latitudes[0] - latitudes[1])
+
+    # Process each station and collect data in a list
+    data_list = [process_station_data(
+            station,
+            latitudes,
+            longitudes,
+            nc_data,
+            max_neighboring_cells,
+            min_area_diff,
+            max_area_diff,
+            lat_col,
+            lon_col,
+            station_name_col,
+            csv_ups_col,
+            cell_size,
+            manual_lat_col,
+            manual_lon_col,
+            manual_area,
+        ) for _, station in stations.iterrows()]
+    
+    df = pd.DataFrame(data_list)
+
+    if config["out_directory"]:
+        out_dir = config["out_directory"]
+        # Create output directory if it doesn't exist
+        os.makedirs(out_dir, exist_ok=True)
+        save_geo_dataframes(df, out_dir, cell_size)
+
+    return df
