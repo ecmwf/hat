@@ -14,13 +14,43 @@ import os
 import geopandas as gpd
 import typer
 
-from hat.cli import prettyprint, title
 from hat.config import read_config
 
 # hat modules
 from hat.data import read_simulation_as_xarray, save_dataset_to_netcdf
 from hat.extract_simulation_timeseries import DEFAULT_CONFIG, extract_timeseries
 from hat.observations import read_station_metadata_file
+
+import click
+import typer
+
+
+def prettyprint(
+    text,
+    color="white",
+    bold=False,
+    background=None,
+    first_line_empty=False,
+    last_line_empty=False,
+):
+    """Pretty print text using click formating"""
+    if first_line_empty:
+        print()
+    typer.echo(click.style(text, fg=color, bg=background, bold=bold))
+    if last_line_empty:
+        print()
+
+
+def warning(text, color="yellow", bold=False):
+    """A text warning"""
+    prettyprint(text, color=color, bold=bold)
+
+
+def title(text, **kwargs):
+    """A pretty title"""
+    print("")
+    prettyprint(text, **kwargs)
+    print("-" * len(text))
 
 
 def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, simulation):
