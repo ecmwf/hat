@@ -33,17 +33,12 @@ dependencies = [
     "xarray",
     "matplotlib",
     "geopandas",
-    "typer",
-    "humanize",
+    "typer", # check if necessary
+    "humanize", # check if necessary
     "tqdm",
     "ipyleaflet",
     "ipywidgets",
-    "earthkit-data",
-    "cfgrib",
-    "netCDF4",
-    "eccodes",
     "plotly",
-    "jupyter",
     "geopy"
 ]
 
