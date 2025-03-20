@@ -38,6 +38,10 @@ dependencies = [
     "tqdm",
     "ipyleaflet",
     "ipywidgets",
+    "earthkit-data",
+    "cfgrib", # check if necessary
+    "netCDF4", # check if necessary
+    "eccodes", # check if necessary
     "plotly",
     "geopy"
 ]
@@ -60,7 +64,7 @@ dependencies = [
 [project.scripts]
     hat-extract-timeseries = "hat.tools.extract_simulation_timeseries_cli:main"
     hat-hydrostats = "hat.tools.hydrostats_cli:main"
-    hat-stations-mapping = "hat.mapping.station_mapping:main"
+    hat-stations-mapping = "hat.tools.station_mapping_cli:main"
 
 # Linting settings
 [tool.ruff]

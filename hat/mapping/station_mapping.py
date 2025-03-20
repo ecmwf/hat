@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import argparse
-import json
 import os
 
 import geopandas as gpd
@@ -263,20 +261,6 @@ def process_station_data(
     }
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Station mapping tool: maps stations on provided grid."
-    )
-    parser.add_argument(
-        "config_file", type=str, help="Path to the JSON configuration file"
-    )
-    args = parser.parse_args()
-    # Load configuration from the specified JSON file
-    with open(args.config_file, "r") as file:
-        config = json.load(file)
-    station_mapping(config)
-
-
 def station_mapping(config):
     # grid and upstream area file
     upstream_area_file = config["upstream_area_file"]
@@ -413,7 +397,3 @@ def save_geo_dataframes(df, out_dir, cell_size):
         driver="GeoJSON",
     )
     gdf_station_point.to_csv(os.path.join(out_dir, "stations.csv"))
-
-
-if __name__ == "__main__":
-    main()
