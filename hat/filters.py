@@ -1,5 +1,6 @@
 import pandas as pd
 import xarray as xr
+import numpy as np
 
 
 def temporal_filter(
@@ -167,14 +168,11 @@ def filter_timeseries(sims_ds: xr.DataArray, obs_ds: xr.DataArray, threshold=80)
     - simulations that match the remaining observations
     """
 
-    # TODO: check why we are calling sorted here
-    matching_stations = sorted(set(sims_ds.station.values).intersection(obs_ds.station.values))
-    print(len(matching_stations))
+    matching_stations = np.intersect1d(sims_ds.station.values, obs_ds.station.values)
     sims_ds = sims_ds.sel(station=matching_stations)
     obs_ds = obs_ds.sel(station=matching_stations)
 
-    # TODO: check why we are calling sorted here
-    relevant_times = sorted(set(sims_ds.time.values).intersection(obs_ds.time.values))
+    relevant_times = np.intersect1d(sims_ds.time.values, obs_ds.time.values)
     sims_ds = sims_ds.sel(time=relevant_times)
     obs_ds = obs_ds.sel(time=relevant_times)
 
