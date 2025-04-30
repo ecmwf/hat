@@ -9,6 +9,8 @@ from typing import List, Union
 import earthkit.data
 import humanize
 import xarray as xr
+import pandas as pd
+import geopandas as gpd
 
 """filepaths"""
 
@@ -277,3 +279,22 @@ def read_simulation_as_xarray(options):
 
     da = ds[var]
     return da
+
+
+def read_csv_and_cache(fpath: str) -> gpd.GeoDataFrame:
+    """read .csv file and cache to pickle"""
+
+    # cache filepath
+    cache_fname = os.path.splitext(os.path.basename(fpath))[0]
+    cache_fpath = get_tmp_filepath(cache_fname, extension=".pickle")
+
+    # use cache if it exists
+    if os.path.exists(cache_fpath):
+        gdf = pd.read_pickle(cache_fpath)
+
+    # otherwise load from user defined filepath (and then cache)
+    else:
+        gdf = gpd.read_file(fpath)
+        gdf.to_pickle(cache_fpath)
+
+    return gdf
