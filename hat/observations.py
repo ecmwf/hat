@@ -30,11 +30,6 @@ def add_geometry_column(gdf: gpd.GeoDataFrame, coord_names):
 
     gdf = gdf.dropna(subset=["x", "y"])
 
-    # filter rows that do not plot on Earth (e.g. -9999)
-    gdf = gdf[
-        (gdf["x"] >= -180) & (gdf["x"] <= 180) & (gdf["y"] >= -90) & (gdf["y"] <= 90)
-    ]
-
     gdf["geometry"] = gpd.points_from_xy(gdf[x_coord_name], gdf[y_coord_name])
 
     return gpd.GeoDataFrame(gdf, geometry="geometry")
