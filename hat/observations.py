@@ -6,29 +6,42 @@ from hat.filters import filter_dataframe
 
 
 def add_geometry_column(gdf: gpd.GeoDataFrame, coord_names):
-    """add geometry column to stations geodataframe. station must have valid
-    coordinates, i.e. not missing data and plot somewhere on Earth"""
+    """
+    Adds a geometry column to a GeoDataFrame using columns specified by coord_names.
 
-    # names of x and y coords for a given river network
+    Parameters
+    ----------
+    gdf : gpd.GeoDataFrame
+        GeoDataFrame to add geometry to.
+    coord_names : tuple
+        Tuple of column names to use as x and y coordinates, in lat/lon order.
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        GeoDataFrame with geometry column added.
+    """
+
     x_coord_name, y_coord_name = coord_names
 
-    # Create numeric x and y columns by converting original string columns,
-    # errors='coerce' will turn non-numeric (like empty strings) to NaN
+    # errors='coerce' turns non-numeric to NaN
     gdf["x"] = pd.to_numeric(gdf[x_coord_name], errors="coerce")
     gdf["y"] = pd.to_numeric(gdf[y_coord_name], errors="coerce")
 
-    # Drop rows with NaN values in either x or y columns
     gdf = gdf.dropna(subset=["x", "y"])
 
-    # Create a geometry column
     gdf["geometry"] = gpd.points_from_xy(gdf[x_coord_name], gdf[y_coord_name])
 
     return gpd.GeoDataFrame(gdf, geometry="geometry")
 
 
-def read_station_metadata_file(fpath: str, coord_names: str, epsg: int, filters: str = None) -> gpd.GeoDataFrame:
-    """read hydrological stations from file. will cache as pickle object
-    because .csv file used by the team takes 12 seconds to load"""
+def read_station_metadata_file(
+    fpath: str, coord_names: str, epsg: int, filters: str = None
+) -> gpd.GeoDataFrame:
+    """
+    read hydrological stations from file. will cache as pickle object
+    because .csv file used by the team takes 12 seconds to load
+    """
 
     try:
         if is_csv(fpath):
@@ -40,7 +53,7 @@ def read_station_metadata_file(fpath: str, coord_names: str, epsg: int, filters:
     except Exception:
         raise Exception(f"Could not open file {fpath}")
 
-    # (optionally) filter the stations, e.g. 'Contintent == Europe'
+    # (optionally) filter the stations, e.g. 'Continent == Europe'
     if filters is not None:
         gdf = filter_dataframe(gdf, filters)
     return gdf

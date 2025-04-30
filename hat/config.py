@@ -5,7 +5,29 @@ from pathlib import Path
 
 import pkg_resources
 
-from hat.cli import warning
+import click
+import typer
+
+
+def prettyprint(
+    text,
+    color="white",
+    bold=False,
+    background=None,
+    first_line_empty=False,
+    last_line_empty=False,
+):
+    """Pretty print text using click formating"""
+    if first_line_empty:
+        print()
+    typer.echo(click.style(text, fg=color, bg=background, bold=bold))
+    if last_line_empty:
+        print()
+
+
+def warning(text, color="yellow", bold=False):
+    """A text warning"""
+    prettyprint(text, color=color, bold=bold)
 
 
 def load_package_config(fname):
@@ -69,9 +91,7 @@ def valid_custom_config(custom_config: dict = {}):
         custom_config = DEFAULT_CONFIG
 
     # only keep keys that are in DEFAULT_CONFIG
-    filtered_custom_config = {
-        k: v for k, v in custom_config.items() if k in DEFAULT_CONFIG
-    }
+    filtered_custom_config = {k: v for k, v in custom_config.items() if k in DEFAULT_CONFIG}
 
     # overwrite default_config values with custom values
     config = copy.deepcopy(DEFAULT_CONFIG)
@@ -84,16 +104,13 @@ def read_config(custom_config_filepath: str):
     """(optional) read config from a .json file.
     Will otherwise use default config and/or any user defined"""
 
-    # check file exists
     if not os.path.exists(custom_config_filepath):
         print("Custom config file not found. Returning default configuration")
         return DEFAULT_CONFIG
 
-    # check for .json extention
     if Path(custom_config_filepath).suffix.lower() != ".json":
         raise ValueError("Custom configuration file must be .json")
 
-    # read config from json
     with open(custom_config_filepath) as file:
         custom_config = json.load(file)
 
@@ -105,7 +122,6 @@ def read_config(custom_config_filepath: str):
     # include custom config filepath to config dict
     custom_config["config_fpath"] = custom_config_filepath
 
-    # valid configurations are complete
-    config = valid_custom_config(custom_config)
+    config = valid_custom_config(custom_config)  # remove extra keys and give defaults to missing ones
 
     return config

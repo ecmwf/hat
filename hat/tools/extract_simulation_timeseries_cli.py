@@ -14,13 +14,19 @@ import os
 import geopandas as gpd
 import typer
 
-from hat.cli import prettyprint, title
-from hat.config import read_config
+from hat.config import read_config, prettyprint
 
 # hat modules
 from hat.data import read_simulation_as_xarray, save_dataset_to_netcdf
 from hat.extract_simulation_timeseries import DEFAULT_CONFIG, extract_timeseries
 from hat.observations import read_station_metadata_file
+
+
+def title(text, **kwargs):
+    """A pretty title"""
+    print("")
+    prettyprint(text, **kwargs)
+    print("-" * len(text))
 
 
 def print_overview(config: dict, station_metadata: gpd.GeoDataFrame, simulation):
@@ -62,9 +68,7 @@ def command_line_tool(
         "",
         help="Path to configuration file",
     ),
-    show_default_config: bool = typer.Option(
-        False, help="Print default configuration and exit"
-    ),
+    show_default_config: bool = typer.Option(False, help="Print default configuration and exit"),
 ):
     """Command line tool to extract simulation timeseries of river discharge
     from gridded files (grib or netcdf)"""

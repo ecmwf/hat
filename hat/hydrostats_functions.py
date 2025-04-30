@@ -1,7 +1,5 @@
 """
-Hydrostats
-
-Collection of functions often used in hydrological sciences.
+Collection of hydrostats functions often used in hydrological sciences.
 
 Inputs
 - two equal sized numpy arrays of simulation and observation timeseries
@@ -24,11 +22,6 @@ Functions:
     correlation: correlation
     KGE:      Kling Gupta Efficiency
     vr :      variability ratio
-
-Refactored from this legacy code: https://tinyurl.com/ynbpejbu
-
-NOTE use the @hydrostat decorator on future functions
-to get handy checks for free
 """
 
 import numpy as np
