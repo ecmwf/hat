@@ -5,7 +5,29 @@ from pathlib import Path
 
 import pkg_resources
 
-from hat.cli import warning
+import click
+import typer
+
+
+def prettyprint(
+    text,
+    color="white",
+    bold=False,
+    background=None,
+    first_line_empty=False,
+    last_line_empty=False,
+):
+    """Pretty print text using click formating"""
+    if first_line_empty:
+        print()
+    typer.echo(click.style(text, fg=color, bg=background, bold=bold))
+    if last_line_empty:
+        print()
+
+
+def warning(text, color="yellow", bold=False):
+    """A text warning"""
+    prettyprint(text, color=color, bold=bold)
 
 
 def load_package_config(fname):
@@ -69,9 +91,7 @@ def valid_custom_config(custom_config: dict = {}):
         custom_config = DEFAULT_CONFIG
 
     # only keep keys that are in DEFAULT_CONFIG
-    filtered_custom_config = {
-        k: v for k, v in custom_config.items() if k in DEFAULT_CONFIG
-    }
+    filtered_custom_config = {k: v for k, v in custom_config.items() if k in DEFAULT_CONFIG}
 
     # overwrite default_config values with custom values
     config = copy.deepcopy(DEFAULT_CONFIG)
@@ -102,6 +122,6 @@ def read_config(custom_config_filepath: str):
     # include custom config filepath to config dict
     custom_config["config_fpath"] = custom_config_filepath
 
-    config = valid_custom_config(custom_config) # remove extra keys and give defaults to missing ones
+    config = valid_custom_config(custom_config)  # remove extra keys and give defaults to missing ones
 
     return config
