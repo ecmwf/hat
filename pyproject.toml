@@ -43,7 +43,8 @@ dependencies = [
     "netCDF4", # check if necessary
     "eccodes", # check if necessary
     "plotly",
-    "geopy"
+    "geopy",
+    "setuptools"
 ]
 
 [project.urls]
