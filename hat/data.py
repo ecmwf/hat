@@ -7,9 +7,7 @@ from tempfile import TemporaryDirectory
 from typing import List, Union
 
 import earthkit.data
-import geopandas as gpd
 import humanize
-import pandas as pd
 import xarray as xr
 
 """filepaths"""
@@ -43,9 +41,7 @@ def get_tmpdir():
     return tmpdir
 
 
-def get_tmp_filepath(
-    filename_components: Union[List[str], str] = "file", extension=".txt"
-) -> str:
+def get_tmp_filepath(filename_components: Union[List[str], str] = "file", extension=".txt") -> str:
     """HPC friendly temporary file path
 
     usage:
@@ -218,25 +214,6 @@ def is_csv(file_path):
     return file_extension.lower() == ".csv"
 
 
-def read_csv_and_cache(fpath: str) -> gpd.GeoDataFrame:
-    """read .csv file and cache to pickle"""
-
-    # cache filepath
-    cache_fname = os.path.splitext(os.path.basename(fpath))[0]
-    cache_fpath = get_tmp_filepath(cache_fname, extension=".pickle")
-
-    # use cache if it exists
-    if os.path.exists(cache_fpath):
-        gdf = pd.read_pickle(cache_fpath)
-
-    # otherwise load from user defined filepath (and then cache)
-    else:
-        gdf = gpd.read_file(fpath)
-        gdf.to_pickle(cache_fpath)
-
-    return gdf
-
-
 """ other data (e.g. non geospatial)"""
 
 
@@ -291,10 +268,7 @@ def read_simulation_as_xarray(options):
     fs = earthkit.data.from_source(src_type, *args)
 
     xarray_kwargs = {}
-    if isinstance(fs, earthkit.data.readers.netcdf.fieldlist.NetCDFMultiFieldList):
-        xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {"time": "auto"}}
-    else:
-        xarray_kwargs["xarray_open_dataset_kwargs"] = {"chunks": {"time": "auto"}}
+    xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {"time": "auto"}}
 
     # xarray dataset
     ds = fs.to_xarray(**xarray_kwargs)

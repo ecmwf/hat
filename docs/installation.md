@@ -9,7 +9,7 @@ Create conda python environment
 
     # If on HPC..
     # module load conda
-    conda env create -n hat python=3.10
+    conda create -n hat python=3.10
     conda activate hat
 
 Installation of required dependencies
