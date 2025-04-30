@@ -44,7 +44,7 @@ dependencies = [
     "eccodes", # check if necessary
     "plotly",
     "geopy",
-    "setuptools"
+    "jupyter"
 ]
 
 [project.urls]
