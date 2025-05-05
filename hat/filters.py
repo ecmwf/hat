@@ -1,5 +1,7 @@
 import pandas as pd
 import xarray as xr
+import numpy as np
+
 
 def temporal_filter(
     _metadata,
@@ -71,12 +73,8 @@ def apply_station_filters(metadata, timeseries, station_filters):
     Apply all station filters.
     """
 
-    metadata, timeseries = temporal_filter(
-        metadata, timeseries, station_filters["timeperiod"]
-    )
-    metadata = calibration_station_filter(
-        metadata, station_filters["calibration_stations"]
-    )
+    metadata, timeseries = temporal_filter(metadata, timeseries, station_filters["timeperiod"])
+    metadata = calibration_station_filter(metadata, station_filters["calibration_stations"])
     metadata = quality_flag_filter(metadata, station_filters["quality_flag"])
     metadata = drainage_area_filter(metadata, station_filters["drainage_area"])
 
@@ -169,15 +167,14 @@ def filter_timeseries(sims_ds: xr.DataArray, obs_ds: xr.DataArray, threshold=80)
     - observations with enough valid data in this timeperiod
     - simulations that match the remaining observations
     """
-    
-    # Only keep stations in both the observation and simulation datasets
-    matching_stations = sorted(
-        set(sims_ds.station.values).intersection(obs_ds.station.values)
-    )
-    print(len(matching_stations))
+
+    matching_stations = np.intersect1d(sims_ds.station.values, obs_ds.station.values)
     sims_ds = sims_ds.sel(station=matching_stations)
     obs_ds = obs_ds.sel(station=matching_stations)
-    obs_ds = obs_ds.sel(time=sims_ds.time)
+
+    relevant_times = np.intersect1d(sims_ds.time.values, obs_ds.time.values)
+    sims_ds = sims_ds.sel(time=relevant_times)
+    obs_ds = obs_ds.sel(time=relevant_times)
 
     obs_ds = obs_ds.dropna(dim="station", how="all")
     sims_ds = sims_ds.sel(station=obs_ds.station)
