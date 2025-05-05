@@ -18,7 +18,7 @@ def get_grid_index(lat, lon, latitudes, longitudes):
     """Find the index of the nearest grid cell to the given lat/lon."""
     lat_idx = (np.abs(latitudes - lat)).argmin()
     lon_idx = (np.abs(longitudes - lon)).argmin()
-    return int(lat_idx), int(lon_idx)
+    return lat_idx, lon_idx
 
 
 def calculate_distance_km(lat1, lon1, lat2, lon2):
@@ -39,8 +39,8 @@ def calculate_distance_cells(lat_idx1, lon_idx1, lat_idx2, lon_idx2):
     Returns:
     - int: Distance in terms of the number of grid cells.
     """
-    lat_diff = abs(lat_idx1 - lat_idx2)
-    lon_diff = abs(lon_idx1 - lon_idx2)
+    lat_diff = lat_idx1 - lat_idx2
+    lon_diff = lon_idx1 - lon_idx2
     return np.sqrt(lat_diff**2 + lon_diff**2)
 
 
@@ -68,7 +68,7 @@ def find_best_matching_grid(
     max_area_diff,
 ):
     lat_idx, lon_idx = get_grid_index(lat, lon, latitudes, longitudes)
-    min_diff = float("inf")
+    min_diff = np.inf
     best_match = (lat_idx, lon_idx)
 
     # Define the search bounds based on max_neighboring_cells
@@ -83,7 +83,6 @@ def find_best_matching_grid(
             grid_data = nc_data[i, j]
             if is_masked(grid_data):
                 continue
-            grid_data = float(grid_data)
             area_diff = calculate_area_diff_percentage(grid_data, csv_value)
             if abs(area_diff) < min_diff and abs(area_diff) <= max_area_diff:
                 min_diff = abs(area_diff)
@@ -156,19 +155,9 @@ def process_station_data(
     if manual_area is not None:
         manual_lat = station.get(manual_lat_col, np.nan)
         manual_lon = station.get(manual_lon_col, np.nan)
-        manual_lat = (
-            float(manual_lat)
-            if not pd.isna(manual_lat) and manual_lat != ""
-            else np.nan
-        )
-        manual_lon = (
-            float(manual_lon)
-            if not pd.isna(manual_lon) and manual_lon != ""
-            else np.nan
-        )
-        manual_lat_idx, manual_lon_idx = get_grid_index(
-            manual_lat, manual_lon, latitudes, longitudes
-        )
+        manual_lat = float(manual_lat) if not pd.isna(manual_lat) and manual_lat != "" else np.nan
+        manual_lon = float(manual_lon) if not pd.isna(manual_lon) and manual_lon != "" else np.nan
+        manual_lat_idx, manual_lon_idx = get_grid_index(manual_lat, manual_lon, latitudes, longitudes)
         manual_area = float(station[manual_area]) if station[manual_area] else np.nan
 
     else:
@@ -182,12 +171,8 @@ def process_station_data(
     near_grid_area = nc_data[lat_idx, lon_idx]
     near_grid_area = float(near_grid_area) if not is_masked(near_grid_area) else np.nan
     near_area_diff = calculate_area_diff_percentage(near_grid_area, station_area)
-    near_distance_km = calculate_distance_km(
-        lat, lon, latitudes[lat_idx], longitudes[lon_idx]
-    )
-    near_grid_polygon = create_grid_polygon(
-        latitudes[lat_idx], longitudes[lon_idx], cell_size
-    )
+    near_distance_km = calculate_distance_km(lat, lon, latitudes[lat_idx], longitudes[lon_idx])
+    near_grid_polygon = create_grid_polygon(latitudes[lat_idx], longitudes[lon_idx], cell_size)
 
     # if the area difference is greater than the minimum, find the best
     # matching grid cell otherwise use the nearest grid cell
@@ -204,21 +189,11 @@ def process_station_data(
             max_area_diff,
         )
         optimum_grid_area = nc_data[optimum_lat_idx, optimum_lon_idx]
-        optimum_grid_area = (
-            float(optimum_grid_area) if not is_masked(optimum_grid_area) else np.nan
-        )
-        optimum_area_diff = calculate_area_diff_percentage(
-            optimum_grid_area, station_area
-        )
-        optimum_grid_polygon = create_grid_polygon(
-            latitudes[optimum_lat_idx], longitudes[optimum_lon_idx], cell_size
-        )
-        optimum_distance_cells = calculate_distance_cells(
-            lat_idx, lon_idx, optimum_lat_idx, optimum_lon_idx
-        )
-        optimum_distance_km = calculate_distance_km(
-            lat, lon, latitudes[optimum_lat_idx], longitudes[optimum_lon_idx]
-        )
+        optimum_grid_area = float(optimum_grid_area) if not is_masked(optimum_grid_area) else np.nan
+        optimum_area_diff = calculate_area_diff_percentage(optimum_grid_area, station_area)
+        optimum_grid_polygon = create_grid_polygon(latitudes[optimum_lat_idx], longitudes[optimum_lon_idx], cell_size)
+        optimum_distance_cells = calculate_distance_cells(lat_idx, lon_idx, optimum_lat_idx, optimum_lon_idx)
+        optimum_distance_km = calculate_distance_km(lat, lon, latitudes[optimum_lat_idx], longitudes[optimum_lon_idx])
     else:
         # Use the nearest grid cell as the best matching grid cell
         optimum_lat_idx, optimum_lon_idx = lat_idx, lon_idx
@@ -260,17 +235,14 @@ def process_station_data(
         "manual_area": manual_area,
     }
 
+
 def save_geo_dataframes(df, out_dir, cell_size):
     df["near_grid_polygon"] = df.apply(
-        lambda row: create_grid_polygon(
-            row["near_grid_lat"], row["near_grid_lon"], cell_size
-        ),
+        lambda row: create_grid_polygon(row["near_grid_lat"], row["near_grid_lon"], cell_size),
         axis=1,
     )
     df["optimum_grid_polygon"] = df.apply(
-        lambda row: create_grid_polygon(
-            row["optimum_grid_lat"], row["optimum_grid_lon"], cell_size
-        ),
+        lambda row: create_grid_polygon(row["optimum_grid_lat"], row["optimum_grid_lon"], cell_size),
         axis=1,
     )
 
@@ -297,30 +269,19 @@ def save_geo_dataframes(df, out_dir, cell_size):
         df,
         geometry=[Point(xy) for xy in zip(df["station_lon"], df["station_lat"])],
     )
-    gdf_near_grid_polygon = gpd.GeoDataFrame(
-        df, geometry=df["near_grid_polygon_wkt"].apply(loads)
-    )
-    gdf_optimum_grid_polygon = gpd.GeoDataFrame(
-        df, geometry=df["optimum_grid_polygon_wkt"].apply(loads)
-    )
+    gdf_near_grid_polygon = gpd.GeoDataFrame(df, geometry=df["near_grid_polygon_wkt"].apply(loads))
+    gdf_optimum_grid_polygon = gpd.GeoDataFrame(df, geometry=df["optimum_grid_polygon_wkt"].apply(loads))
     gdf_line_optimum = gpd.GeoDataFrame(df, geometry=optimum_lines)
 
     # Save to files
-    gdf_station_point.to_file(
-        os.path.join(out_dir, "stations.geojson"), driver="GeoJSON"
-    )
-    gdf_near_grid_polygon.to_file(
-        os.path.join(out_dir, "near_grid.geojson"), driver="GeoJSON"
-    )
-    gdf_optimum_grid_polygon.to_file(
-        os.path.join(out_dir, "optimum_grid.geojson"), driver="GeoJSON"
-    )
+    gdf_station_point.to_file(os.path.join(out_dir, "stations.geojson"), driver="GeoJSON")
+    gdf_near_grid_polygon.to_file(os.path.join(out_dir, "near_grid.geojson"), driver="GeoJSON")
+    gdf_optimum_grid_polygon.to_file(os.path.join(out_dir, "optimum_grid.geojson"), driver="GeoJSON")
     gdf_line_optimum.to_file(
         os.path.join(out_dir, "stations2grid_optimum_line.geojson"),
         driver="GeoJSON",
     )
     gdf_station_point.to_csv(os.path.join(out_dir, "stations.csv"))
-
 
 
 def station_mapping(config):
@@ -367,7 +328,8 @@ def station_mapping(config):
     cell_size = abs(latitudes[0] - latitudes[1])
 
     # Process each station and collect data in a list
-    data_list = [process_station_data(
+    data_list = [
+        process_station_data(
             station,
             latitudes,
             longitudes,
@@ -383,8 +345,10 @@ def station_mapping(config):
             manual_lat_col,
             manual_lon_col,
             manual_area,
-        ) for _, station in stations.iterrows()]
-    
+        )
+        for _, station in stations.iterrows()
+    ]
+
     df = pd.DataFrame(data_list)
 
     if config["out_directory"]:
