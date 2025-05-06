@@ -5,7 +5,6 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import xarray as xr
-from geopy.distance import geodesic
 from numpy.ma import is_masked
 from shapely.geometry import LineString, Point, box
 from shapely.wkt import loads
@@ -14,18 +13,22 @@ from hat.data import find_main_var
 from hat.observations import read_station_metadata_file
 
 
-def get_grid_index(lat, lon, latitudes, longitudes):
-    """Find the index of the nearest grid cell to the given lat/lon."""
-    lat_idx = (np.abs(latitudes - lat)).argmin()
-    lon_idx = (np.abs(longitudes - lon)).argmin()
+def get_closest_gridcell_index(lat_pt, lon_pt, latitudes_array, longitudes_array):
+    """
+    Find the index of the nearest grid cell to the given lat/lon.
+
+    Parameters:
+    - lat_pt (float): Latitude of the point.
+    - lon_pt (float): Longitude of the point.
+    - latitudes_array (numpy.ndarray): Array of latitude values for the grid cells.
+    - longitudes_array (numpy.ndarray): Array of longitude values for the grid cells.
+
+    Returns:
+    - tuple: Indices of the nearest grid cell (lat_idx, lon_idx).
+    """
+    lat_idx = (np.abs(latitudes_array - lat_pt)).argmin()
+    lon_idx = (np.abs(longitudes_array - lon_pt)).argmin()
     return lat_idx, lon_idx
-
-
-def calculate_distance_km(lat1, lon1, lat2, lon2):
-    """Calculate the distance in kilometers between two points."""
-    if pd.isna(lat1) or pd.isna(lon1) or pd.isna(lat2) or pd.isna(lon2):
-        return np.nan
-    return geodesic((lat1, lon1), (lat2, lon2)).kilometers
 
 
 def calculate_distance_cells(lat_idx1, lon_idx1, lat_idx2, lon_idx2):
@@ -37,7 +40,7 @@ def calculate_distance_cells(lat_idx1, lon_idx1, lat_idx2, lon_idx2):
     - lat_idx2, lon_idx2: Grid indices for the second point.
 
     Returns:
-    - int: Distance in terms of the number of grid cells.
+    - float: Distance in terms of the number of grid cells.
     """
     lat_diff = lat_idx1 - lat_idx2
     lon_diff = lon_idx1 - lon_idx2
@@ -46,15 +49,7 @@ def calculate_distance_cells(lat_idx1, lon_idx1, lat_idx2, lon_idx2):
 
 def calculate_area_diff_percentage(eval_value, ref_value):
     """Calculate the area difference as a percentage."""
-    try:
-        ref_value = float(ref_value)
-        eval_value = float(eval_value)
-    except ValueError:
-        return np.nan  # Return NaN if conversion fails
-
-    if ref_value <= 0:
-        return np.nan  # Avoid division by zero
-    return ((ref_value - eval_value) / ref_value) * 100
+    return (np.abs(ref_value - eval_value) / ref_value) * 100
 
 
 def find_best_matching_grid(
@@ -67,7 +62,7 @@ def find_best_matching_grid(
     max_neighboring_cells,
     max_area_diff,
 ):
-    lat_idx, lon_idx = get_grid_index(lat, lon, latitudes, longitudes)
+    lat_idx, lon_idx = get_closest_gridcell_index(lat, lon, latitudes, longitudes)
     min_diff = np.inf
     best_match = (lat_idx, lon_idx)
 
@@ -84,8 +79,8 @@ def find_best_matching_grid(
             if is_masked(grid_data):
                 continue
             area_diff = calculate_area_diff_percentage(grid_data, csv_value)
-            if abs(area_diff) < min_diff and abs(area_diff) <= max_area_diff:
-                min_diff = abs(area_diff)
+            if area_diff < min_diff and area_diff <= max_area_diff:
+                min_diff = area_diff
                 best_match = (i, j)
 
     return best_match
@@ -141,9 +136,6 @@ def process_station_data(
         manual_area (str):
             Column name for manually mapped area in the station data.
 
-    Note:
-        All lattitude and longitude values must be in decimal degrees (DD).
-
     Returns:
         dict: A dictionary containing processed data for the station,
         nearest grid cell, and best matching grid cell (if applicable).
@@ -157,7 +149,7 @@ def process_station_data(
         manual_lon = station.get(manual_lon_col, np.nan)
         manual_lat = float(manual_lat) if not pd.isna(manual_lat) and manual_lat != "" else np.nan
         manual_lon = float(manual_lon) if not pd.isna(manual_lon) and manual_lon != "" else np.nan
-        manual_lat_idx, manual_lon_idx = get_grid_index(manual_lat, manual_lon, latitudes, longitudes)
+        manual_lat_idx, manual_lon_idx = get_closest_gridcell_index(manual_lat, manual_lon, latitudes, longitudes)
         manual_area = float(station[manual_area]) if station[manual_area] else np.nan
 
     else:
@@ -167,11 +159,10 @@ def process_station_data(
         manual_lat_idx, manual_lon_idx = np.nan, np.nan
 
     # Nearest grid cell
-    lat_idx, lon_idx = get_grid_index(lat, lon, latitudes, longitudes)
+    lat_idx, lon_idx = get_closest_gridcell_index(lat, lon, latitudes, longitudes)
     near_grid_area = nc_data[lat_idx, lon_idx]
     near_grid_area = float(near_grid_area) if not is_masked(near_grid_area) else np.nan
     near_area_diff = calculate_area_diff_percentage(near_grid_area, station_area)
-    near_distance_km = calculate_distance_km(lat, lon, latitudes[lat_idx], longitudes[lon_idx])
     near_grid_polygon = create_grid_polygon(latitudes[lat_idx], longitudes[lon_idx], cell_size)
 
     # if the area difference is greater than the minimum, find the best
@@ -193,7 +184,6 @@ def process_station_data(
         optimum_area_diff = calculate_area_diff_percentage(optimum_grid_area, station_area)
         optimum_grid_polygon = create_grid_polygon(latitudes[optimum_lat_idx], longitudes[optimum_lon_idx], cell_size)
         optimum_distance_cells = calculate_distance_cells(lat_idx, lon_idx, optimum_lat_idx, optimum_lon_idx)
-        optimum_distance_km = calculate_distance_km(lat, lon, latitudes[optimum_lat_idx], longitudes[optimum_lon_idx])
     else:
         # Use the nearest grid cell as the best matching grid cell
         optimum_lat_idx, optimum_lon_idx = lat_idx, lon_idx
@@ -201,7 +191,6 @@ def process_station_data(
         optimum_area_diff = near_area_diff
         optimum_grid_polygon = near_grid_polygon
         optimum_distance_cells = 0
-        optimum_distance_km = near_distance_km
 
     return {
         # Station data
@@ -225,7 +214,6 @@ def process_station_data(
         "optimum_grid_area": optimum_grid_area,
         "optimum_area_diff": optimum_area_diff,
         "optimum_distance_cells": optimum_distance_cells,
-        "optimum_distance_km": optimum_distance_km,
         "optimum_grid_polygon": optimum_grid_polygon,
         # Manually mapped variable
         "manual_lat": manual_lat,
