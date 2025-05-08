@@ -291,10 +291,9 @@ def read_csv_and_cache(fpath: str) -> gpd.GeoDataFrame:
     # use cache if it exists
     if os.path.exists(cache_fpath):
         gdf = pd.read_pickle(cache_fpath)
-
     # otherwise load from user defined filepath (and then cache)
     else:
-        gdf = gpd.read_file(fpath)
+        gdf = pd.read_csv(fpath)
         gdf.to_pickle(cache_fpath)
 
     return gdf

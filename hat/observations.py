@@ -36,7 +36,7 @@ def read_station_metadata_file(fpath: str, coord_names: str, epsg: int, filters:
     try:
         if is_csv(fpath):
             gdf = read_csv_and_cache(fpath)
-            gdf = add_geometry_column(gdf, coord_names)
+            gdf = add_geometry_column(gdf, coord_names, epsg)
             gdf = gdf.set_crs(epsg=epsg)
         else:
             gdf = gpd.read_file(fpath)

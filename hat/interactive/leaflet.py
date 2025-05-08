@@ -141,8 +141,6 @@ class LeafletMap:
 
         def update_widgets_from_click(*args, **kwargs):
             widgets.update(*args, **kwargs)
-            # station_id = kwargs["feature"]["properties"]["station_id"]
-            # self._update_boundaries_from_station(station_id, geodata, coord_names)
 
         geojson.on_click(update_widgets_from_click)
         geojson.on_hover(self.create_hover(widgets))
@@ -296,8 +294,8 @@ class StatsColormap(PyleafletColormap):
             assert "station_id_column_name" in self.config, 'Config must contain "station_id_column_name"'
             # Normalize the data for coloring
             if range is None:
-                self.min_val = self.stats.values.min()
-                self.max_val = self.stats.values.max()
+                self.min_val = np.nanmin(self.stats.values)
+                self.max_val = np.nanmax(self.stats.values)
             else:
                 self.min_val = range[0]
                 self.max_val = range[1]
