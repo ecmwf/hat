@@ -33,19 +33,20 @@ dependencies = [
     "xarray",
     "matplotlib",
     "geopandas",
-    "typer",
-    "humanize",
+    "typer", # check if necessary
+    "humanize", # check if necessary
     "tqdm",
     "ipyleaflet",
     "ipywidgets",
-    "earthkit-data",
-    "cfgrib",
-    "netCDF4",
-    "eccodes",
+    "earthkit-data>=0.13.8",
+    "cfgrib", # check if necessary
+    "netCDF4", # check if necessary
+    "eccodes", # check if necessary
     "plotly",
-    "jupyter",
+    "floods-html",
     "geopy",
-    "floods-html"
+    "setuptools",
+    "anywidget"
 ]
 
 [project.urls]
@@ -66,7 +67,7 @@ dependencies = [
 [project.scripts]
     hat-extract-timeseries = "hat.tools.extract_simulation_timeseries_cli:main"
     hat-hydrostats = "hat.tools.hydrostats_cli:main"
-    hat-stations-mapping = "hat.mapping.station_mapping:main"
+    hat-stations-mapping = "hat.tools.station_mapping_cli:main"
 
 # Linting settings
 [tool.ruff]

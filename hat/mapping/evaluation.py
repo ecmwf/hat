@@ -4,11 +4,12 @@ import numpy as np
 from hat.mapping.station_mapping import (
     calculate_area_diff_percentage,
     calculate_distance_cells,
-    calculate_distance_km,
 )
 
 
-# Function to calculate Mean Absolute Error
+# TODO: we already have MAE, RMSE in hydrostats. This is duplication, merge logic.
+
+
 def calculate_mae(df, column_reference, column_evaluated):
     """
     Calculate the Mean Absolute Error (MAE) as
@@ -23,14 +24,13 @@ def calculate_mae(df, column_reference, column_evaluated):
         (np.abs((df[column_reference] - df[column_evaluated]))).mean(),
         2,
     )
-    print(
-        "Mean Abs. Error (MAE) between"
-        + f"{column_reference} & {column_evaluated}: {mae}km2"
-    )
+    print("Mean Abs. Error (MAE) between" + f"{column_reference} & {column_evaluated}: {mae}km2")
     return mae
 
 
-# Function to calculate Average Error
+# TODO: decide on docstring style. Maybe change the docstrings here to numpy-style.
+
+
 def calculate_rmse(df, column_reference, column_evaluated):
     """
     Calculate the Root Mean Square Error (RMSE) between two columns in a DataFrame.
@@ -40,9 +40,7 @@ def calculate_rmse(df, column_reference, column_evaluated):
     :param column_evaluated: Name of the column to be evaluated against the reference
     :return: RMSE value
     """
-    rmse = round(
-        np.sqrt(((df[column_reference] - df[column_evaluated]) ** 2).mean()), 2
-    )
+    rmse = round(np.sqrt(((df[column_reference] - df[column_evaluated]) ** 2).mean()), 2)
     print(f"RMSE between {column_reference} and {column_evaluated}: {rmse} km2")
     return rmse
 
@@ -79,18 +77,10 @@ def count_and_analyze_area_distance(
         ref_name + "_lat_idx",
         ref_name + "_lon_idx",
     )  # column name for reference grid indices
-    ref_lat_col, ref_lon_col = (
-        ref_name + "_lat",
-        ref_name + "_lon",
-    )  # column name for reference grid lat and lon
     eval_lat_idx_col, eval_lon_idx_col = (
         eval_name + "_lat_idx",
         eval_name + "_lon_idx",
     )  # column name for evaluated grid indices
-    eval_lat_col, eval_lon_col = (
-        eval_name + "_lat",
-        eval_name + "_lon",
-    )  # column name for evaluated grid lat and lon
 
     # Initialise counters for counting stations and distances frequencies
     count_outside_area_limit = 0
@@ -99,10 +89,8 @@ def count_and_analyze_area_distance(
     count_outside_distance_limit = 0
     distance_freq = {}
 
-    for index, row in df.iterrows():
-        area_diff = abs(
-            calculate_area_diff_percentage(row[eval_area_col], row[ref_area_col])
-        )
+    for _, row in df.iterrows():
+        area_diff = abs(calculate_area_diff_percentage(row[eval_area_col], row[ref_area_col]))
 
         if area_diff <= area_diff_limit:
             if distance_unit == "cells":
@@ -114,15 +102,8 @@ def count_and_analyze_area_distance(
                         row[eval_lon_idx_col],
                     )
                 )
-            elif distance_unit == "km":
-                grid_distance = round(
-                    calculate_distance_km(
-                        row[ref_lat_col],
-                        row[ref_lon_col],
-                        row[eval_lat_col],
-                        row[eval_lon_col],
-                    )
-                )
+            else:
+                raise Exception("Invalid distance unit. Use 'cells'.")
             distance_freq[grid_distance] = distance_freq.get(grid_distance, 0) + 1
             count_inside_area_limit += 1
 
@@ -138,10 +119,7 @@ def count_and_analyze_area_distance(
     distances, frequencies = zip(*distance_freq.items())
     fig, ax = plt.subplots()
     ax.bar(distances, frequencies, color="blue", alpha=0.7, width=0.9)
-    ax.set_title(
-        "Histogram of Distances "
-        + f"Found within Acceptable Area Differences of {area_diff_limit}%"
-    )
+    ax.set_title("Histogram of Distances " + f"Found within Acceptable Area Differences of {area_diff_limit}%")
     ax.set_xlabel(f"Grid Distance ({distance_unit})")
     ax.set_ylabel("Frequency")
     ax.set_yscale(y_scale)

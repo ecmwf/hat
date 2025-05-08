@@ -1,14 +1,12 @@
 import numpy as np
 import pytest
-from geopy.distance import geodesic
 
 from hat.mapping.station_mapping import (
     calculate_area_diff_percentage,
     calculate_distance_cells,
-    calculate_distance_km,
     create_grid_polygon,
     find_best_matching_grid,
-    get_grid_index,
+    get_closest_gridcell_index,
     process_station_data,
 )
 
@@ -18,17 +16,8 @@ def test_get_grid_index():
     latitudes = np.array([0, 1, 2, 3, 4])
     longitudes = np.array([0, 1, 2, 3, 4])
     lat, lon = 2.5, 2.5
-    lat_idx, lon_idx = get_grid_index(lat, lon, latitudes, longitudes)
+    lat_idx, lon_idx = get_closest_gridcell_index(lat, lon, latitudes, longitudes)
     assert lat_idx == 2 and lon_idx == 2
-
-
-# Test for calculate_distance function
-def test_calculate_distance_km():
-    lat1, lon1 = 0, 0
-    lat2, lon2 = 1, 1
-    expected_distance = geodesic((lat1, lon1), (lat2, lon2)).kilometers
-    distance = calculate_distance_km(lat1, lon1, lat2, lon2)
-    assert pytest.approx(distance) == expected_distance
 
 
 # Test for calculate_distance_cells function
@@ -139,110 +128,71 @@ def test_process_station_data(mock_station, mock_latitudes_longitudes, mock_nc_d
 
     # Assert the structure of the returned data
     assert "station_name" in processed_data, "Station name is missing"
-    assert isinstance(
-        processed_data["station_name"], str
-    ), "Station name should be a string"
+    assert isinstance(processed_data["station_name"], str), "Station name should be a string"
 
     assert "station_lat" in processed_data, "Station latitude is missing"
-    assert isinstance(
-        processed_data["station_lat"], float
-    ), "Station latitude should be a float"
+    assert isinstance(processed_data["station_lat"], float), "Station latitude should be a float"
 
     assert "station_lon" in processed_data, "Station longitude is missing"
-    assert isinstance(
-        processed_data["station_lon"], float
-    ), "Station longitude should be a float"
+    assert isinstance(processed_data["station_lon"], float), "Station longitude should be a float"
 
     assert "station_area" in processed_data, "Station area is missing"
-    assert isinstance(
-        processed_data["station_area"], float
-    ), "Station area should be a float"
+    assert isinstance(processed_data["station_area"], float), "Station area should be a float"
 
     assert "near_grid_lat" in processed_data, "Near grid latitude is missing"
-    assert isinstance(
-        processed_data["near_grid_lat"], float
-    ), "Near grid latitude should be a float"
+    assert isinstance(processed_data["near_grid_lat"], float), "Near grid latitude should be a float"
 
     assert "near_grid_lon" in processed_data, "Near grid longitude is missing"
-    assert isinstance(
-        processed_data["near_grid_lon"], float
-    ), "Near grid longitude should be a float"
+    assert isinstance(processed_data["near_grid_lon"], float), "Near grid longitude should be a float"
 
     assert "near_grid_area" in processed_data, "Near grid area is missing"
-    assert isinstance(
-        processed_data["near_grid_area"], float
-    ), "Near grid area should be a float"
+    assert isinstance(processed_data["near_grid_area"], float), "Near grid area should be a float"
 
     assert "near_area_diff" in processed_data, "Near area difference is missing"
-    assert isinstance(
-        processed_data["near_area_diff"], float
-    ), "Near area difference should be a float"
+    assert isinstance(processed_data["near_area_diff"], float), "Near area difference should be a float"
 
     assert "optimum_grid_lat" in processed_data, "Optimum grid latitude is missing"
-    assert isinstance(
-        processed_data["optimum_grid_lat"], float
-    ), "Optimum grid latitude should be a float"
+    assert isinstance(processed_data["optimum_grid_lat"], float), "Optimum grid latitude should be a float"
 
     assert "optimum_grid_lon" in processed_data, "Optimum grid longitude is missing"
-    assert isinstance(
-        processed_data["optimum_grid_lon"], float
-    ), "Optimum grid longitude should be a float"
+    assert isinstance(processed_data["optimum_grid_lon"], float), "Optimum grid longitude should be a float"
 
     assert "optimum_grid_area" in processed_data, "Optimum grid area is missing"
-    assert isinstance(
-        processed_data["optimum_grid_area"], float
-    ), "Optimum grid area should be a float"
+    assert isinstance(processed_data["optimum_grid_area"], float), "Optimum grid area should be a float"
 
     assert "optimum_area_diff" in processed_data, "Optimum area difference is missing"
-    assert isinstance(
-        processed_data["optimum_area_diff"], float
-    ), "Optimum area difference should be a float"
+    assert isinstance(processed_data["optimum_area_diff"], float), "Optimum area difference should be a float"
 
-    assert (
-        "optimum_distance_cells" in processed_data
-    ), "Optimum distance in cells is missing"
-    assert isinstance(
-        processed_data["optimum_distance_cells"], int
-    ), "Optimum distance should be an integer"
-
-    assert "optimum_distance_km" in processed_data, "Optimium distance in km is missing"
-    assert isinstance(
-        processed_data["optimum_distance_km"], float
-    ), "Nearest distance in km should be a float"
+    assert "optimum_distance_cells" in processed_data, "Optimum distance in cells is missing"
+    assert isinstance(processed_data["optimum_distance_cells"], float), "Optimum distance should be a float"
 
     # If manually mapping variables are used in your test, include them in assertions
     if "manual_lat" in processed_data:
-        assert isinstance(
-            processed_data["manual_lat"], float
-        ), "Manual latitude should be a float or NaN"
+        assert isinstance(processed_data["manual_lat"], float), "Manual latitude should be a float or NaN"
 
     if "manual_lon" in processed_data:
-        assert isinstance(
-            processed_data["manual_lon"], float
-        ), "Manual longitude should be a float or NaN"
+        assert isinstance(processed_data["manual_lon"], float), "Manual longitude should be a float or NaN"
 
     if "manual_area" in processed_data:
-        assert isinstance(
-            processed_data["manual_area"], float
-        ), "Manual area should be a float or NaN"
+        assert isinstance(processed_data["manual_area"], float), "Manual area should be a float or NaN"
 
     # Assert for grid index values if they are part of the returned data structure
     if "near_grid_lat_idx" in processed_data:
         assert isinstance(
-            processed_data["near_grid_lat_idx"], int
+            processed_data["near_grid_lat_idx"], (int, np.integer)
         ), "Near grid latitude index should be an integer"
 
     if "near_grid_lon_idx" in processed_data:
         assert isinstance(
-            processed_data["near_grid_lon_idx"], int
+            processed_data["near_grid_lon_idx"], (int, np.integer)
         ), "Near grid longitude index should be an integer"
 
     if "optimum_grid_lat_idx" in processed_data:
         assert isinstance(
-            processed_data["optimum_grid_lat_idx"], int
+            processed_data["optimum_grid_lat_idx"], (int, np.integer)
         ), "Optimum grid latitude index should be an integer"
 
     if "optimum_grid_lon_idx" in processed_data:
         assert isinstance(
-            processed_data["optimum_grid_lon_idx"], int
+            processed_data["optimum_grid_lon_idx"], (int, np.integer)
         ), "Optimum grid longitude index should be an integer"

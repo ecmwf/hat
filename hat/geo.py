@@ -13,7 +13,7 @@ sys.path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 
-# Lat lon to EFAS grid Transforer
+# Lat lon to EFAS grid Transformer
 EFAS_5KM_CRS = CRS.from_proj4(
     """ +proj=laea +lat_0=52 +lon_0=10 +x_0=4321000
      +y_0=3210000 +ellps=GRS80 +units=m +no_defs """
@@ -34,8 +34,6 @@ def reproject_4326_to_3857(xarr):
 
 
 def reproject_efas_5km(xarr, epsg):
-    """safely reprojects EFAS 5km.
-    CRS was not read from file so defined from docs"""
     crs = CRS.from_proj4(
         """ +proj=laea +lat_0=52 +lon_0=10 +x_0=4321000
          +y_0=3210000 +ellps=GRS80 +units=m +no_defs """
@@ -46,7 +44,9 @@ def reproject_efas_5km(xarr, epsg):
 
 
 def transform_bounds(src_bounds, src_crs, dst_crs):
-    """transform bounding box from source to destination crs"""
+    """
+    Transform a bounding box from a source to a destination CRS.
+    """
 
     transformer = Transformer.from_crs(src_crs, dst_crs)
 
@@ -75,19 +75,20 @@ def shapely_to_geojson(shapely_object, fpath="data.geojson"):
 
 
 def point_in_bounds(point, bounds):
-    """is point (x,y) in bounds (minx, miny, maxx, maxy)"""
+    """
+    Checks if a point (x,y) is in the bounds (minx, miny, maxx, maxy)
+    """
 
-    x, y = point
-    minx, miny, maxx, maxy = bounds
-
-    point = shapely.Point(x, y)
-    box = shapely.box(minx, miny, maxx, maxy)
+    point = shapely.Point(*point)
+    box = shapely.box(*bounds)
     return point.within(box)
 
 
 def find_nearest(array, value):
-    """nearest value in array"""
-    array = np.asarray(array)
+    """
+    Finds the nearest value in an array
+    """
+    array = np.asarray(array) # TODO: check if this is necessary
     idx = (np.abs(array - value)).argmin()
     return array[idx]
 
@@ -95,13 +96,18 @@ def find_nearest(array, value):
 def name_of_adjusted_coord(
     coord_name: str, model: str, version_num: int, resolution: str
 ):
-    """column name in station metadata of manually adjusted coordinate
-    based on model river network"""
+    """
+    Convenience function to find the column name in station metadata
+    of the manually adjusted coordinate based on model river network
+    """
     return f"{model.title()}{coord_name.title()}{version_num}_{resolution}"
 
 
 def name_of_adjusted_coords(river_network: str, version=1):
-    """names of columns in station metadata with river network coordinates"""
+    """
+    Finds the names of the columns in the station metadata
+    with manually adjusted river network coordinates
+    """
 
     model, resolution = river_network.split("_")
     lat_name = name_of_adjusted_coord("lat", model, version, resolution)
@@ -111,7 +117,10 @@ def name_of_adjusted_coords(river_network: str, version=1):
 
 
 def river_network_geometry(metadata, river_network, version=1):
-    """station metadata geodataframe with river network corrected geometry"""
+    """
+    Find a station metadata geodataframe
+    with the river network corrected geometry
+    """
 
     if river_network == "EPSG:4326":
         return metadata
@@ -123,7 +132,7 @@ def river_network_geometry(metadata, river_network, version=1):
 
     return gdf
 
-
+# TODO: check why this is a function
 def river_network_to_coord_names_mapping():
     """explicit mapping between river network name and coord names
     (to handle inconsistent naming conventions)"""
@@ -140,7 +149,9 @@ def river_network_to_coord_names_mapping():
 
 
 def river_network_to_coord_names(river_network: str = "") -> dict:
-    "river network name to coordinate column names in station metadata table"
+    """
+    river network name to coordinate column names in station metadata table
+    """
 
     # default is station lonlat (epsg:4326)
     if not river_network:
@@ -158,8 +169,9 @@ def river_network_to_coord_names(river_network: str = "") -> dict:
         return {"x": x, "y": y}
     else:
         print(f"River network '{river_network}' not in: {valid_river_networks}")
+        # TODO: check why this doesn't return anything/raise error
 
-
+# TODO: check why this is a function
 def geojson_schema():
     """GeoJSON schema definition"""
 
@@ -272,8 +284,11 @@ def geojson_schema():
     }
 
 
+# TODO: check if this is necessary
 def is_valid_geojson(file_path):
-    """check if a file is valid geojson"""
+    """
+    Check if a file is valid .geojson
+    """
 
     try:
         with open(file_path, "r") as file:
@@ -286,23 +301,20 @@ def is_valid_geojson(file_path):
 
 
 def geopoints_to_array(gdf, array_coords) -> np.ndarray:
-    """Create 2D boolean array where points in gdf nearest to array coords
+    """
+    Create 2D boolean array where points in gdf nearest to array coords.
 
     NOTE numpy arrays convention is (row, col) which corresponds to (y,x)
     """
 
-    # check is geopandas dataframe
-    if not isinstance(gdf, gpd.GeoDataFrame):
-        print("Points must be in a geopandas dataframe")
-        return
+    assert isinstance(gdf, gpd.GeoDataFrame)
 
     # check geometries are points
     points = gdf.geometry
-    if not all(isinstance(point, shapely.Point) for point in points):
-        print("Geometries must be shapely POINT")
-        return
 
-    # x and y (e.g. longitude and latitude) of georeferenced points
+    assert all(isinstance(point, shapely.Point) for point in points)
+
+    # TODO: check if this is necessary
     point_xs = np.array([point.x for point in points])
     point_ys = np.array([point.y for point in points])
 
@@ -310,19 +322,18 @@ def geopoints_to_array(gdf, array_coords) -> np.ndarray:
     x_indices = [(np.abs(array_coords["x"] - point_x)).argmin() for point_x in point_xs]
     y_indices = [(np.abs(array_coords["y"] - point_y)).argmin() for point_y in point_ys]
 
-    # create an empty boolean array
     shape = (len(array_coords["y"]), len(array_coords["x"]))
     arr = np.full(shape, False)
-
-    # set point elements to True
     arr[y_indices, x_indices] = True
 
     return arr
 
 
 def geopoints_from_csv(fpath: str, lat_name: str, lon_name: str) -> gpd.GeoDataFrame:
-    """Load georeferenced points from file.
-    Requires name of latitude and longitude columns"""
+    """
+    Load georeferenced points from file.
+    Requires name of latitude and longitude columns.
+    """
 
     gdf = gpd.read_file(fpath)
     gdf["geometry"] = gpd.points_from_xy(gdf[lon_name], gdf[lat_name])
@@ -343,16 +354,15 @@ def get_latlon_keys(ds):
         raise Exception(
             f"Lat/lon coordinates could not be detected in dataset with coords {ds.coords}"  # noqa: E501
         )
-
     return lat_key, lon_key
 
 
 def latlon_coords(ds):
-    """Latitude and longitude coordinates of an xarray"""
+    """
+    Find latitude and longitude coordinates of an xarray.
+    """
 
     lat_key, lon_key = get_latlon_keys(ds)
     lat_coords = ds.coords.get(lat_key).data
     lon_coords = ds.coords.get(lon_key).data
-    coords = {"x": lon_coords, "y": lat_coords}
-
-    return coords
+    return {"x": lon_coords, "y": lat_coords}

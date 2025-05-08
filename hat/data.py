@@ -12,11 +12,11 @@ import xarray as xr
 import pandas as pd
 import geopandas as gpd
 
-"""filepaths"""
-
 
 def valid_filepath(filepaths):
-    """returns first valid filepath in list of filepaths"""
+    """
+    Returns first valid filepath in list of filepaths.
+    """
 
     for filepath in filepaths:
         if os.path.exists(filepath):
@@ -24,8 +24,10 @@ def valid_filepath(filepaths):
 
 
 def get_tmpdir():
-    """HPC friendly temporary directory
-    defined by environment variable called TMPDIR"""
+    """
+    HPC friendly temporary directory
+    defined by environment variable called TMPDIR
+    """
 
     # HPC has an environmented variable for the preferred
     # (i.e. safer) temporary directory
@@ -70,7 +72,9 @@ def get_tmp_filepath(filename_components: Union[List[str], str] = "file", extens
 
 
 def find_files(simulation_files):
-    """Find files matching regex"""
+    """
+    Find files matching regex
+    """
 
     fpaths = glob.glob(simulation_files)
 
@@ -87,7 +91,9 @@ def find_files(simulation_files):
 
 
 def filesize(fpath, bytesize=False):
-    """Given a filepath return the size of the file in human readable format"""
+    """
+    Given a filepath return the size of the file in human readable format
+    """
 
     # check exists
     if not os.path.exists(fpath):
@@ -108,8 +114,10 @@ def filesize(fpath, bytesize=False):
 
 
 def dirsize(simulation_datadir, bytesize=False):
-    """given a root directory return total size of all files
-    in a directory in human readable format"""
+    """
+    given a root directory return total size of all files
+    in a directory in human readable format
+    """
 
     if not os.path.exists(simulation_datadir) or not os.path.isdir(simulation_datadir):
         print("Not a directory", simulation_datadir)
@@ -216,9 +224,6 @@ def is_csv(file_path):
     return file_extension.lower() == ".csv"
 
 
-""" other data (e.g. non geospatial)"""
-
-
 def read_json_to_dict(fpath: str) -> dict:
     """read json to dict"""
 
@@ -266,13 +271,11 @@ def read_simulation_as_xarray(options):
             f"Simulation type {options['type']} not supported. Currently supported: file, mars, fdb"  # noqa: E501
         )
 
-    # earthkit data file source
     fs = earthkit.data.from_source(src_type, *args)
 
     xarray_kwargs = {}
     xarray_kwargs["xarray_open_mfdataset_kwargs"] = {"chunks": {"time": "auto"}}
 
-    # xarray dataset
     ds = fs.to_xarray(**xarray_kwargs)
 
     var = find_main_var(ds)

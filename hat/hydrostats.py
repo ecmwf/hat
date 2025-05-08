@@ -1,5 +1,3 @@
-"""high level python api for hydrological statistics"""
-
 from typing import List
 
 import numpy as np
@@ -14,21 +12,16 @@ def run_analysis(
     obs_ds: xr.DataArray,
 ) -> xr.Dataset:
     """
-    Run statistical analysis on simulation and observation timeseries
+    Run statistical analysis on simulation and observation timeseries.
     """
 
-    # list of stations
     stations = sims_ds.coords["station"].values
 
     ds = xr.Dataset()
 
-    # For each statistical function
     for name in functions:
-        # get function itself from name
         func = getattr(hydrostats_functions, name)
 
-        # do timeseries analysis for each station
-        # (using a "numpy in, numpy out" function)
         statistics = []
         for station in stations:
             sims = sims_ds.sel(station=station).to_numpy()
@@ -38,10 +31,9 @@ def run_analysis(
             if stat is None:
                 print(f"Warning! All NaNs for station {station}")
                 stat = 0
-            statistics += [stat]
+            statistics.append(stat)
         statistics = np.array(statistics)
 
-        # Add the Series to the DataFrame
         ds[name] = xr.DataArray(statistics, coords={"station": stations})
 
     return ds
