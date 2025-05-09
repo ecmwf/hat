@@ -121,7 +121,10 @@ def apply_filter(df: pd.DataFrame, key: str, operator: str, value: str) -> pd.Da
 
     filter_func = operators[operator]
 
-    return df[filter_func(df[key], value)]
+    series_to_filter = df[key]
+    casted_val = pd.Series([value]).astype(series_to_filter.dtype).iloc[0]
+
+    return df[filter_func(series_to_filter, casted_val)]
 
 
 def filter_dataframe(df, filters: str):
