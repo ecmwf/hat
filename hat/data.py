@@ -292,7 +292,7 @@ def read_csv_and_cache(fpath: str) -> gpd.GeoDataFrame:
     cache_fpath = get_tmp_filepath(cache_fname, extension=".pickle")
 
     # use cache if it exists
-    if os.path.exists(cache_fpath):
+    if False:  # os.path.exists(cache_fpath):
         gdf = pd.read_pickle(cache_fpath)
     # otherwise load from user defined filepath (and then cache)
     else:

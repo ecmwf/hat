@@ -11,21 +11,6 @@ from ipyleaflet import Popup, WidgetControl
 from ipywidgets import HTML, Button, HBox, Layout, Text
 
 
-def _compute_bounds(stations_metadata, coord_names):
-    """Compute the bounds of the map based on the stations metadata."""
-
-    lon_column = coord_names[0]
-    lat_column = coord_names[1]
-
-    lons = stations_metadata[lon_column].values
-    lats = stations_metadata[lat_column].values
-
-    min_lat, max_lat = min(lats), max(lats)
-    min_lon, max_lon = min(lons), max(lons)
-
-    return [(float(min_lat), float(min_lon)), (float(max_lat), float(max_lon))]
-
-
 class LeafletMap:
     """
     A class for creating interactive leaflet maps.
