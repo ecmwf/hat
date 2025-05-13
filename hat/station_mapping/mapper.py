@@ -1,8 +1,9 @@
 import pandas as pd
 import xarray as xr
+import plotly.express as px
+from plotly.colors import get_colorscale
 from hat.data import find_main_var
-
-from hat.station_mapping.station_mapping import StationMapping
+from .station_mapping import StationMapping
 
 
 def get_grid_inputs(grid_config):
@@ -36,6 +37,42 @@ def outputs_to_df(df, indx, indy, cindx, cindy, errors, grid_area_coords1, grid_
     df["opt_x_coord"] = grid_area_coords1[indx, 0]
     df["opt_y_coord"] = grid_area_coords2[0, indy]
     df.to_csv(filename, index=False)
+    return df
+
+
+def light_zero_color(colorscale_name="Viridis", zero_color="rgba(0,0,0,0)"):
+    base = get_colorscale(colorscale_name)
+    n = len(base)
+    scaled = [[i / (n - 1), color] for i, (_, color) in enumerate(base)]
+    scaled[0] = [0.0, zero_color]
+    return scaled
+
+
+def generate_summary_plots(df, plot_config):
+    if plot_config is None:
+        return
+
+    distance_plot_config = plot_config.get("error", None)
+    if distance_plot_config is not None:
+        df["grid_offset_x"] = df["opt_x_index"] - df["near_x_index"]
+        df["grid_offset_y"] = df["opt_y_index"] - df["near_y_index"]
+        custom_scale = light_zero_color("Viridis")
+        fig = px.density_heatmap(
+            df,
+            x="grid_offset_x",
+            y="grid_offset_y",
+            marginal_x="histogram",
+            marginal_y="histogram",
+            color_continuous_scale=custom_scale,
+        )
+        fig.write_html(distance_plot_config["file"])
+        fig.show()
+
+    error_plot_config = plot_config.get("error", None)
+    if error_plot_config is not None:
+        fig = px.histogram(df, x="opt_error")
+        fig.write_html(error_plot_config["file"])
+        fig.show()
 
 
 def mapper(config):
@@ -44,4 +81,6 @@ def mapper(config):
     mapping_outputs = StationMapping(config["parameters"]).conduct_mapping(
         station_coords1, station_coords2, grid_area_coords1, grid_area_coords2, station_metric, metric_grid
     )
-    outputs_to_df(df, *mapping_outputs, grid_area_coords1, grid_area_coords2, filename=config["output"]["file"])
+    df = outputs_to_df(df, *mapping_outputs, grid_area_coords1, grid_area_coords2, filename=config["output"]["file"])
+    generate_summary_plots(df, config.get("plot", None))
+    return df
