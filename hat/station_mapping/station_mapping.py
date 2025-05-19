@@ -1,14 +1,13 @@
 import numpy as np
 
-from hat.station_mapping import distance_metrics
 from hat.station_mapping import metrics
 
 
 class StationMapping:
     def __init__(self, config):
         self.max_search_distance = config.get("max_search_distance", 5)
-        self.metric_error_func = getattr(metrics, config.get("metric_error_func", "percentage_error"))
-        self.distance_error_func = getattr(distance_metrics, config.get("distance_error_func", "no_error"))
+        self.metric_error_func = getattr(metrics, config.get("metric_error_func", "mape"))
+        self.distance_error_func = getattr(metrics, config.get("distance_error_func", "no_error"))
         self.lambd = config.get("lambda", 0)
         self.max_error = config.get("max_error", np.inf)
         self.min_error = config.get("min_error", 0)
@@ -51,6 +50,11 @@ class StationMapping:
             subset_x = grid_area_coords1[searchbox_min_x:searchbox_max_x, searchbox_min_y:searchbox_max_y]
             subset_y = grid_area_coords2[searchbox_min_x:searchbox_max_x, searchbox_min_y:searchbox_max_y]
 
+            shape = subset_x.shape
+
+            subset_x = subset_x.flatten()
+            subset_y = subset_y.flatten()
+
             subset_coords = np.stack((subset_x, subset_y), axis=0)
             coords_vec = np.array([station_x, station_y])
 
@@ -60,20 +64,28 @@ class StationMapping:
                 area_error = 0
             else:
                 assert grid_metric is not None
-                subset_metric = grid_metric[searchbox_min_x:searchbox_max_x, searchbox_min_y:searchbox_max_y]
+                subset_metric = grid_metric[searchbox_min_x:searchbox_max_x, searchbox_min_y:searchbox_max_y].flatten()
                 area_error = self.metric_error_func(station_metric[i], subset_metric)
 
             error = area_error + self.lambd * distance_error
-            min_index = np.unravel_index(np.nanargmin(error), error.shape)
-            best_error = error[min_index]
+            best_error_1d_index = np.nanargmin(error)
+            min_index = np.unravel_index(best_error_1d_index, shape)
+            best_error = error[best_error_1d_index]
 
-            if best_error >= self.min_error and best_error <= self.max_error:
-                indx = (min_index[0] + searchbox_min_x) % grid_area_coords1.shape[0]
-                indy = (min_index[1] + searchbox_min_y) % grid_area_coords1.shape[1]
-            else:
+            closest_1d_index = self.max_search_distance * (2 * self.max_search_distance + 1) + self.max_search_distance
+            closest_error = error[closest_1d_index]
+
+            if closest_error <= self.min_error:  # if nearest cell is good enough
                 indx = closest_idx
                 indy = closest_idy
-                best_error = error[self.max_search_distance, self.max_search_distance]
+                best_error = closest_error
+            elif best_error <= self.max_error:
+                indx = (min_index[0] + searchbox_min_x) % grid_area_coords1.shape[0]
+                indy = (min_index[1] + searchbox_min_y) % grid_area_coords1.shape[1]
+            else:  # if best match is still too bad, revert to closest cell
+                indx = closest_idx
+                indy = closest_idy
+                best_error = closest_error  # 1d equivalent to [self.max_search_distance, self.max_search_distance]
 
             indxs[i] = indx
             indys[i] = indy
