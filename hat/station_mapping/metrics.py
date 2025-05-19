@@ -18,7 +18,7 @@ def metric_wrapper(func):
 
 
 @metric_wrapper
-def no_error(val, grid):
+def zero(val, grid):
     """
     Zero Error
     """

@@ -72,7 +72,9 @@ class StationMapping:
             min_index = np.unravel_index(best_error_1d_index, shape)
             best_error = error[best_error_1d_index]
 
+            # 1d equivalent to [self.max_search_distance, self.max_search_distance]
             closest_1d_index = self.max_search_distance * (2 * self.max_search_distance + 1) + self.max_search_distance
+
             closest_error = error[closest_1d_index]
 
             if closest_error <= self.min_error:  # if nearest cell is good enough
@@ -85,7 +87,7 @@ class StationMapping:
             else:  # if best match is still too bad, revert to closest cell
                 indx = closest_idx
                 indy = closest_idy
-                best_error = closest_error  # 1d equivalent to [self.max_search_distance, self.max_search_distance]
+                best_error = closest_error
 
             indxs[i] = indx
             indys[i] = indy
