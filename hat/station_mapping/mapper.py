@@ -1,5 +1,6 @@
 import pandas as pd
 import xarray as xr
+import numpy as np
 import plotly.express as px
 from plotly.colors import get_colorscale
 from hat.data import find_main_var
@@ -14,8 +15,8 @@ def get_grid_inputs(grid_config):
     grid_area_coords1, grid_area_coords2 = xr.broadcast(
         ds[grid_config.get("coord_x", "lat")], ds[grid_config.get("coord_y", "lon")]
     )
-    grid_area_coords1 = grid_area_coords1.values
-    grid_area_coords2 = grid_area_coords2.values
+    grid_area_coords1 = grid_area_coords1.values.copy()
+    grid_area_coords2 = grid_area_coords2.values.copy()
 
     return metric_grid, grid_area_coords1, grid_area_coords2
 
@@ -26,6 +27,19 @@ def get_station_inputs(station_config):
     station_coords2 = df[station_config["coord_y"]].values
     station_metric = df[station_config["metric"]].values
     return station_metric, station_coords1, station_coords2, df
+
+
+def apply_blacklist(blacklist_config, metric_grid, grid_area_coords1, grid_area_coords2):
+    if blacklist_config is not None:
+        ds = xr.open_dataset(blacklist_config["file"])
+        nc_variable = find_main_var(ds, min_dim=2)
+        mask = ds[nc_variable].values
+
+        metric_grid[mask] = np.nan
+        grid_area_coords1[mask] = np.nan
+        grid_area_coords2[mask] = np.nan
+
+    return metric_grid, grid_area_coords1, grid_area_coords2
 
 
 def outputs_to_df(df, indx, indy, cindx, cindy, errors, grid_area_coords1, grid_area_coords2, filename):
@@ -78,6 +92,9 @@ def generate_summary_plots(df, plot_config):
 def mapper(config):
     metric_grid, grid_area_coords1, grid_area_coords2 = get_grid_inputs(config["grid"])
     station_metric, station_coords1, station_coords2, df = get_station_inputs(config["station"])
+    metric_grid, grid_area_coords1, grid_area_coords2 = apply_blacklist(
+        config.get("blacklist", None), metric_grid, grid_area_coords1, grid_area_coords2
+    )
     mapping_outputs = StationMapping(config["parameters"]).conduct_mapping(
         station_coords1, station_coords2, grid_area_coords1, grid_area_coords2, station_metric, metric_grid
     )

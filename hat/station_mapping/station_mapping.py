@@ -33,8 +33,8 @@ class StationMapping:
             station_x, station_y = station_coords1[i], station_coords2[i]
 
             # get all grid cells within max_search_distance
-            closest_idx = np.abs(grid_area_coords1[:, 0] - station_x).argmin()
-            closest_idy = np.abs(grid_area_coords2[0, :] - station_y).argmin()
+            closest_idx = np.nanargmin(np.abs(grid_area_coords1[:, 0] - station_x))
+            closest_idy = np.nanargmin(np.abs(grid_area_coords2[0, :] - station_y))
 
             searchbox_min_x = closest_idx - self.max_search_distance
             searchbox_max_x = closest_idx + self.max_search_distance + 1
