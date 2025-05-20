@@ -36,8 +36,6 @@ def apply_blacklist(blacklist_config, metric_grid, grid_area_coords1, grid_area_
         mask = ds[nc_variable].values
 
         metric_grid[mask] = np.nan
-        grid_area_coords1[mask] = np.nan
-        grid_area_coords2[mask] = np.nan
 
     return metric_grid, grid_area_coords1, grid_area_coords2
 
