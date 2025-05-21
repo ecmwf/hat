@@ -12,9 +12,12 @@ def get_grid_inputs(grid_config):
     nc_variable = find_main_var(ds, min_dim=2)
     metric_grid = ds[nc_variable].values
 
-    grid_area_coords1, grid_area_coords2 = xr.broadcast(
-        ds[grid_config.get("coord_x", "lat")], ds[grid_config.get("coord_y", "lon")]
-    )
+    coord_dict = grid_config.get("coords", None)
+    coord_x = "lat" if coord_dict is None else coord_dict["x"]
+    coord_y = "lon" if coord_dict is None else coord_dict["y"]
+    ds = ds.sortby([coord_x, coord_y])
+
+    grid_area_coords1, grid_area_coords2 = xr.broadcast(ds[coord_x], ds[coord_y])
     grid_area_coords1 = grid_area_coords1.values.copy()
     grid_area_coords2 = grid_area_coords2.values.copy()
 
@@ -23,8 +26,10 @@ def get_grid_inputs(grid_config):
 
 def get_station_inputs(station_config):
     df = pd.read_csv(station_config["file"])
-    station_coords1 = df[station_config["coord_x"]].values
-    station_coords2 = df[station_config["coord_y"]].values
+    coord_x = station_config["coords"]["x"]
+    coord_y = station_config["coords"]["y"]
+    station_coords1 = df[coord_x].values
+    station_coords2 = df[coord_y].values
     station_metric = df[station_config["metric"]].values
     return station_metric, station_coords1, station_coords2, df
 
