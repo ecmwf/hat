@@ -101,4 +101,5 @@ def extractor(config):
     masked_da = apply_mask(da, mask, duplication_indexes, gridx_colname, gridy_colname)
     ds = xr.Dataset({da_varname: masked_da})
     ds["station"] = station_names[ds.station]
+    ds.to_netcdf(config["output"]["file"])
     return ds
