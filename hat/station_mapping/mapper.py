@@ -1,5 +1,6 @@
 import pandas as pd
 import xarray as xr
+import earthkit.data as ekd
 import numpy as np
 import plotly.express as px
 from plotly.colors import get_colorscale
@@ -8,7 +9,7 @@ from .station_mapping import StationMapping
 
 
 def get_grid_inputs(grid_config):
-    ds = xr.open_dataset(grid_config["file"])
+    ds = ekd.from_source(*grid_config["datasource"]).to_xarray()
     nc_variable = find_main_var(ds, min_dim=2)
     metric_grid = ds[nc_variable].values
 
