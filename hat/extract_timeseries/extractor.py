@@ -78,7 +78,7 @@ def mask_array_np(arr, mask):
     return arr[..., mask]
 
 
-def apply_mask(da, mask, duplication_indexes, coordx, coordy):
+def apply_mask(da, mask, coordx, coordy):
     task = xr.apply_ufunc(
         mask_array_np,
         da,
@@ -100,7 +100,7 @@ def extractor(config):
     da, da_varname, gridx_colname, gridy_colname, mask, station_names, duplication_indexes = process_inputs(
         config["station"], config["grid"]
     )
-    masked_da = apply_mask(da, mask, duplication_indexes, gridx_colname, gridy_colname)
+    masked_da = apply_mask(da, mask, gridx_colname, gridy_colname)
     ds = xr.Dataset({da_varname: masked_da})
     ds = ds.isel(station=duplication_indexes)
     ds["station"] = station_names
