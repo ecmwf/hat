@@ -1,11 +1,14 @@
 import pandas as pd
 import xarray as xr
 import numpy as np
+import earthkit.data as ekd
 from hat.data import find_main_var
 
 
 def process_grid_inputs(grid_config):
-    ds = xr.open_dataset(grid_config["files"])
+    ds = ekd.from_source(*grid_config["datasource"]).to_xarray(
+        xarray_open_mfdataset_kwargs={"chunks": {"time": "auto"}}
+    )
     var_name = find_main_var(ds)
     da = ds[var_name]
     gridx_colname = grid_config.get("coord_x", "lat")
@@ -71,8 +74,8 @@ def process_inputs(station_config, grid_config):
     return da, da_varname, gridx_colname, gridy_colname, mask, station_names, duplication_indexes
 
 
-def mask_array_np(arr, mask, inverse):
-    return arr[..., mask][..., inverse]
+def mask_array_np(arr, mask):
+    return arr[..., mask]
 
 
 def apply_mask(da, mask, duplication_indexes, coordx, coordy):
@@ -80,8 +83,7 @@ def apply_mask(da, mask, duplication_indexes, coordx, coordy):
         mask_array_np,
         da,
         mask,
-        duplication_indexes,
-        input_core_dims=[(coordx, coordy), (), ()],
+        input_core_dims=[(coordx, coordy), (coordx, coordy)],
         output_core_dims=[["station"]],
         output_dtypes=[da.dtype],
         exclude_dims={coordx, coordy},
@@ -100,6 +102,7 @@ def extractor(config):
     )
     masked_da = apply_mask(da, mask, duplication_indexes, gridx_colname, gridy_colname)
     ds = xr.Dataset({da_varname: masked_da})
-    ds["station"] = station_names[ds.station]
+    ds = ds.isel(station=duplication_indexes)
+    ds["station"] = station_names
     ds.to_netcdf(config["output"]["file"])
     return ds
