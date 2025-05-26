@@ -28,55 +28,27 @@
 
 The Hydrological Analysis Toolkit (HAT) is a software suite for hydrologists working with simulated and observed river discharge. HAT performs data analysis on hydrological datasets, with its main features being:
 - mapping station locations into hydrological model grids
-- extraction of timeseries
+- extraction of timeseries at station locations from gridded model outputs
 - statistical analysis of hydrological timeseries
 
 ### Installation
 
-Clone source code repository
+For a default installation, run
 
-    $ git clone https://github.com/ecmwf/hat.git
-    $ cd hat
+```
+pip install hydro-analysis-toolkit
+```
 
-Create and activate conda environment
+For a developer setup, run
 
-    $ conda create -n hat python=3.10
-    $ conda activate hat
-
-For default installation, run
-
-    $ pip install .
-
-For a developer installation (includes linting and test libraries), run
-
-    $ pip install -e .[dev]
-    $ pre-commit install
-
-If you only plan to run the tests, instead run
-
-    $ pip install -e .[test]
-
-If you plan to build a source and a wheel distribution, it is additionally required to run
-
-    $ pip install build
-
-### Usage
-
-Run a command line tool
-
-    $ hat-extract-timeseries --help
-
-### Running the tests
-
-Tests are stored in the `tests/` folder and can be run with
-
-    $ pytest
-
-### Deployment
-
-To build a source and a wheel distribution, run
-
-    $ python build
+```
+conda create -n hat python=3.12
+conda activate hat
+git clone https://github.com/ecmwf/hat.git
+cd hat
+pip install -e .[dev]
+pre-commit install
+```
 
 ## Licence
 
