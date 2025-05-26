@@ -10,21 +10,25 @@ authors = [
 ]
 maintainers = [
     {name = "Corentin Carton de Wiart", email = "corentin.carton@ecmwf.int"},
+    {name = "Oisín M. Morrison", email = "oisin.morrison@ecmwf.int"}
 ]
-description = "ECMWF Hydrological Analysis Tools"
-license = {file = "LICENSE"}
+description = "ECMWF's Hydrological Analysis Toolkit"
+license = { text = "Apache License Version 2.0" }
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
     "Natural Language :: English",
+    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
-    "Topic :: Scientific/Engineering",
-]
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering"
+    ]
 dynamic = ["version", "readme"]
 
 dependencies = [
@@ -92,18 +96,16 @@ include-package-data = true
 [tool.setuptools.dynamic]
 readme = {file = ["README.md"], content-type = "text/markdown"}
 
-# [tool.setuptools.package_data]
-# hat = ["config_json/*.json"]
-
 [tool.setuptools.packages.find]
 where = ["."]
 exclude = ["tests"]
 
 [tool.setuptools_scm]
-write_to = "hat/_version.py"
-write_to_template = '''
+version_file = "hat/_version.py"
+version_file_template = '''
 # Do not change! Do not track in version control!
 __version__ = "{version}"
 '''
 parentdir_prefix_version='hat-'  # get version from GitHub-like tarballs
 fallback_version='0.7.1'
+local_scheme = "no-local-version"
