@@ -52,14 +52,16 @@ class LeafletMap:
         ]
         self.map.fit_bounds(bounds)
 
-    def _update_boundaries_from_station(self, station_id, metadata, coord_names):
+    def _update_boundaries_from_station(self, station_id, metadata, coord_names, station_id_colname="station_id"):
         """
         Compute the boundaries of the map based on the stations metadata.
         """
         lon_column = coord_names[0]
         lat_column = coord_names[1]
 
-        station_metadata = metadata[metadata["station_id"] == station_id]
+        station_id_correct_dtype = metadata[station_id_colname].dtype.type(station_id)
+
+        station_metadata = metadata[metadata[station_id_colname] == station_id_correct_dtype]
         lon = float(station_metadata[lon_column].values[0])
         lat = float(station_metadata[lat_column].values[0])
 
@@ -78,7 +80,7 @@ class LeafletMap:
                 index = widgets.index(feature, **kwargs)
                 # Create a popup with the index as its content
                 message = HTML()
-                message.value = index
+                message.value = str(index)
                 self.popup = Popup(
                     location=(
                         feature["geometry"]["coordinates"][1],
@@ -94,7 +96,7 @@ class LeafletMap:
 
         return hover_handler
 
-    def add_geolayer(self, geodata, colormap, widgets, coord_names=None):
+    def add_geolayer(self, geodata, colormap, widgets, coord_names=None, station_id_colname="station_id"):
         """
         Add a geolayer to the map.
 
@@ -146,7 +148,7 @@ class LeafletMap:
         def update_widgets_from_text(*args, **kwargs):
             station_id = text_input.value
             widgets.update(station_id)
-            self._update_boundaries_from_station(station_id, geodata, coord_names)
+            self._update_boundaries_from_station(station_id, geodata, coord_names, station_id_colname)
 
         text_button.on_click(update_widgets_from_text)
 
