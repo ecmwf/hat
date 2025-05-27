@@ -1,173 +1,83 @@
 import numpy as np
+import xarray as xr
 
 
 def bias(sim_da, obs_da, time_name):
     return (sim_da - obs_da).mean(dim=time_name, skipna=True)
 
 
-def apb(sim_da, obs_da, time_name):
-    return np.abs(sim_da - obs_da).sum(dim=time_name, skipna=True) / obs_da.sum(dim=time_name, skipna=True)
+def mae(sim_da, obs_da, time_name):
+    return np.abs(sim_da - obs_da).mean(dim=time_name, skipna=True)
 
 
-def apb2(sim_da, obs_da, time_name):
-    return np.abs(sim_da.mean(dim=time_name, skipna=True) - obs_da.mean(dim=time_name, skipna=True)) / obs_da.mean(
-        dim=time_name, skipna=True
+def mape(sim_da, obs_da, time_name):
+    return mae(sim_da, obs_da, time_name) / np.abs(obs_da).sum(dim=time_name, skipna=True)
+
+
+def mse(sim_da, obs_da, time_name):
+    return ((sim_da - obs_da) ** 2).mean(dim=time_name, skipna=True)
+
+
+def rmse(sim_da, obs_da, time_name):
+    return np.sqrt(mse(sim_da, obs_da, time_name))
+
+
+def br(sim_da, obs_da, time_name):
+    # as defined in:
+    # Kling, H., Fuchs, M., & Paulin, M. (2012). Runoff conditions in the upper Danube basin under an ensemble of climate change scenarios. Journal of hydrology, 424, 264-277.
+    return sim_da.mean(dim=time_name, skipna=True) / obs_da.mean(dim=time_name, skipna=True)
+
+
+def vr(sim_da, obs_da, time_name):
+    # as defined in:
+    # Kling, H., Fuchs, M., & Paulin, M. (2012). Runoff conditions in the upper Danube basin under an ensemble of climate change scenarios. Journal of hydrology, 424, 264-277.
+    return (sim_da.std(dim=time_name, skipna=True) * obs_da.mean(dim=time_name, skipna=True)) / (
+        obs_da.std(dim=time_name, skipna=True) * sim_da.mean(dim=time_name, skipna=True)
     )
 
 
-def mae(sim_da, obs_da, time_name):
-    return (sim_da - obs_da).abs().mean(dim=time_name, skipna=True)
+def pc_bias(sim_da, obs_da, time_name):
+    return (sim_da - obs_da).mean(dim=time_name, skipna=True) / obs_da.mean(dim=time_name, skipna=True)
 
 
-# @hydrostat
-# def br(s, o):
-#     """
-#     Bias ratio
-#     input:
-#         s: simulated
-#         o: observed
-#     output:
-#         br: bias ratio
-#     """
-#     return 1 - abs(np.mean(s) / np.mean(o) - 1)
+def correlation(sim_da, obs_da, time_name):
+    def _corr(a, b):
+        mask = ~np.isnan(a) & ~np.isnan(b)
+        if np.sum(mask) < 2:
+            return np.nan
+        return np.corrcoef(a[mask], b[mask])[0, 1]
+
+    return xr.apply_ufunc(
+        _corr,
+        sim_da,
+        obs_da,
+        input_core_dims=[[time_name], [time_name]],
+        vectorize=True,
+        dask="parallelized",
+        output_dtypes=[float],
+    )
 
 
-# @hydrostat
-# def correlation(s, o):
-#     """
-#     correlation coefficient
-#     input:
-#         s: simulated
-#         o: observed
-#     output:
-#         correlation: correlation coefficient
-#     """
-#     return np.corrcoef(o, s)[0, 1]
+def kge(sim_da, obs_da, time_name):
+    # as defined in:
+    # Kling, H., Fuchs, M., & Paulin, M. (2012). Runoff conditions in the upper Danube basin under an ensemble of climate change scenarios. Journal of hydrology, 424, 264-277.
+    B = br(sim_da, obs_da, time_name)
+    y = vr(sim_da, obs_da, time_name)
+    r = correlation(sim_da, obs_da, time_name)
+
+    return 1 - np.sqrt((r - 1) ** 2 + (B - 1) ** 2 + (y - 1) ** 2)
 
 
-# @hydrostat
-# def kge(s, o):
-#     """
-#         Kling Gupta Efficiency
-#         input:
-#         s: simulated
-#         o: observed
-#     output:
-#         KGE: Kling Gupta Efficiency
-#     """
-#     B = np.mean(s) / np.mean(o)
-#     y = (np.std(s) / np.mean(s)) / (np.std(o) / np.mean(o))
-#     r = np.corrcoef(o, s)[0, 1]
+def index_agreement(sim_da, obs_da, time_name):
+    numerator = ((obs_da - sim_da) ** 2).sum(dim=time_name, skipna=True)
+    mean_obs = obs_da.mean(dim=time_name, skipna=True)
+    denominator = ((np.abs(sim_da - mean_obs) + np.abs(obs_da - mean_obs)) ** 2).sum(dim=time_name, skipna=True)
 
-#     return 1 - np.sqrt((r - 1) ** 2 + (B - 1) ** 2 + (y - 1) ** 2)
+    return 1 - (numerator / denominator)
 
 
-# @hydrostat
-# def index_agreement(s, o):
-#     """
-#         index of agreement
-#         input:
-#         s: simulated
-#         o: observed
-#     output:
-#         ia: index of agreement
-#     """
-#     return 1 - (np.sum((o - s) ** 2)) / (
-#         np.sum((np.abs(s - np.mean(o)) + np.abs(o - np.mean(o))) ** 2)
-#     )
+def nse(sim_da, obs_da, time_name):
+    numerator = ((sim_da - obs_da) ** 2).sum(dim=time_name, skipna=True)
+    denominator = ((obs_da - obs_da.mean(dim=time_name, skipna=True)) ** 2).sum(dim=time_name, skipna=True)
 
-
-# @hydrostat
-# def ns(s, o):
-#     """
-#     Nash-Sutcliffe efficiency coefficient
-#     input:
-#         s: simulated
-#         o: observed
-#     output:
-#         NS: Nash-Sutcliffe efficient coefficient
-#     """
-#     return 1 - sum((s - o) ** 2) / sum((o - np.mean(o)) ** 2)
-
-
-# @hydrostat
-# def nslog(s, o):
-#     """
-#     Nash-Sutcliffe efficiency coefficient from log-transformed data
-#     input:
-#         s: simulated
-#         o: observed
-#     output:
-#         NSlog: Nash-Sutcliffe efficient coefficient from log-transformed data
-#     """
-#     s = np.log(s)
-#     o = np.log(o)
-#     return 1 - sum((s - o) ** 2) / sum((o - np.mean(o)) ** 2)
-
-
-# @hydrostat
-# def pc_bias(s, o):
-#     """
-#     Percent Bias
-#     input:
-#         s: simulated
-#         o: observed
-#     output:
-#         pc_bias: percent bias
-#     """
-#     return 100.0 * sum(s - o) / sum(o)
-
-
-# @hydrostat
-# def pc_bias2(s, o):
-#     """
-#     Percent Bias 2
-#     input:
-#         s: simulated
-#         o: observed
-#     output:
-#         apb2: absolute percent bias 2
-#     """
-#     return 100 * (np.mean(s) - np.mean(o)) / np.mean(o)
-
-
-# @hydrostat
-# def rmse(s, o):
-#     """
-#     Root Mean Squared Error
-#     input:
-#         s: simulated
-#         o: observed
-#     output:
-#         rmses: root mean squared error
-#     """
-#     return np.sqrt(np.mean((s - o) ** 2))
-
-
-# @hydrostat
-# def rsr(s, o):
-#     """
-#     RMSE-observations standard deviation ratio
-#     input:
-#         s: simulated
-#         o: observed
-#     output:
-#         RSR: RMSE-observations standard deviation ratio
-#     """
-
-#     rmse = np.sqrt(np.sum((s - o) ** 2))
-#     stdev_obs = np.sqrt(np.sum((o - np.mean(o)) ** 2))
-#     return rmse / stdev_obs
-
-
-# @hydrostat
-# def vr(s, o):
-#     """
-#         Variability ratio
-#         input:
-#         s: simulated
-#         o: observed
-#     output:
-#         vr: variability ratio
-#     """
-#     return 1 - abs((np.std(s) / np.mean(s)) / (np.std(o) / np.mean(o)) - 1)
+    return 1 - (numerator / denominator)
