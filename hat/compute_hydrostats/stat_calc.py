@@ -1,5 +1,5 @@
 import earthkit.data as ekd
-from hat.data import find_main_var
+from earthkit.hydro.readers import find_main_var
 import numpy as np
 import xarray as xr
 from hat.compute_hydrostats import stats

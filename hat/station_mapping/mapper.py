@@ -4,13 +4,13 @@ import earthkit.data as ekd
 import numpy as np
 import plotly.express as px
 from plotly.colors import get_colorscale
-from hat.data import find_main_var
+from earthkit.hydro.readers import find_main_var
 from .station_mapping import StationMapping
 
 
 def get_grid_inputs(grid_config):
     ds = ekd.from_source(*grid_config["datasource"]).to_xarray()
-    nc_variable = find_main_var(ds, min_dim=2)
+    nc_variable = find_main_var(ds, 2)
     metric_grid = ds[nc_variable].values
 
     coord_dict = grid_config.get("coords", None)
@@ -38,7 +38,7 @@ def get_station_inputs(station_config):
 def apply_blacklist(blacklist_config, metric_grid, grid_area_coords1, grid_area_coords2):
     if blacklist_config is not None:
         ds = xr.open_dataset(blacklist_config["file"])
-        nc_variable = find_main_var(ds, min_dim=2)
+        nc_variable = find_main_var(ds, 2)
         mask = ds[nc_variable].values
 
         metric_grid[mask] = np.nan

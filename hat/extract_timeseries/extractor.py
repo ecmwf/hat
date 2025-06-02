@@ -2,14 +2,14 @@ import pandas as pd
 import xarray as xr
 import numpy as np
 import earthkit.data as ekd
-from hat.data import find_main_var
+from earthkit.hydro.readers import find_main_var
 
 
 def process_grid_inputs(grid_config):
     ds = ekd.from_source(*grid_config["datasource"]).to_xarray(
         xarray_open_mfdataset_kwargs={"chunks": {"time": "auto"}}
     )
-    var_name = find_main_var(ds)
+    var_name = find_main_var(ds, 3)
     da = ds[var_name]
     gridx_colname = grid_config.get("coord_x", "lat")
     gridy_colname = grid_config.get("coord_y", "lon")

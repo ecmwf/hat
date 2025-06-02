@@ -43,6 +43,7 @@ dependencies = [
     "ipyleaflet",
     "ipywidgets",
     "earthkit-data>=0.13.8",
+    "earthkit-hydro",
     "cfgrib", # check if necessary
     "netCDF4", # check if necessary
     "eccodes", # check if necessary
