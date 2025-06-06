@@ -104,5 +104,6 @@ def extractor(config):
     ds = xr.Dataset({da_varname: masked_da})
     ds = ds.isel(station=duplication_indexes)
     ds["station"] = station_names
-    ds.to_netcdf(config["output"]["file"])
+    if config.get("output", None) is not None:
+        ds.to_netcdf(config["output"]["file"])
     return ds

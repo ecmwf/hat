@@ -53,7 +53,8 @@ def outputs_to_df(df, indx, indy, cindx, cindy, errors, grid_area_coords1, grid_
     df["opt_error"] = errors
     df["opt_x_coord"] = grid_area_coords1[indx, 0]
     df["opt_y_coord"] = grid_area_coords2[0, indy]
-    df.to_csv(filename, index=False)
+    if filename is not None:
+        df.to_csv(filename, index=False)
     return df
 
 
@@ -101,6 +102,6 @@ def mapper(config):
     mapping_outputs = StationMapping(config["parameters"]).conduct_mapping(
         station_coords1, station_coords2, grid_area_coords1, grid_area_coords2, station_metric, metric_grid
     )
-    df = outputs_to_df(df, *mapping_outputs, grid_area_coords1, grid_area_coords2, filename=config["output"]["file"])
+    df = outputs_to_df(df, *mapping_outputs, grid_area_coords1, grid_area_coords2, filename=config["output"]["file"] if config.get("output", None) is not None else None)
     generate_summary_plots(df, config.get("plot", None))
     return df
