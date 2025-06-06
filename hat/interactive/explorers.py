@@ -169,12 +169,8 @@ class StationsExplorer:
         self.config = config
 
         # Create station objects
-        self.stations_metadata = read_station_metadata_file(
-            fpath=config["stations"],
-            coord_names=config["station_coordinates"],
-            epsg=config["station_epsg"],
-            filters=config["station_filters"],
-        )
+        self.stations_metadata = pd.read_csv(config["stations"])
+
         self.station_index = config["station_id_column_name"]
 
         # Title label
