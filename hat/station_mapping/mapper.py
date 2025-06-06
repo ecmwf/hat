@@ -9,7 +9,7 @@ from .station_mapping import StationMapping
 
 
 def get_grid_inputs(grid_config):
-    ds = ekd.from_source(*grid_config["datasource"]).to_xarray()
+    ds = ekd.from_source(*grid_config["source"]).to_xarray()
     nc_variable = find_main_var(ds, 2)
     metric_grid = ds[nc_variable].values
 
@@ -37,10 +37,9 @@ def get_station_inputs(station_config):
 
 def apply_blacklist(blacklist_config, metric_grid, grid_area_coords1, grid_area_coords2):
     if blacklist_config is not None:
-        ds = xr.open_dataset(blacklist_config["file"])
+        ds = ekd.from_source(*blacklist_config["source"]).to_xarray()
         nc_variable = find_main_var(ds, 2)
         mask = ds[nc_variable].values
-
         metric_grid[mask] = np.nan
 
     return metric_grid, grid_area_coords1, grid_area_coords2
