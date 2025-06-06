@@ -45,6 +45,6 @@ def stat_calc(config):
         func = getattr(stats, stat)
         stat_dict[stat] = func(sim_da, obs_da, new_coords.get("t", "time"))
     ds = xr.Dataset(stat_dict)
-    if config.get("output", None) is not None:
+    if config["output"].get("file", None) is not None:
         ds.to_netcdf(config["output"]["file"])
     return ds
