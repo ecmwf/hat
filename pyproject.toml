@@ -44,6 +44,7 @@ dependencies = [
     "ipywidgets",
     "earthkit-data>=0.13.8",
     "earthkit-hydro",
+    "earthkit-meteo",
     "cfgrib", # check if necessary
     "netCDF4", # check if necessary
     "eccodes", # check if necessary
