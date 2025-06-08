@@ -132,10 +132,12 @@ def find_common_stations(station_index, stations_metadata, obs_ds, sim_ds, stati
 
     """
     ids = set(obs_ds["station"].values)
-    ids &= {ds["station"].values for ds in sim_ds.values()}
-    ids &= {stations_metadata[station_index]}
+    for ds in sim_ds.values():
+        ids &= set(ds["station"].values)
+    ids &= set(stations_metadata[station_index])
     if statistics:
-        ids &= {ds["station"].values for ds in statistics.values()}
+        for ds in statistics.values():
+            ids &= set(ds["station"].values)
 
     return list(ids)
 
