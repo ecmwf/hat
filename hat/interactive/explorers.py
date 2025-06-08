@@ -131,20 +131,13 @@ def find_common_stations(station_index, stations_metadata, obs_ds, sim_ds, stati
         A list of common station IDs.
 
     """
-    ids = []
-    ids += [list(obs_ds["station"].values)]
-    ids += [list(ds["station"].values) for ds in sim_ds.values()]
-    ids += [stations_metadata[station_index]]
+    ids = set(obs_ds["station"].values)
+    ids &= {ds["station"].values for ds in sim_ds.values()}
+    ids &= {stations_metadata[station_index]}
     if statistics:
-        ids += [list(ds["station"].values) for ds in statistics.values()]
+        ids &= {ds["station"].values for ds in statistics.values()}
 
-    common_ids = None
-    for id in ids:
-        if common_ids is None:
-            common_ids = set(id)
-        else:
-            common_ids = set(id) & common_ids
-    return list(common_ids)
+    return list(ids)
 
 
 class StationsExplorer:
