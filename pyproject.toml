@@ -88,6 +88,9 @@ indent-style = "space"
 "__init__.py" = [
     "F401", # unused imports
     ]
+"tests/*" = [
+    "F401", # unused imports
+    ]
 
 # Testing
 [tool.pytest]
