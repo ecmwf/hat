@@ -14,7 +14,6 @@ from hat.interactive.widgets import (
     WidgetsManager,
     UpdatingHTML,
 )
-from hat.observations import read_station_metadata_file
 
 
 def prepare_simulations_data(simulations, sims_var_name):
