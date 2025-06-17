@@ -71,9 +71,9 @@ dependencies = [
     ]
 
 [project.scripts]
-    hat-extract-timeseries = "hat.tools.extract_simulation_timeseries_cli:main"
-    hat-hydrostats = "hat.tools.hydrostats_cli:main"
-    hat-stations-mapping = "hat.tools.station_mapping_cli:main"
+    hat-extract-timeseries = "hat.cli:extractor_cli"
+    hat-hydrostats = "hat.cli:stat_calc_cli"
+    hat-stations-mapping = "hat.cli:mapper_cli"
 
 # Linting settings
 [tool.ruff]
