@@ -84,6 +84,11 @@ indent-width = 4
 quote-style = "double"
 indent-style = "space"
 
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [
+    "F401", # unused imports
+    ]
+
 # Testing
 [tool.pytest]
 addopts = "--pdbcls=IPython.terminal.debugger:Pdb"
