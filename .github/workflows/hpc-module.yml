@@ -3,7 +3,7 @@ name: hpc-module
 on:
   workflow_dispatch:
       inputs:
-        module-name: 
+        module-name:
           description: 'Module name'
           required: true
           type: string
@@ -39,9 +39,9 @@ jobs:
 
             module unload python3
 
-            software-sync -s local -p hat
+            software-sync -s local -p hat -t aa,ab,ac,ad
             module load modulemgr
-            modulemgr -f -m all sync hat
+            modulemgr -f -m aa,ab,ac,ad sync hat
 
             if [ $MODULE_TAG != 'NOT_DEFINED' ]
             then

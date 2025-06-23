@@ -43,6 +43,7 @@ dependencies = [
     "netCDF4",
     "eccodes",
     "plotly",
+    "anywidget",
     "jupyter",
     "geopy"
 ]
