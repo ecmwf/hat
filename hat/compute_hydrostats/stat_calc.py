@@ -6,7 +6,7 @@ from hat.compute_hydrostats import stats
 
 
 def load_da(ds_config):
-    ds = ekd.from_source(*ds_config["datasource"]).to_xarray(xarray_open_mfdataset_kwargs={"chunks": {"time": "auto"}})
+    ds = ekd.from_source(*ds_config["source"]).to_xarray(xarray_open_mfdataset_kwargs={"chunks": {"time": "auto"}})
     var_name = find_main_var(ds, 2)
     da = ds[var_name]
     return da
@@ -45,5 +45,6 @@ def stat_calc(config):
         func = getattr(stats, stat)
         stat_dict[stat] = func(sim_da, obs_da, new_coords.get("t", "time"))
     ds = xr.Dataset(stat_dict)
-
+    if config["output"].get("file", None) is not None:
+        ds.to_netcdf(config["output"]["file"])
     return ds

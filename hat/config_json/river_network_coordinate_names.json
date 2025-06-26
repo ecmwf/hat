@@ -1,9 +1,0 @@
-{
-    "cama_3min": ["CamaLon1_3min", "CamaLat1_3min"],
-    "cama_6min": ["CamaLon1_6min", "CamaLat1_6min"],
-    "cama_15min": ["CamaLon1_15min", "CamaLat1_15min"],
-    "lisflood_5km": ["LisfloodX5k", "LisfloodY5k"],
-    "lisflood_1min": ["LisfloodX.efas1min", "LisfloodY.efas1min"],
-    "lisflood_3min": ["LisfloodX_3min", "LisfloodY_3min"],
-    "station": ["StationLon", "StationLat"]
-}

@@ -14,7 +14,6 @@ from hat.interactive.widgets import (
     WidgetsManager,
     UpdatingHTML,
 )
-from hat.observations import read_station_metadata_file
 
 
 def prepare_simulations_data(simulations, sims_var_name):
@@ -131,20 +130,15 @@ def find_common_stations(station_index, stations_metadata, obs_ds, sim_ds, stati
         A list of common station IDs.
 
     """
-    ids = []
-    ids += [list(obs_ds["station"].values)]
-    ids += [list(ds["station"].values) for ds in sim_ds.values()]
-    ids += [stations_metadata[station_index]]
+    ids = set(obs_ds["station"].values)
+    for ds in sim_ds.values():
+        ids &= set(ds["station"].values)
+    ids &= set(stations_metadata[station_index])
     if statistics:
-        ids += [list(ds["station"].values) for ds in statistics.values()]
+        for ds in statistics.values():
+            ids &= set(ds["station"].values)
 
-    common_ids = None
-    for id in ids:
-        if common_ids is None:
-            common_ids = set(id)
-        else:
-            common_ids = set(id) & common_ids
-    return list(common_ids)
+    return list(ids)
 
 
 class StationsExplorer:
@@ -169,12 +163,8 @@ class StationsExplorer:
         self.config = config
 
         # Create station objects
-        self.stations_metadata = read_station_metadata_file(
-            fpath=config["stations"],
-            coord_names=config["station_coordinates"],
-            epsg=config["station_epsg"],
-            filters=config["station_filters"],
-        )
+        self.stations_metadata = pd.read_csv(config["stations"])
+
         self.station_index = config["station_id_column_name"]
 
         # Title label
