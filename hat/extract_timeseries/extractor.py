@@ -50,6 +50,9 @@ def create_mask_from_coords(coords_config, df, gridx, gridy, shape):
 
 def process_inputs(station_config, grid_config):
     df = pd.read_csv(station_config["file"])
+    filters = station_config.get("filter")
+    if filters is not None:
+        df = df.query(filters)
     station_names = df[station_config["name"]].values
 
     index_config = station_config.get("index", None)
