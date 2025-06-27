@@ -6,7 +6,7 @@ from hat.compute_hydrostats import stats
 
 
 def load_da(ds_config):
-    ds = ekd.from_source(*ds_config["source"]).to_xarray(xarray_open_mfdataset_kwargs={"chunks": {"time": "auto"}})
+    ds = ekd.from_source(*ds_config["source"]).to_xarray()
     var_name = find_main_var(ds, 2)
     da = ds[var_name]
     return da
