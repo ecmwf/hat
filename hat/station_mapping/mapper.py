@@ -27,6 +27,9 @@ def get_grid_inputs(grid_config):
 
 def get_station_inputs(station_config):
     df = pd.read_csv(station_config["file"])
+    filters = station_config.get("filter")
+    if filters is not None:
+        df = df.query(filters)
     coord_x = station_config["coords"]["x"]
     coord_y = station_config["coords"]["y"]
     station_coords1 = df[coord_x].values
