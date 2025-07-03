@@ -1,37 +1,53 @@
 time:
   base_time: 2025040500
-  steps: [0, 6, 12, 18]
+  steps: [24, 48]
 
 datasets:
   fc:
     type: forecast
     source: mars
-    requests:
-      class: ce
-      expver: 1
-      levtype: sfc
-      model: lisflood
-      origin: ecmf
-      param: 240023
-      stream: efas
-      type: "pf"
-      number: "1/to/51"
+    request:
+      # class: ce
+      # expver: 1
+      # levtype: sfc
+      # model: lisflood
+      # origin: ecmf
+      # param: 240023
+      # stream: efas
+      # type: "pf"
+      # number: "1/to/51"
+      # date: "{base_time:%Y%m%d}"
+      # time: "{base_time:%H}"
+      # step: "{steps}"
       # date: "$date"
       # step: 6/to/240/by/6
       # time: 00:00:00
+      
+      class: ce
+      expver: 1
+      levtype: sfc
+      model: global_lisflood
+      origin: ecmf
+      param: 240024
+      step: 24/to/240/by/24
+      stream: wfas
+      type: pf
+      number: "1/2"
+      date: "{base_time:%Y%m%d}"
+      time: "{base_time:%H}"
+      step: "{steps}"
 
   reanalysis:
     type: reanalysis
     source: mars
-    requests:
+    request:
       class: ce
-      date: "2023-01-01"
-      expver: 1
-      model: lisflood
-      stream: efcl
+      date: "2022-10-01"
+      expver: 5
+      model: global_lisflood
+      stream: wfcl
       levtype: sfc
-      param: 240023
+      param: 240024
       type: sfo
-      # hdate: "20250101"
-      # time: "00:00:00"
-
+      hdate: "{valid_time:%Y%m%d}"
+      time: "{valid_time:%H}"

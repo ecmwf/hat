@@ -1,3 +1,6 @@
+import numpy as np
+import pandas as pd
+
 from pandas import DatetimeIndex
 
 
@@ -9,6 +12,7 @@ class Time:
     def dayofyear(self, calendar: str = "standard") -> int:
         """Return the day of the year of the forecast."""
         raise NotImplementedError
+
 
 class Reanalysis(Time):
 
@@ -63,7 +67,7 @@ class Forecast(Time):
 class ForecastFromBaseTimeAndStep(Forecast):
     """Represents a forecast time derived from base time and step."""
 
-    def __init__(self, base_time: DatetimeIndex, steps: int) -> None:
+    def __init__(self, base_time: pd.Timestamp, steps: pd.TimedeltaIndex) -> None:
         """Initialize ForecastFromBaseTimeAndStep with base time and step.
 
         Args
@@ -82,33 +86,46 @@ class ForecastFromBaseTimeAndStep(Forecast):
 
     def steps(self):
         """Return the steps of the forecast."""
-        return self.steps
+        return self._steps
 
     def forecast_date(self):
         """Return the date of the forecast."""
-        raise self._base_time
-    
+        return self._base_time
+
     def step_from_time(self, time):
         """Return the step from the time of the forecast."""
         if time < self._base_time:
             raise ValueError("Time is before the base time.")
-        return (time - self._base_time)
-    
+        return time - self._base_time
+
     def time_from_step(self, step):
         """Return the time from the step of the forecast."""
         raise NotImplementedError
+
+    def mars_keys(self) -> dict:
+        """Return the keys for the Mars request."""
+        # step_array = self._steps.astype('timedelta64[h]').astype(int).tolist()
+        step_array = "/".join(
+            map(str, (self._steps.total_seconds() // 3600).astype(int).tolist())
+        )
+        return {
+            "base_time": self._base_time,
+            "steps": step_array,
+            "valid_time": self.time(),
+        }
 
 
 def construct_time(options):
 
     if options.get("base_time") and options.get("step"):
         return ForecastFromBaseTimeAndStep(
-            base_time=options["base_time"],
-            steps=options["step"]
+            base_time=options["base_time"], steps=options["step"]
         )
     else:
-        raise ValueError("Invalid options for constructing time. "
-                         "Must provide 'base_time' and 'step'.")
+        raise ValueError(
+            "Invalid options for constructing time. "
+            "Must provide 'base_time' and 'step'."
+        )
 
 
 # class ForecastFromValidTimeAndStep(Forecast):
@@ -132,7 +149,6 @@ def construct_time(options):
 #         self.date_coordinate_name = date_coordinate.variable.name if date_coordinate else None
 
 
-
 # class ForecastFromValidTimeAndBaseTime(Time):
 #     """Represents a forecast time derived from valid time and base time."""
 
@@ -148,7 +164,6 @@ def construct_time(options):
 #         """
 #         self.date_coordinate_name = date_coordinate.name
 #         self.time_coordinate_name = time_coordinate.name
-
 
 
 # class ForecastFromBaseTimeAndDate(Time):
