@@ -1,0 +1,37 @@
+time:
+  base_time: 2025040500
+  steps: [0, 6, 12, 18]
+
+datasets:
+  fc:
+    type: forecast
+    source: mars
+    requests:
+      class: ce
+      expver: 1
+      levtype: sfc
+      model: lisflood
+      origin: ecmf
+      param: 240023
+      stream: efas
+      type: "pf"
+      number: "1/to/51"
+      # date: "$date"
+      # step: 6/to/240/by/6
+      # time: 00:00:00
+
+  reanalysis:
+    type: reanalysis
+    source: mars
+    requests:
+      class: ce
+      date: "2023-01-01"
+      expver: 1
+      model: lisflood
+      stream: efcl
+      levtype: sfc
+      param: 240023
+      type: sfo
+      # hdate: "20250101"
+      # time: "00:00:00"
+
