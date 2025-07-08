@@ -16,7 +16,6 @@ def get_grid_inputs(grid_config):
     coord_dict = grid_config.get("coords", None)
     coord_x = "lat" if coord_dict is None else coord_dict["x"]
     coord_y = "lon" if coord_dict is None else coord_dict["y"]
-    ds = ds.sortby([coord_x, coord_y])
 
     grid_area_coords1, grid_area_coords2 = xr.broadcast(ds[coord_x], ds[coord_y])
     grid_area_coords1 = grid_area_coords1.values.copy()
