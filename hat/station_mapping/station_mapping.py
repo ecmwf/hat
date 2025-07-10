@@ -73,10 +73,11 @@ class StationMapping:
                 best_error_1d_index = np.nanargmin(error)
                 min_index = np.unravel_index(best_error_1d_index, shape)
                 best_error = error[best_error_1d_index]
-                # 1d equivalent to [self.max_search_distance, self.max_search_distance]
-                closest_1d_index = (
-                    self.max_search_distance * (2 * self.max_search_distance + 1) + self.max_search_distance
-                )
+
+                center_offset_x = closest_idx - searchbox_min_x
+                center_offset_y = closest_idy - searchbox_min_y
+                subset_width = searchbox_max_y - searchbox_min_y
+                closest_1d_index = center_offset_x * subset_width + center_offset_y
 
                 closest_error = error[closest_1d_index]
 
@@ -92,9 +93,10 @@ class StationMapping:
                     indy = closest_idy
                     best_error = closest_error
             except ValueError:
-                closest_1d_index = (
-                    self.max_search_distance * (2 * self.max_search_distance + 1) + self.max_search_distance
-                )
+                center_offset_x = closest_idx - searchbox_min_x
+                center_offset_y = closest_idy - searchbox_min_y
+                subset_width = searchbox_max_y - searchbox_min_y
+                closest_1d_index = center_offset_x * subset_width + center_offset_y
 
                 closest_error = error[closest_1d_index]
                 indx = closest_idx
