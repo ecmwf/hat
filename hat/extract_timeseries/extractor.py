@@ -6,9 +6,10 @@ from earthkit.hydro.readers import find_main_var
 
 
 def process_grid_inputs(grid_config):
+    src_name = list(grid_config["source"].keys())[0]
     ds = ( 
         ekd
-        .from_source(*grid_config["source"])
+        .from_source(src_name, **grid_config["source"][src_name])
         .to_xarray(**grid_config.get("to_xarray_options", {}))
     )
     var_name = find_main_var(ds, 3)
