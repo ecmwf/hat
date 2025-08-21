@@ -1,12 +1,17 @@
+from dask.diagnostics import ProgressBar
 import pandas as pd
 import xarray as xr
 import numpy as np
 import earthkit.data as ekd
 from earthkit.hydro.readers import find_main_var
 
+from hat import _LOGGER as logger
+
 
 def process_grid_inputs(grid_config):
     src_name = list(grid_config["source"].keys())[0]
+    logger.info(f"Processing grid inputs from source: {src_name}")
+    logger.debug(f"Grid config: {grid_config['source'][src_name]}")
     ds = ( 
         ekd
         .from_source(src_name, **grid_config["source"][src_name])
@@ -14,6 +19,7 @@ def process_grid_inputs(grid_config):
     )
     var_name = find_main_var(ds, 3)
     da = ds[var_name]
+    logger.info(f"Xarray created from source:\n{da}\n")
     gridx_colname = grid_config.get("coord_x", "lat")
     gridy_colname = grid_config.get("coord_y", "lon")
     da = da.sortby([gridx_colname, gridy_colname])
@@ -31,6 +37,8 @@ def construct_mask(indx, indy, shape):
 
 
 def create_mask_from_index(index_config, df, shape):
+    logger.info(f"Creating mask {shape} from index: {index_config}")
+    logger.debug(f"DataFrame columns: {df.columns.tolist()}")
     indx_colname = index_config.get("x", "opt_x_index")
     indy_colname = index_config.get("y", "opt_y_index")
     indx, indy = df[indx_colname].values, df[indy_colname].values
@@ -39,6 +47,8 @@ def create_mask_from_index(index_config, df, shape):
 
 
 def create_mask_from_coords(coords_config, df, gridx, gridy, shape):
+    logger.info(f"Creating mask {shape} from coordinates: {coords_config}")
+    logger.debug(f"DataFrame columns: {df.columns.tolist()}")
     x_colname = coords_config.get("x", "opt_x_coord")
     y_colname = coords_config.get("y", "opt_y_coord")
     xs = df[x_colname].values
@@ -54,9 +64,11 @@ def create_mask_from_coords(coords_config, df, gridx, gridy, shape):
 
 
 def process_inputs(station_config, grid_config):
+    logger.debug(f"Reading station file, {station_config}")
     df = pd.read_csv(station_config["file"])
     filters = station_config.get("filter")
     if filters is not None:
+        logger.debug(f"Applying filters: {filters} to station DataFrame")
         df = df.query(filters)
     station_names = df[station_config["name"]].values
 
@@ -99,17 +111,20 @@ def apply_mask(da, mask, coordx, coordy):
             "allow_rechunk": True,
         },
     )
-    return task.compute()
+    with ProgressBar(dt=15):
+        return task.compute()
 
 
 def extractor(config):
     da, da_varname, gridx_colname, gridy_colname, mask, station_names, duplication_indexes = process_inputs(
         config["station"], config["grid"]
     )
+    logger.info("Extracting timeseries at selected stations")
     masked_da = apply_mask(da, mask, gridx_colname, gridy_colname)
     ds = xr.Dataset({da_varname: masked_da})
     ds = ds.isel(station=duplication_indexes)
     ds["station"] = station_names
     if config.get("output", None) is not None:
+        logger.info(f"Saving output to {config['output']['file']}")
         ds.to_netcdf(config["output"]["file"])
     return ds

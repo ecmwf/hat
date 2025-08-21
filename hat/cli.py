@@ -2,6 +2,7 @@ import yaml
 import argparse
 import sys
 
+from hat import _LOGGER as logger
 from hat.compute_hydrostats.stat_calc import stat_calc
 from hat.extract_timeseries.extractor import extractor
 from hat.station_mapping.mapper import mapper
@@ -32,5 +33,5 @@ if __name__ == "__main__":
     if tool_name in tools:
         tools[tool_name](sys.argv[2:])
     else:
-        print(f"Tool '{tool_name}' not found. Available tools: {', '.join(tools.keys())}")
+        logger.error(f"Tool '{tool_name}' not found. Available tools: {', '.join(tools.keys())}")
         sys.exit(1)
