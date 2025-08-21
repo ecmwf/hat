@@ -75,11 +75,12 @@ def process_inputs(station_config, grid_config):
     index_config = station_config.get("index", None)
     coords_config = station_config.get("coords", None)
 
-    da, da_varname, gridx_colname, gridy_colname, shape = process_grid_inputs(grid_config)
-
     if index_config is not None and coords_config is not None:
         raise ValueError("Use either index or coords, not both.")
-    elif index_config is not None:
+
+    da, da_varname, gridx_colname, gridy_colname, shape = process_grid_inputs(grid_config)
+
+    if index_config is not None:
         mask, duplication_indexes = create_mask_from_index(index_config, df, shape)
     elif coords_config is not None:
         mask, duplication_indexes = create_mask_from_coords(
