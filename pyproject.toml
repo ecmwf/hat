@@ -92,7 +92,7 @@ indent-style = "space"
     ]
 
 # Testing
-[tool.pytest]
+[tool.pytest.ini_options]
 addopts = "--pdbcls=IPython.terminal.debugger:Pdb"
 testpaths = [
     "tests",
