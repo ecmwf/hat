@@ -2,6 +2,7 @@ import glob
 import json
 import os
 
+import jinja2
 import ipyleaflet
 import ipywidgets
 import matplotlib as mpl
@@ -23,13 +24,31 @@ class LeafletMap:
 
     """
 
+    POPUP_MESS_TEMPLATE = """
+    <div id="station-popup">
+        <h4>{{ index }}</h4>
+        <ul>
+        {% for property_name, property_value in properties.items() -%}
+        <li><b>{{ property_name }}:</b>
+            {% if property_value is string %}
+                {{ property_value }}
+            {% else %}
+                {{ property_value | round(0) }}
+            {% endif %}
+        </li>
+        {%- endfor %}
+        </ul>
+    </div>
+    """
     def __init__(
         self,
         basemap=ipyleaflet.basemaps.OpenStreetMap.Mapnik,
+        **kwargs
     ):
         self.map = ipyleaflet.Map(
             basemap=basemap,
             layout=ipywidgets.Layout(width="100%", height="600px"),
+            **kwargs,
         )
         self.legend_widget = ipywidgets.Output()
 
@@ -74,13 +93,17 @@ class LeafletMap:
         bounds = [(float(min_lat), float(min_lon)), (float(max_lat), float(max_lon))]
         self.map.fit_bounds(bounds)
 
-    def create_hover(self, widgets):
+    def create_hover(self, widgets, min_zoom=7, property_names=None):
         def hover_handler(feature, **kwargs):
-            if self.map.zoom >= 7:
+            if self.map.zoom >= min_zoom:
                 index = widgets.index(feature, **kwargs)
                 # Create a popup with the index as its content
                 message = HTML()
-                message.value = str(index)
+                if property_names is not None:
+                    items = {prop_name: feature["properties"].get(prop_name, "N/A") for prop_name in property_names}
+                    message.value = jinja2.Template(self.POPUP_MESS_TEMPLATE).render(index=index, properties=items)
+                else:
+                    message.value = str(index)
                 self.popup = Popup(
                     location=(
                         feature["geometry"]["coordinates"][1],
@@ -92,11 +115,21 @@ class LeafletMap:
                     close_on_escape_key=False,
                 )
                 # Add the popup to the map
-                self.map.add_layer(self.popup)
+                self.map.add(self.popup)
 
         return hover_handler
 
-    def add_geolayer(self, geodata, colormap, widgets, coord_names=None, station_id_colname="station_id"):
+    def add_geolayer(
+            self,
+            geodata,
+            colormap,
+            widgets,
+            coord_names=None,
+            station_id_colname="station_id",
+            name="Stations",
+            property_names=None,
+            # cluster=False
+        ):
         """
         Add a geolayer to the map.
 
@@ -113,6 +146,7 @@ class LeafletMap:
             Default is None.
         """
         geojson = ipyleaflet.GeoJSON(
+            name=name,
             data=json.loads(geodata.to_json()),
             style={
                 "radius": 7,
@@ -125,12 +159,44 @@ class LeafletMap:
             point_style={"radius": 5},
             style_callback=colormap.style_callback(),
         )
+        # if cluster:
+        #     markers = []
+        #     for feat in geojson.data["features"]:
+        #         marker = ipyleaflet.Marker(location=(feat["geometry"]["coordinates"][1], feat["geometry"]["coordinates"][0]))
+        #         mess = HTML()
+        #         if property_names is not None:
+        #             items = {prop_name: feat["properties"].get(prop_name, "N/A") for prop_name in property_names}
+        #             mess.value = self.POPUP_MESS_TEMPLATE.format(index=widgets.index(feat), properties=items)
+        #             marker.tooltip = Popup(message=feat["properties"].get("name",""))
+        #         markers.append(marker)
+
+        #     SPIDERFY_MAX_ZOOM = 12
+        #     marker_cluster = ipyleaflet.MarkerCluster(
+        #         markers=markers,
+        #         spiderfy_on_max_zoom=True,
+        #         disable_clustering_at_zoom=SPIDERFY_MAX_ZOOM,
+        #         zoom_to_bounds_on_click=True,
+        #     )
+        #     self.map.add(marker_cluster)
+        #     geojson.visible = False
+
+        #     def handle_zoom(**kwargs):
+        #         if kwargs.get("type") == "zoom":
+        #             zoom = self.map.zoom
+        #         if zoom < SPIDERFY_MAX_ZOOM:
+        #             marker_cluster.visible = True
+        #             geojson.visible = False
+        #         else:
+        #             marker_cluster.visible = False
+        #             geojson.visible = True
+
+        #     self.map.on_interaction(handle_zoom)
 
         def update_widgets_from_click(*args, **kwargs):
             widgets.update(*args, **kwargs)
 
         geojson.on_click(update_widgets_from_click)
-        geojson.on_hover(self.create_hover(widgets))
+        geojson.on_hover(self.create_hover(widgets, property_names=property_names))
         self.map.add(geojson)
 
         if coord_names is not None:
@@ -138,7 +204,7 @@ class LeafletMap:
 
         # Add the legend to the map
         legend_control = WidgetControl(widget=colormap.legend(), position="bottomleft")
-        self.map.add_control(legend_control)
+        self.map.add(legend_control)
 
         # Add station selector with update button
         text_input = Text(placeholder="ID", description="Station:", disabled=False, layout=Layout(width="200px"))
@@ -155,7 +221,7 @@ class LeafletMap:
         # Add the station selector to the map
         widget_container = HBox([text_input, text_button])
         widget_control = WidgetControl(widget=widget_container, position="topright")
-        self.map.add_control(widget_control)
+        self.map.add(widget_control)
 
     def output(self, layout={}):
         """
@@ -272,11 +338,13 @@ class StatsColormap(PyleafletColormap):
         range=None,
         empty_color="white",
         default_color="blue",
+        show_legend=True,
     ):
         self.config = config
         self.stats = stats
         self.empty_color = empty_color
         self.default_color = default_color
+        self.show_legend = show_legend
         if self.stats is not None:
             assert "station_id_column_name" in self.config, 'Config must contain "station_id_column_name"'
             # Normalize the data for coloring
@@ -325,6 +393,11 @@ class StatsColormap(PyleafletColormap):
 
         return map_color
 
+    def legend(self):
+        if self.show_legend:
+            return super().legend()
+        else:
+            return ipywidgets.HTML("")
 
 class PPColormap(PyleafletColormap):
     def __init__(self, config):

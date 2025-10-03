@@ -2,7 +2,7 @@ import pandas as pd
 import xarray as xr
 import numpy as np
 import earthkit.data as ekd
-from earthkit.hydro.readers import find_main_var
+from earthkit.hydro._readers import find_main_var
 
 
 def process_grid_inputs(grid_config):
