@@ -12,10 +12,8 @@ def process_grid_inputs(grid_config):
     src_name = list(grid_config["source"].keys())[0]
     logger.info(f"Processing grid inputs from source: {src_name}")
     logger.debug(f"Grid config: {grid_config['source'][src_name]}")
-    ds = ( 
-        ekd
-        .from_source(src_name, **grid_config["source"][src_name])
-        .to_xarray(**grid_config.get("to_xarray_options", {}))
+    ds = ekd.from_source(src_name, **grid_config["source"][src_name]).to_xarray(
+        **grid_config.get("to_xarray_options", {})
     )
     var_name = find_main_var(ds, 3)
     da = ds[var_name]

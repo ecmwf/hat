@@ -5,9 +5,9 @@
 The `station_mapping` library is designed for mapping the location of hydrological station data onto the optimum location of a hydrological model grid (netcdf).
 This tool is available as both [command line](#station-mapping-with-command-line) and [Python API](#station-mapping-as-python-script-eg-called-within-jupyter-notebook-or-python-file)
 
-The optimum grid cell location is searched through optimising the upstream area error and the cell distance(s) from the station nearest grid cells. In this tool, users can define their <b>acceptable area difference/ error</b> using the parameter `max_area_difference` (%) and <b>the maximum cell radius</b> parameter: `max_neighboring_cell` (number of cells) to search for this optimum grid. The tool can also be parameterised to ignore further searching of optimum cells when upstream area difference of a station nearest grid is below, i.e. when the uspteam area of the nearest cell to the station is already deemed acceptable by defining `min_area_diff`(%). 
+The optimum grid cell location is searched through optimising the upstream area error and the cell distance(s) from the station nearest grid cells. In this tool, users can define their <b>acceptable area difference/ error</b> using the parameter `max_area_difference` (%) and <b>the maximum cell radius</b> parameter: `max_neighboring_cell` (number of cells) to search for this optimum grid. The tool can also be parameterised to ignore further searching of optimum cells when upstream area difference of a station nearest grid is below, i.e. when the uspteam area of the nearest cell to the station is already deemed acceptable by defining `min_area_diff`(%).
 
-For instance, refer to illustration example below, if the specified `max_area_difference` is 10%, then the optimum grid to be returned when specified `max_neighboring_cell` = 1 cell, is the one with 7% upstream area difference (blue). While if the `max_neighboring_cell` = 2 cell, then the cell with 5% upstream area difference will be returned as the optimum grid instead. 
+For instance, refer to illustration example below, if the specified `max_area_difference` is 10%, then the optimum grid to be returned when specified `max_neighboring_cell` = 1 cell, is the one with 7% upstream area difference (blue). While if the `max_neighboring_cell` = 2 cell, then the cell with 5% upstream area difference will be returned as the optimum grid instead.
 
 <img src="station_mapping_search_algo.svg" alt="illustration of optimum grid search algorithm" width="450"/>
 
@@ -21,11 +21,11 @@ To use the `station_mapping` as command line, follow these steps:
 
 1.  Prepare your data input: station data and grid data in the appropriate format. Station data should be in a CSV file, and grid data should be in a NetCDF file.
     PLease ensure all lattitudes and longitude values in [<b> decimal degree format/ DD</b>](https://en.wikipedia.org/wiki/Decimal_degrees).
-    
+
 2.  Create a [JSON configuration](https://github.com/ecmwf/hat/tree/main/notebooks/examples/station_mapping_config_example.json) file specifying the paths to your data files, column names, and other relevant parameters.
-    
+
 3.  Run the `station_mapping.py` script with the path to your configuration file:
-    
+
 `./station_mapping.py path/to/your/config.json`
 
 
@@ -48,7 +48,7 @@ config = {
     "csv_ups_col": "DrainingArea.km2.Provider", # column name for metadata of upstream  (string)
 
     # Mapping parameters (3x)
-    "max_neighboring_cells": 5, # Parameter 1: maximum radius to search for best cells (no. of cells)  
+    "max_neighboring_cells": 5, # Parameter 1: maximum radius to search for best cells (no. of cells)
     "max_area_diff": 20, # Parameter 2: acceptable/ optimum upstream area difference (%)
     "min_area_diff": 0, # Parameter 3: minimum upstream area difference (%) between nearest grid and the station metadata
 
@@ -59,15 +59,15 @@ config = {
 
     # if Output directory is provided, it will save the geodataframe outputs to geojson and csv readable by GIS or jupyter interactive
     # "out_directory": None # put none if you don't want to save the output
-    "out_directory": "output"    
+    "out_directory": "output"
 }
 ```
 3. Run the `station_mapping` function with the config dictionary input and store result as dataframe (df)
 Since in the above example, the out_directory is not empty/ None, i.e. hence geojson and csv output of the station mapping tool will be saved in the specified directory.
 
 ```
-# import station mapping 
-from hat.mapping.station_mapping import station_mapping 
+# import station mapping
+from hat.mapping.station_mapping import station_mapping
 # call station_mapping function and apply on the created config dictionary
 df = station_mapping(config)
 ```
@@ -87,7 +87,7 @@ Outputs
 ------
 
 The following elements (column) will be written as dataframe as the expected `station_mapping` output.
-Note: `_lat` and `_lon` refer to the actual lattitude and longitude of the location, while `_lat_idx` and `_lon_idx` refer to the lat and lon grid ID. 
+Note: `_lat` and `_lon` refer to the actual lattitude and longitude of the location, while `_lat_idx` and `_lon_idx` refer to the lat and lon grid ID.
 
 * Station data
 `station_name`, `station_lat`, `station_lon`, `station_area`
@@ -101,7 +101,7 @@ Note: `_lat` and `_lon` refer to the actual lattitude and longitude of the locat
 * Manually mapped variable
 `manual_lat`, `manual_lon`, `manual_lat_idx`, `manual_lon_idx`, `manual_area`
 
-* GIS compatble output files (optional) 
+* GIS compatble output files (optional)
 if the "out_directory" in the `configuration` is specified, then the following files will be written in the directory:
 
     1. `stations.geojson`: stations point vector in geojson (readable in GIS)

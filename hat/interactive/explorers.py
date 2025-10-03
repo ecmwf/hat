@@ -328,15 +328,7 @@ class TimeSeriesExplorer(StationsExplorer):
         )
         return main_frame
 
-    def plot(
-            self,
-            colorby=None,
-            sim=None,
-            limits=None,
-            mp_colormap="viridis",
-            show_legend=True,
-            **kwargs
-        ):
+    def plot(self, colorby=None, sim=None, limits=None, mp_colormap="viridis", show_legend=True, **kwargs):
         """
         Plot the stations markers colored by a given metric.
 

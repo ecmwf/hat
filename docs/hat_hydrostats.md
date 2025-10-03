@@ -1,7 +1,7 @@
 `hat-hydrostats` documentation
 ==============================
 
-Command line tool to calculate hydrological statistics on timeseries. 
+Command line tool to calculate hydrological statistics on timeseries.
 
 How to use
 -----

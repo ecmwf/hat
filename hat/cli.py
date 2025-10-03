@@ -7,6 +7,7 @@ from hat.compute_hydrostats.stat_calc import stat_calc
 from hat.extract_timeseries.extractor import extractor
 from hat.station_mapping.mapper import mapper
 
+
 def commandlineify(func):
     def wrapper(args=None):
         if args is None:
@@ -18,7 +19,9 @@ def commandlineify(func):
         with open(confpath, "r") as file:
             config = yaml.safe_load(file)
         func(config)
+
     return wrapper
+
 
 mapper_cli = commandlineify(mapper)
 extractor_cli = commandlineify(extractor)
@@ -27,6 +30,7 @@ stat_calc_cli = commandlineify(stat_calc)
 
 if __name__ == "__main__":
     from importlib.metadata import entry_points
+
     eps = entry_points().select(group="console_scripts")
     tools = {ep.name: ep.load() for ep in eps if ep.module.startswith("hat.")}
     tool_name = sys.argv[1]

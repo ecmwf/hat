@@ -40,11 +40,8 @@ class LeafletMap:
         </ul>
     </div>
     """
-    def __init__(
-        self,
-        basemap=ipyleaflet.basemaps.OpenStreetMap.Mapnik,
-        **kwargs
-    ):
+
+    def __init__(self, basemap=ipyleaflet.basemaps.OpenStreetMap.Mapnik, **kwargs):
         self.map = ipyleaflet.Map(
             basemap=basemap,
             layout=ipywidgets.Layout(width="100%", height="600px"),
@@ -120,16 +117,16 @@ class LeafletMap:
         return hover_handler
 
     def add_geolayer(
-            self,
-            geodata,
-            colormap,
-            widgets,
-            coord_names=None,
-            station_id_colname="station_id",
-            name="Stations",
-            property_names=None,
-            # cluster=False
-        ):
+        self,
+        geodata,
+        colormap,
+        widgets,
+        coord_names=None,
+        station_id_colname="station_id",
+        name="Stations",
+        property_names=None,
+        # cluster=False
+    ):
         """
         Add a geolayer to the map.
 
@@ -398,6 +395,7 @@ class StatsColormap(PyleafletColormap):
             return super().legend()
         else:
             return ipywidgets.HTML("")
+
 
 class PPColormap(PyleafletColormap):
     def __init__(self, config):

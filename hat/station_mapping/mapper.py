@@ -104,6 +104,12 @@ def mapper(config):
     mapping_outputs = StationMapping(config["parameters"]).conduct_mapping(
         station_coords1, station_coords2, grid_area_coords1, grid_area_coords2, station_metric, metric_grid
     )
-    df = outputs_to_df(df, *mapping_outputs, grid_area_coords1, grid_area_coords2, filename=config["output"]["file"] if config.get("output", None) is not None else None)
+    df = outputs_to_df(
+        df,
+        *mapping_outputs,
+        grid_area_coords1,
+        grid_area_coords2,
+        filename=config["output"]["file"] if config.get("output", None) is not None else None,
+    )
     generate_summary_plots(df, config.get("plot", None))
     return df
