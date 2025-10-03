@@ -358,7 +358,7 @@ class StatsColormap(PyleafletColormap):
         try:
             colormap = mpl.colormaps[colormap_style]
         except KeyError:
-            raise KeyError(f"Colormap {colormap_style} not found. " f"Available colormaps are: {mpl.colormaps}")
+            raise KeyError(f"Colormap {colormap_style} not found. Available colormaps are: {mpl.colormaps}")
 
         super().__init__(colormap)
 
