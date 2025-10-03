@@ -4,7 +4,7 @@ import earthkit.data as ekd
 import numpy as np
 import plotly.express as px
 from plotly.colors import get_colorscale
-from earthkit.hydro.readers import find_main_var
+from earthkit.hydro._readers import find_main_var
 from .station_mapping import StationMapping
 
 
