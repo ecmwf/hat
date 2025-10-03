@@ -11,9 +11,7 @@ from ipywidgets import HTML, Button, DatePicker, HBox, Label, Layout, Output, Te
 
 from earthkit.meteo.score import crps
 
-import sys
 
-sys.path.append("../../../floods-html")
 from floods_html import floods_html
 
 
@@ -310,11 +308,12 @@ class HTMLTableWidget(Widget):
         The title of the table.
     """
 
-    def __init__(self, title):
+    def __init__(self, title, css_classes="custom-table"):
         self.title = title
+        self.css_classes = css_classes
         super().__init__(Output())
 
-        # Define the styles for the statistics table
+        # Define the default styles for the statistics table
         self.table_style = """
             <style>
                 .custom-table-container {
@@ -351,8 +350,10 @@ class HTMLTableWidget(Widget):
         empty_df = pd.DataFrame()
         self._display_dataframe_with_scroll(empty_df, title=self.title)
 
-    def _display_dataframe_with_scroll(self, df, title=""):
-        table_html = df.to_html(classes="custom-table")
+    def _display_dataframe_with_scroll(self, df, title="", orientation="horizontal"):
+        if orientation == "vertical":
+            df = df.transpose()
+        table_html = df.to_html(classes=self.css_classes, index=False, na_rep="N/A", notebook=True)
         content = f"{self.table_style}<div class='custom-table-container'><h3 {self.stat_title_style}>{title}</h3>{table_html}</div>"  # noqa: E501
         with self.output:
             clear_output(wait=True)  # Clear any previous plots or messages
