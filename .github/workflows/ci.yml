@@ -13,7 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: pip install ruff
-      - run: ruff check
+      - run: ruff check # check linting violations
+      - run: ruff format --check --exclude *.ipynb # check formatting
 
   docs:
     runs-on: ubuntu-latest

@@ -5,14 +5,15 @@ import pandas as pd
 import xarray as xr
 from IPython.display import display
 
-from hat.interactive.leaflet import LeafletMap, PyleafletColormap
+from hat.interactive.leaflet import LeafletMap, StatsColormap, PPColormap, ReportingPointsColormap
 from hat.interactive.widgets import (
     MetaDataWidget,
     PlotlyWidget,
+    PPForecastPlotWidget,
     StatisticsWidget,
     WidgetsManager,
+    UpdatingHTML,
 )
-from hat.observations import read_station_metadata_file
 
 
 def prepare_simulations_data(simulations, sims_var_name):
@@ -81,9 +82,7 @@ def prepare_observations_data(observations, sim_ds, obs_var_name):
 
     if file_extension == ".csv":
         obs_df = pd.read_csv(observations, parse_dates=["Timestamp"])
-        obs_melted = obs_df.melt(
-            id_vars="Timestamp", var_name="station", value_name=obs_var_name
-        )
+        obs_melted = obs_df.melt(id_vars="Timestamp", var_name="station", value_name=obs_var_name)
         # Convert the melted DataFrame to xarray Dataset
         obs_ds = obs_melted.set_index(["Timestamp", "station"]).to_xarray()
         obs_ds = obs_ds.rename({"Timestamp": "time"})
@@ -131,23 +130,55 @@ def find_common_stations(station_index, stations_metadata, obs_ds, sim_ds, stati
         A list of common station IDs.
 
     """
-    ids = []
-    ids += [list(obs_ds["station"].values)]
-    ids += [list(ds["station"].values) for ds in sim_ds.values()]
-    ids += [stations_metadata[station_index]]
+    ids = set(obs_ds["station"].values)
+    for ds in sim_ds.values():
+        ids &= set(ds["station"].values)
+    ids &= set(stations_metadata[station_index])
     if statistics:
-        ids += [list(ds["station"].values) for ds in statistics.values()]
+        for ds in statistics.values():
+            ids &= set(ds["station"].values)
 
-    common_ids = None
-    for id in ids:
-        if common_ids is None:
-            common_ids = set(id)
-        else:
-            common_ids = set(id) & common_ids
-    return list(common_ids)
+    return list(ids)
 
 
-class TimeSeriesExplorer:
+class StationsExplorer:
+    """
+    Base class for the interactive stations explorer.
+    Provides the stations metadata, the title label and an empty LeafletMap.
+    """
+
+    def __init__(self, config, title="Interactive stations explorer"):
+        """
+        Initializes an instance of the Explorer class.
+
+        Parameters
+        ----------
+        config : dict
+            A dictionary containing the configuration parameters for the
+            Explorer.
+        title : str, optional
+            The title of the explorer to display in the application.
+        """
+
+        self.config = config
+
+        # Create station objects
+        self.stations_metadata = pd.read_csv(config["stations"])
+
+        self.station_index = config["station_id_column_name"]
+
+        # Title label
+        self.title_label = ipywidgets.Label(
+            "Interactive Map Visualisation for Hydrological Stations",
+            layout=ipywidgets.Layout(justify_content="center"),
+            style={"font_weight": "bold", "font_size": "24px", "font_family": "Arial"},
+        )
+
+        # Create the main leaflet map
+        self.leafletmap = LeafletMap()
+
+
+class TimeSeriesExplorer(StationsExplorer):
     """
     Initialize the interactive map with configurations and data sources.
     """
@@ -204,22 +235,15 @@ class TimeSeriesExplorer:
             files and the simulation netCDF files.
 
         """
-        self.config = config
+        # Initialise base class
+        title = "Interactive Map Visualisation for Hydrological Model Performance"
+        super().__init__(config, title)
 
-        self.stations_metadata = read_station_metadata_file(
-            fpath=config["stations"],
-            coord_names=config["station_coordinates"],
-            epsg=config["station_epsg"],
-            filters=config["station_filters"],
-        )
+        self.loading_widget = ipywidgets.Label(value="")
 
         # Use the external functions to prepare data
-        sim_ds = prepare_simulations_data(
-            config["simulations"], config["sims_var_name"]
-        )
-        obs_ds = prepare_observations_data(
-            config["observations"], sim_ds, config["obs_var_name"]
-        )
+        sim_ds = prepare_simulations_data(config["simulations"], config["sims_var_name"])
+        obs_ds = prepare_observations_data(config["observations"], sim_ds, config["obs_var_name"])
 
         # set station index
         self.station_index = config["station_id_column_name"]
@@ -232,9 +256,7 @@ class TimeSeriesExplorer:
                 self.statistics[name] = xr.open_dataset(path)
 
         # Ensure the keys of self.statistics match the keys of self.sim_ds
-        assert set(self.statistics.keys()) == set(
-            sim_ds.keys()
-        ), "Mismatch between statistics and simulations keys."
+        assert set(self.statistics.keys()) == set(sim_ds.keys()), "Mismatch between statistics and simulations keys."
 
         # find common station ids between metadata, observation and simulations
         common_ids = find_common_stations(
@@ -246,26 +268,10 @@ class TimeSeriesExplorer:
         )
 
         print(f"Found {len(common_ids)} common stations")
-        self.stations_metadata = self.stations_metadata.loc[
-            self.stations_metadata[self.station_index].isin(common_ids)
-        ]
+        self.stations_metadata = self.stations_metadata.loc[self.stations_metadata[self.station_index].isin(common_ids)]
         obs_ds = obs_ds.sel(station=common_ids)
         for sim, ds in sim_ds.items():
             sim_ds[sim] = ds.sel(station=common_ids)
-
-        # Create loading widget
-        self.loading_widget = ipywidgets.Label(value="")
-
-        # Title label
-        self.title_label = ipywidgets.Label(
-            "Interactive Map Visualisation for Hydrological Model Performance",
-            layout=ipywidgets.Layout(justify_content="center"),
-            style={
-                "font_weight": "bold",
-                "font_size": "24px",
-                "font_family": "Arial",
-            },
-        )
 
         # Create the interactive widgets
         datasets = sim_ds
@@ -274,12 +280,7 @@ class TimeSeriesExplorer:
         widgets["plot"] = PlotlyWidget(datasets)
         widgets["stats"] = StatisticsWidget(self.statistics)
         widgets["meta"] = MetaDataWidget(self.stations_metadata, self.station_index)
-        self.widgets = WidgetsManager(
-            widgets, config["station_id_column_name"], self.loading_widget
-        )
-
-        # Create the main leaflet map
-        self.leafletmap = LeafletMap()
+        self.widgets = WidgetsManager(widgets, config["station_id_column_name"], self.loading_widget)
 
     def create_frame(self):
         """
@@ -327,7 +328,7 @@ class TimeSeriesExplorer:
         )
         return main_frame
 
-    def plot(self, colorby=None, sim=None, limits=None, mp_colormap="viridis"):
+    def plot(self, colorby=None, sim=None, limits=None, mp_colormap="viridis", show_legend=True, **kwargs):
         """
         Plot the stations markers colored by a given metric.
 
@@ -348,7 +349,190 @@ class TimeSeriesExplorer:
         stats = None
         if self.statistics and colorby is not None and sim is not None:
             stats = self.statistics[sim][colorby]
-        colormap = PyleafletColormap(self.config, stats, mp_colormap, limits)
+        colormap = StatsColormap(self.config, stats, mp_colormap, limits, show_legend=show_legend)
+
+        # add layer to the leaflet map
+        self.leafletmap.add_geolayer(
+            self.stations_metadata,
+            colormap,
+            self.widgets,
+            self.config["station_coordinates"],
+            self.config["station_id_column_name"],
+            **kwargs,
+        )
+
+        # Initialize frame elements
+        frame = self.create_frame()
+
+        # Display the main layout
+        display(frame)
+
+
+class PPForecastExplorer(StationsExplorer):
+    def __init__(self, config):
+        # Initialise base class
+        title = "Interactive Map Visualisation for the PP module of the EFAS forecast"
+        super().__init__(config, title)
+
+        # Create the interactive widgets
+        widgets = {}
+        # Create loading widget
+        self.loading_widget = ipywidgets.Label(value="")
+        widgets["meta"] = MetaDataWidget(self.stations_metadata, self.station_index)
+        widgets["plot"] = PPForecastPlotWidget(config["pp"], self.stations_metadata, self.station_index)
+        self.widgets = WidgetsManager(widgets, config["station_id_column_name"], self.loading_widget)
+
+    def create_frame(self):
+        """
+        Initialize the layout of the widgets for the map visualization.
+
+        Returns
+        -------
+        ipywidgets.VBox
+            A vertical box containing the layout elements for the map
+            visualization.
+
+        """
+        # Layouts 2
+        main_layout = ipywidgets.Layout(
+            justify_content="space-around",
+            align_items="stretch",
+            spacing="2px",
+            width="1000px",
+        )
+        # half_layout = ipywidgets.Layout(
+        #     justify_content="space-around",
+        #     align_items="center",
+        #     spacing="2px",
+        #     width="50%",
+        # )
+        # left_layout = ipywidgets.Layout(
+        #     justify_content="space-around",
+        #     align_items="center",
+        #     spacing="2px",
+        #     width="40%",
+        # )
+        # right_layout = ipywidgets.Layout(
+        #     justify_content="center", align_items="center", spacing="2px", width="60%"
+        # )
+
+        # Main layout
+        main_top_frame = ipywidgets.HBox(
+            [self.leafletmap.map, self.widgets["plot"].output],
+        )
+        main_frame = ipywidgets.VBox(
+            [self.title_label, main_top_frame, self.widgets["meta"].output],
+            layout=main_layout,
+        )
+        return main_frame
+
+    def plot(self):
+        """
+        Plot the stations markers colored by a given metric.
+
+        Parameters
+        ----------
+        colorby : str, optional
+            The name of the metric to color the stations by.
+        sim : str, optional
+            The name of the simulation to use for the metric.
+        limits : list, optional
+            A list of two values representing the minimum and maximum values
+            for the color bar.
+        mp_colormap : str, optional
+            The name of the matplotlib colormap to use for the color bar.
+
+        """
+        # create colormap from statistics
+        colormap = PPColormap(self.config)
+
+        # add layer to the leaflet map
+        self.leafletmap.add_geolayer(
+            self.stations_metadata,
+            colormap,
+            self.widgets,
+            self.config["station_coordinates"],
+        )
+
+        # Initialize frame elements
+        frame = self.create_frame()
+
+        # Display the main layout
+        display(frame)
+
+
+class ReportingPointsExplorer(StationsExplorer):
+    def __init__(self, config):
+        # Initialise base class
+        self.config = config
+        title = "Interactive Map Visualisation of Reporting Points"
+        config["stations"] = self.config["stations"].format(date=self.config["date"])
+        super().__init__(config, title)
+
+        # Create the interactive widgets
+        widgets = {}
+        # Create loading widget
+        self.loading_widget = ipywidgets.Label(value="")
+        widgets["html"] = UpdatingHTML(self.config)
+        self.widgets = WidgetsManager(widgets, config["station_id_column_name"], self.loading_widget)
+
+    def create_frame(self):
+        """
+        Initialize the layout of the widgets for the map visualization.
+
+        Returns
+        -------
+        ipywidgets.VBox
+            A vertical box containing the layout elements for the map
+            visualization.
+
+        """
+
+        main_layout = ipywidgets.Layout(
+            justify_content="space-around",
+            align_items="stretch",
+            spacing="2px",
+            width="100%",
+        )
+        left_layout = ipywidgets.Layout(
+            justify_content="space-around",
+            align_items="center",
+            spacing="2px",
+            width="100%",
+        )
+
+        top_left_frame = self.leafletmap.output(left_layout)
+
+        # Main layout
+        main_top_frame = ipywidgets.VBox(
+            [top_left_frame, self.widgets["html"].output],
+        )
+        main_frame = ipywidgets.VBox(
+            [self.title_label, main_top_frame],
+            layout=main_layout,
+        )
+        return main_frame
+
+    def plot(self):
+        """
+        Plot the stations markers colored by a given metric.
+
+        Parameters
+        ----------
+        colorby : str, optional
+            The name of the metric to color the stations by.
+        sim : str, optional
+            The name of the simulation to use for the metric.
+        limits : list, optional
+            A list of two values representing the minimum and maximum values
+            for the color bar.
+        mp_colormap : str, optional
+            The name of the matplotlib colormap to use for the color bar.
+
+        """
+
+        # create colormap from statistics
+        colormap = ReportingPointsColormap(self.config)
 
         # add layer to the leaflet map
         self.leafletmap.add_geolayer(

@@ -1,7 +1,7 @@
 `hat-extract-timeseries` documentation
 ===============================
 
-Extract timeseries from a collection of simulation raster files. 
+Extract timeseries from a collection of simulation raster files.
 
 How to use
 -----
