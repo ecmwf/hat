@@ -328,7 +328,15 @@ class TimeSeriesExplorer(StationsExplorer):
         )
         return main_frame
 
-    def plot(self, colorby=None, sim=None, limits=None, mp_colormap="viridis"):
+    def plot(
+            self,
+            colorby=None,
+            sim=None,
+            limits=None,
+            mp_colormap="viridis",
+            show_legend=True,
+            **kwargs
+        ):
         """
         Plot the stations markers colored by a given metric.
 
@@ -349,7 +357,7 @@ class TimeSeriesExplorer(StationsExplorer):
         stats = None
         if self.statistics and colorby is not None and sim is not None:
             stats = self.statistics[sim][colorby]
-        colormap = StatsColormap(self.config, stats, mp_colormap, limits)
+        colormap = StatsColormap(self.config, stats, mp_colormap, limits, show_legend=show_legend)
 
         # add layer to the leaflet map
         self.leafletmap.add_geolayer(
@@ -357,6 +365,8 @@ class TimeSeriesExplorer(StationsExplorer):
             colormap,
             self.widgets,
             self.config["station_coordinates"],
+            self.config["station_id_column_name"],
+            **kwargs,
         )
 
         # Initialize frame elements
