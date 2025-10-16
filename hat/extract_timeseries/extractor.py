@@ -23,8 +23,9 @@ def process_grid_inputs(grid_config):
     var_name = find_main_var(ds, 3)
     da = ds[var_name]
     logger.info(f"Xarray created from source:\n{da}\n")
-    gridx_colname = grid_config.get("coord_x", "lat")
-    gridy_colname = grid_config.get("coord_y", "lon")
+    coord_config = grid_config.get("coords", {})
+    gridx_colname = coord_config.get("x", "lat")
+    gridy_colname = coord_config.get("y", "lon")
     da = da.sortby([gridx_colname, gridy_colname])
     shape = da[gridx_colname].shape[0], da[gridy_colname].shape[0]
     return da, var_name, gridx_colname, gridy_colname, shape
@@ -93,11 +94,9 @@ def process_inputs(station_config, grid_config):
         unique_indices, duplication_indexes = np.unique(df[index_1d_config].values, return_inverse=True)
         grid_config["source"]["gribjump"]["indices"] = unique_indices
         masked_da = load_ekd_source(grid_config)
-        # TODO: implement
-        da_varname = "placeholder_variable_name"
-
         var_name = find_main_var(masked_da, 2)
         masked_da = masked_da[var_name]
+        da_varname = var_name
     else:
         da, da_varname, gridx_colname, gridy_colname, shape = process_grid_inputs(grid_config)
 
@@ -142,10 +141,9 @@ def apply_mask(da, mask, coordx, coordy):
 
 def extractor(config):
     da_varname, station_names, duplication_indexes, masked_da = process_inputs(config["station"], config["grid"])
-    print(masked_da)
     ds = xr.Dataset({da_varname: masked_da})
     ds = ds.isel(index=duplication_indexes)
-    ds["station"] = station_names
+    ds = ds.assign_coords({"station": ("index", station_names)})
     if config.get("output", None) is not None:
         logger.info(f"Saving output to {config['output']['file']}")
         ds.to_netcdf(config["output"]["file"])
