@@ -68,6 +68,10 @@ dependencies = [
         "ruff",
         "pre-commit"
     ]
+    gribjump = [
+	"earthkit-data[gribjump]",
+	"gribjumplib==0.10.3.dev20250908"
+    ]
 
 [project.scripts]
     hat-extract-timeseries = "hat.cli:extractor_cli"
