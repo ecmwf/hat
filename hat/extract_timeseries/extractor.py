@@ -8,13 +8,18 @@ from earthkit.hydro._readers import find_main_var
 from hat import _LOGGER as logger
 
 
-def process_grid_inputs(grid_config):
+def load_ekd_source(grid_config):
     src_name = list(grid_config["source"].keys())[0]
     logger.info(f"Processing grid inputs from source: {src_name}")
     logger.debug(f"Grid config: {grid_config['source'][src_name]}")
     ds = ekd.from_source(src_name, **grid_config["source"][src_name]).to_xarray(
         **grid_config.get("to_xarray_options", {})
     )
+    return ds
+
+
+def process_grid_inputs(grid_config):
+    ds = load_ekd_source(grid_config)
     var_name = find_main_var(ds, 3)
     da = ds[var_name]
     logger.info(f"Xarray created from source:\n{da}\n")
@@ -61,7 +66,7 @@ def create_mask_from_coords(coords_config, df, gridx, gridy, shape):
     return mask, duplication_indexes
 
 
-def process_inputs(station_config, grid_config):
+def parse_stations(station_config):
     logger.debug(f"Reading station file, {station_config}")
     df = pd.read_csv(station_config["file"])
     filters = station_config.get("filter")
@@ -72,23 +77,44 @@ def process_inputs(station_config, grid_config):
 
     index_config = station_config.get("index", None)
     coords_config = station_config.get("coords", None)
+    index_1d_config = station_config.get("index_1d", None)
+    return index_config, coords_config, index_1d_config, station_names, df
 
+
+def process_inputs(station_config, grid_config):
+    index_config, coords_config, index_1d_config, station_names, df = parse_stations(station_config)
+
+    # TODO: better malformed config handling
     if index_config is not None and coords_config is not None:
         raise ValueError("Use either index or coords, not both.")
 
-    da, da_varname, gridx_colname, gridy_colname, shape = process_grid_inputs(grid_config)
+    if list(grid_config["source"].keys())[0] == "gribjump":
+        assert index_1d_config is not None
+        unique_indices, duplication_indexes = np.unique(df[index_1d_config].values, return_inverse=True)
+        grid_config["source"]["gribjump"]["indices"] = unique_indices
+        masked_da = load_ekd_source(grid_config)
+        # TODO: implement
+        da_varname = "placeholder_variable_name"
 
-    if index_config is not None:
-        mask, duplication_indexes = create_mask_from_index(index_config, df, shape)
-    elif coords_config is not None:
-        mask, duplication_indexes = create_mask_from_coords(
-            coords_config, df, da[gridx_colname].values, da[gridy_colname].values, shape
-        )
+        var_name = find_main_var(masked_da, 2)
+        masked_da = masked_da[var_name]
     else:
-        # default to index approach
-        mask, duplication_indexes = create_mask_from_index(index_config, df, shape)
+        da, da_varname, gridx_colname, gridy_colname, shape = process_grid_inputs(grid_config)
 
-    return da, da_varname, gridx_colname, gridy_colname, mask, station_names, duplication_indexes
+        if index_config is not None:
+            mask, duplication_indexes = create_mask_from_index(index_config, df, shape)
+        elif coords_config is not None:
+            mask, duplication_indexes = create_mask_from_coords(
+                coords_config, df, da[gridx_colname].values, da[gridy_colname].values, shape
+            )
+        else:
+            # default to index approach
+            mask, duplication_indexes = create_mask_from_index(index_config, df, shape)
+
+        logger.info("Extracting timeseries at selected stations")
+        masked_da = apply_mask(da, mask, gridx_colname, gridy_colname)
+
+    return da_varname, station_names, duplication_indexes, masked_da
 
 
 def mask_array_np(arr, mask):
@@ -101,12 +127,12 @@ def apply_mask(da, mask, coordx, coordy):
         da,
         mask,
         input_core_dims=[(coordx, coordy), (coordx, coordy)],
-        output_core_dims=[["station"]],
+        output_core_dims=[["index"]],
         output_dtypes=[da.dtype],
         exclude_dims={coordx, coordy},
         dask="parallelized",
         dask_gufunc_kwargs={
-            "output_sizes": {"station": int(mask.sum())},
+            "output_sizes": {"index": int(mask.sum())},
             "allow_rechunk": True,
         },
     )
@@ -115,13 +141,10 @@ def apply_mask(da, mask, coordx, coordy):
 
 
 def extractor(config):
-    da, da_varname, gridx_colname, gridy_colname, mask, station_names, duplication_indexes = process_inputs(
-        config["station"], config["grid"]
-    )
-    logger.info("Extracting timeseries at selected stations")
-    masked_da = apply_mask(da, mask, gridx_colname, gridy_colname)
+    da_varname, station_names, duplication_indexes, masked_da = process_inputs(config["station"], config["grid"])
+    print(masked_da)
     ds = xr.Dataset({da_varname: masked_da})
-    ds = ds.isel(station=duplication_indexes)
+    ds = ds.isel(index=duplication_indexes)
     ds["station"] = station_names
     if config.get("output", None) is not None:
         logger.info(f"Saving output to {config['output']['file']}")
