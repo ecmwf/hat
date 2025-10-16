@@ -143,7 +143,8 @@ def extractor(config):
     da_varname, station_names, duplication_indexes, masked_da = process_inputs(config["station"], config["grid"])
     ds = xr.Dataset({da_varname: masked_da})
     ds = ds.isel(index=duplication_indexes)
-    ds = ds.assign_coords({"station": ("index", station_names)})
+    ds = ds.rename({"index": "station"})
+    ds["station"] = station_names
     if config.get("output", None) is not None:
         logger.info(f"Saving output to {config['output']['file']}")
         ds.to_netcdf(config["output"]["file"])
