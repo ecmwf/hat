@@ -71,3 +71,9 @@ In applying this licence, ECMWF does not waive the privileges and immunities
 granted to it by virtue of its status as an intergovernmental organisation
 nor does it submit to any jurisdiction.
 ```
+
+## Attributions
+
+The hydrostats part of this library uses the [`scores`](https://scores.readthedocs.io) library [1], which is available under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.txt).
+
+[1] Leeuwenburg, T., Loveday, N., Ebert, E. E., Cook, H., Khanarmuei, M., Taggart, R. J., Ramanathan, N., Carroll, M., Chong, S., Griffiths, A., & Sharples, J. (2024). scores: A Python package for verifying and evaluating models and predictions with xarray. Journal of Open Source Software, 9(99), 6889. https://doi.org/10.21105/joss.06889
