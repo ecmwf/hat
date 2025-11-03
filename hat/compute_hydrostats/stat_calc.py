@@ -1,21 +1,7 @@
-import earthkit.data as ekd
-from earthkit.hydro._readers import find_main_var
+from hat.core import load_da
 import numpy as np
 import xarray as xr
 from hat.compute_hydrostats import stats
-
-
-def load_da(ds_config):
-    src_name = list(ds_config["source"].keys())[0]
-    ds = ( 
-        ekd
-        .from_source(*ds_config["source"])
-        .from_source(src_name, **ds_config["source"][src_name])
-        .to_xarray(**ds_config.get("to_xarray_options", {}))
-    )
-    var_name = find_main_var(ds, 2)
-    da = ds[var_name]
-    return da
 
 
 def find_valid_subset(sim_da, obs_da, sim_coords, obs_coords, new_coords):
@@ -41,9 +27,9 @@ def find_valid_subset(sim_da, obs_da, sim_coords, obs_coords, new_coords):
 
 def stat_calc(config):
     sim_config = config["sim"]
-    sim_da = load_da(sim_config)
+    sim_da, _ = load_da(sim_config, 2)
     obs_config = config["obs"]
-    obs_da = load_da(obs_config)
+    obs_da, _ = load_da(obs_config, 2)
     new_coords = config["output"]["coords"]
     sim_da, obs_da = find_valid_subset(sim_da, obs_da, sim_config["coords"], obs_config["coords"], new_coords)
     stat_dict = {}

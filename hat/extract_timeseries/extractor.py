@@ -2,26 +2,13 @@ from dask.diagnostics import ProgressBar
 import pandas as pd
 import xarray as xr
 import numpy as np
-import earthkit.data as ekd
-from earthkit.hydro._readers import find_main_var
+from hat.core import load_da
 
 from hat import _LOGGER as logger
 
 
-def load_ekd_source(grid_config):
-    src_name = list(grid_config["source"].keys())[0]
-    logger.info(f"Processing grid inputs from source: {src_name}")
-    logger.debug(f"Grid config: {grid_config['source'][src_name]}")
-    ds = ekd.from_source(src_name, **grid_config["source"][src_name]).to_xarray(
-        **grid_config.get("to_xarray_options", {})
-    )
-    return ds
-
-
 def process_grid_inputs(grid_config):
-    ds = load_ekd_source(grid_config)
-    var_name = find_main_var(ds, 3)
-    da = ds[var_name]
+    da, var_name = load_da(grid_config, 3)
     logger.info(f"Xarray created from source:\n{da}\n")
     coord_config = grid_config.get("coords", {})
     gridx_colname = coord_config.get("x", "lat")
@@ -93,10 +80,7 @@ def process_inputs(station_config, grid_config):
         assert index_1d_config is not None
         unique_indices, duplication_indexes = np.unique(df[index_1d_config].values, return_inverse=True)
         grid_config["source"]["gribjump"]["indices"] = unique_indices
-        masked_da = load_ekd_source(grid_config)
-        var_name = find_main_var(masked_da, 2)
-        masked_da = masked_da[var_name]
-        da_varname = var_name
+        masked_da, da_varname = load_da(grid_config, 2)
     else:
         da, da_varname, gridx_colname, gridy_colname, shape = process_grid_inputs(grid_config)
 
