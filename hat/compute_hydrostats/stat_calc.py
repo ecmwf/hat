@@ -2,7 +2,7 @@ import earthkit.data as ekd
 from earthkit.hydro._readers import find_main_var
 import numpy as np
 import xarray as xr
-from hat.compute_hydrostats import stats
+import scores
 
 
 def load_da(ds_config):
@@ -40,10 +40,14 @@ def stat_calc(config):
     obs_da = load_da(obs_config)
     new_coords = config["output"]["coords"]
     sim_da, obs_da = find_valid_subset(sim_da, obs_da, sim_config["coords"], obs_config["coords"], new_coords)
+    time_dim = new_coords.get("t", "time")
     stat_dict = {}
     for stat in config["stats"]:
-        func = getattr(stats, stat)
-        stat_dict[stat] = func(sim_da, obs_da, new_coords.get("t", "time"))
+        parts = stat.split(".")
+        func = scores
+        for part in parts:
+            func = getattr(func, part)
+        stat_dict[stat] = func(sim_da, obs_da, reduce_dims=time_dim)
     ds = xr.Dataset(stat_dict)
     if config["output"].get("file", None) is not None:
         ds.to_netcdf(config["output"]["file"])
