@@ -6,7 +6,13 @@ from hat.compute_hydrostats import stats
 
 
 def load_da(ds_config):
-    ds = ekd.from_source(*ds_config["source"]).to_xarray()
+    src_name = list(ds_config["source"].keys())[0]
+    ds = ( 
+        ekd
+        .from_source(*ds_config["source"])
+        .from_source(src_name, **ds_config["source"][src_name])
+        .to_xarray(**ds_config.get("to_xarray_options", {}))
+    )
     var_name = find_main_var(ds, 2)
     da = ds[var_name]
     return da
@@ -35,7 +41,7 @@ def find_valid_subset(sim_da, obs_da, sim_coords, obs_coords, new_coords):
 
 def stat_calc(config):
     sim_config = config["sim"]
-    sim_da = load_da(config["sim"])
+    sim_da = load_da(sim_config)
     obs_config = config["obs"]
     obs_da = load_da(obs_config)
     new_coords = config["output"]["coords"]
