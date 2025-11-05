@@ -11,7 +11,7 @@ jobs:
   quality_assurance:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - run: pip install ruff
       - run: ruff check # check linting violations
       - run: ruff format --check --exclude *.ipynb # check formatting
@@ -19,15 +19,17 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v5
       - run: pip install -r docs/requirements.txt
       - run: mkdocs build
 
   setup_and_test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
       - name: install hat package
         shell: bash -l {0}
         run: pip install .[test]
