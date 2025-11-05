@@ -51,7 +51,8 @@ dependencies = [
     "floods-html",
     "geopy",
     "setuptools",
-    "anywidget"
+    "anywidget",
+    "scores"
 ]
 
 [project.urls]
