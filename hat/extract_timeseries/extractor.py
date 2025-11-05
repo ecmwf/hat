@@ -79,7 +79,11 @@ def process_inputs(station_config, grid_config):
     if list(grid_config["source"].keys())[0] == "gribjump":
         assert index_1d_config is not None
         unique_indices, duplication_indexes = np.unique(df[index_1d_config].values, return_inverse=True)
-        grid_config["source"]["gribjump"]["indices"] = unique_indices
+        # TODO: Double-check this. Converting indices to ranges is currently
+        # faster than using indices directly, should be fixed in the gribjump
+        # source.
+        ranges = [(i, i + 1) for i in unique_indices]
+        grid_config["source"]["gribjump"]["ranges"] = ranges
         masked_da, da_varname = load_da(grid_config, 2)
     else:
         da, da_varname, gridx_colname, gridy_colname, shape = process_grid_inputs(grid_config)
