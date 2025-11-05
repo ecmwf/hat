@@ -125,6 +125,7 @@ class LeafletMap:
         station_id_colname="station_id",
         name="Stations",
         property_names=None,
+        fit_map=True,
         # cluster=False
     ):
         """
@@ -196,7 +197,7 @@ class LeafletMap:
         geojson.on_hover(self.create_hover(widgets, property_names=property_names))
         self.map.add(geojson)
 
-        if coord_names is not None:
+        if coord_names is not None and fit_map:
             self._set_default_boundaries(geodata, coord_names)
 
         # Add the legend to the map
