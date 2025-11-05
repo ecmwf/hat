@@ -23,8 +23,10 @@ jobs:
     name: setup
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
       - name: install hat package
         shell: bash -l {0}
         run: pip install .
@@ -34,8 +36,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [setup]
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
       - name: developer install of hat package
         shell: bash -l {0}
         run: pip install .[test]
@@ -48,8 +52,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [setup]
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v5
+    - uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
     - name: install hat package
       shell: bash -l {0}
       run: pip install .
