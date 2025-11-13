@@ -72,9 +72,17 @@ def parse_stations(station_config):
 def process_inputs(station_config, grid_config):
     index_config, coords_config, index_1d_config, station_names, df = parse_stations(station_config)
 
-    # TODO: better malformed config handling
+    # Validate station mapping configuration
     if index_config is not None and coords_config is not None:
-        raise ValueError("Use either index or coords, not both.")
+        raise ValueError("Station config must use either 'index' or 'coords', not both.")
+
+    if list(grid_config["source"].keys())[0] == "gribjump":
+        if index_1d_config is None:
+            raise ValueError("Gribjump source requires 'index_1d' in station config.")
+    else:
+        # For non-gribjump sources, require either index or coords
+        if index_config is None and coords_config is None:
+            raise ValueError("Station config must provide either 'index' or 'coords' for station mapping.")
 
     if list(grid_config["source"].keys())[0] == "gribjump":
         assert index_1d_config is not None
@@ -90,13 +98,10 @@ def process_inputs(station_config, grid_config):
 
         if index_config is not None:
             mask, duplication_indexes = create_mask_from_index(index_config, df, shape)
-        elif coords_config is not None:
+        else:  # coords_config is not None (validated above)
             mask, duplication_indexes = create_mask_from_coords(
                 coords_config, df, da[gridx_colname].values, da[gridy_colname].values, shape
             )
-        else:
-            # default to index approach
-            mask, duplication_indexes = create_mask_from_index(index_config, df, shape)
 
         logger.info("Extracting timeseries at selected stations")
         masked_da = apply_mask(da, mask, gridx_colname, gridy_colname)
