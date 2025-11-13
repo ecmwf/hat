@@ -2,6 +2,7 @@ from dask.diagnostics.progress import ProgressBar
 import pandas as pd
 import xarray as xr
 import numpy as np
+from typing import Any
 from hat.core import load_da
 
 from hat import _LOGGER as logger
@@ -30,7 +31,8 @@ def construct_mask(x_indices, y_indices, shape):
 def create_mask_from_index(df, shape):
     logger.info(f"Creating mask {shape} from index")
     logger.debug(f"DataFrame columns: {df.columns.tolist()}")
-    x_indices, y_indices = df["x_index"].values, df["y_index"].values
+    x_indices = df["x_index"].values
+    y_indices = df["y_index"].values
     if np.any(x_indices < 0) or np.any(x_indices >= shape[0]) or np.any(y_indices < 0) or np.any(y_indices >= shape[1]):
         raise ValueError(
             f"Station indices out of grid bounds. Grid shape={shape}, "
@@ -56,7 +58,7 @@ def create_mask_from_coords(df, gridx, gridy, shape):
     return mask, duplication_indexes
 
 
-def parse_stations(station_config):
+def parse_stations(station_config: dict[str, Any]) -> pd.DataFrame:
     """Read, filter, and normalize station DataFrame to canonical column names."""
     logger.debug(f"Reading station file, {station_config}")
     if "name" not in station_config:
@@ -116,12 +118,12 @@ def parse_stations(station_config):
     return df_renamed
 
 
-def _process_gribjump(grid_config, df):
+def _process_gribjump(grid_config: dict[str, Any], df: pd.DataFrame) -> xr.Dataset:
     if "index_1d" not in df.columns:
         raise ValueError("Gribjump source requires 'index_1d' in station config.")
 
     station_names = df["station_name"].values
-    unique_indices, duplication_indexes = np.unique(df["index_1d"].values, return_inverse=True)
+    unique_indices, duplication_indexes = np.unique(df["index_1d"].values, return_inverse=True)  # type: ignore[call-overload]
     # TODO: Double-check this. Converting indices to ranges is currently
     # faster than using indices directly, should be fixed in the gribjump
     # source.
@@ -138,7 +140,7 @@ def _process_gribjump(grid_config, df):
     return ds
 
 
-def _process_regular(grid_config, df):
+def _process_regular(grid_config: dict[str, Any], df: pd.DataFrame) -> xr.Dataset:
     station_names = df["station_name"].values
     da, var_name, x_dim, y_dim, shape = process_grid_inputs(grid_config)
 
@@ -159,7 +161,7 @@ def _process_regular(grid_config, df):
     return ds
 
 
-def process_inputs(station_config, grid_config):
+def process_inputs(station_config: dict[str, Any], grid_config: dict[str, Any]) -> xr.Dataset:
     df = parse_stations(station_config)
     if "gribjump" in grid_config.get("source", {}):
         return _process_gribjump(grid_config, df)
@@ -189,7 +191,7 @@ def apply_mask(da, mask, coordx, coordy):
         return task.compute()
 
 
-def extractor(config):
+def extractor(config: dict[str, Any]) -> xr.Dataset:
     ds = process_inputs(config["station"], config["grid"])
     if config.get("output", None) is not None:
         logger.info(f"Saving output to {config['output']['file']}")
