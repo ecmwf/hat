@@ -4,6 +4,7 @@ import pytest
 import pandas as pd
 import numpy as np
 import xarray as xr
+from unittest.mock import Mock, patch
 
 from hat.extract_timeseries.extractor import extractor
 
@@ -227,3 +228,61 @@ def test_extractor_with_output_file(dummy_grid_data, station_csv_file, tmp_path)
     xr.testing.assert_equal(result_ds.station, loaded_ds.station)
 
     loaded_ds.close()
+
+
+def test_extractor_with_empty_stations(dummy_grid_data, tmp_path):
+    """Test that extractor raises clear error for empty station list."""
+    empty_csv = tmp_path / "empty_stations.csv"
+    pd.DataFrame(columns=["station_id", "opt_x_index", "opt_y_index"]).to_csv(empty_csv, index=False)
+
+    config = {
+        "station": {
+            "file": str(empty_csv),
+            "name": "station_id",
+            "index": {"x": "opt_x_index", "y": "opt_y_index"},
+        },
+        "grid": {
+            "source": {"list-of-dicts": {"list_of_dicts": dummy_grid_data}},
+            "coords": {"x": "latitude", "y": "longitude"},
+        },
+    }
+
+    with pytest.raises(ValueError, match="No stations found"):
+        extractor(config)
+
+
+@patch("earthkit.data.from_source")
+def test_extractor_gribjump(mock_from_source, tmp_path):
+    """Test gribjump path: verifies ranges computation and earthkit call."""
+
+    # Mock returns object with to_xarray() that returns minimal dataset
+    mock_source = Mock()
+    mock_source.to_xarray.return_value = xr.Dataset(
+        {"temperature": xr.DataArray([[15.0, 25.0], [35.0, 45.0]], dims=["index", "time"])}
+    )
+    mock_from_source.return_value = mock_source
+
+    # Station CSV with index_1d (includes duplicate to test deduplication)
+    csv_file = tmp_path / "stations.csv"
+    pd.DataFrame(
+        {
+            "name": ["S1", "S2", "S3"],
+            "idx": [100, 200, 100],  # S1 and S3 share index 100
+        }
+    ).to_csv(csv_file, index=False)
+
+    config = {
+        "station": {"file": str(csv_file), "name": "name", "index_1d": "idx"},
+        "grid": {"source": {"gribjump": {"request": {"class": "od", "expver": "0001", "stream": "oper"}}}},
+    }
+
+    result = extractor(config)
+
+    # Verify earthkit.data.from_source was called correctly
+    mock_from_source.assert_called_once_with(
+        "gribjump", request={"class": "od", "expver": "0001", "stream": "oper"}, ranges=[(100, 101), (200, 201)]
+    )
+
+    # Verify output
+    assert len(result.station) == 3
+    assert list(result.station.values) == ["S1", "S2", "S3"]
