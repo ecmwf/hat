@@ -72,6 +72,10 @@ dependencies = [
     ]
     gribjump = [
 	"earthkit-data[gribjump]",
+    # At this time, there is not an official release on PyPI which can be easily
+    # installed without potential ABI issues with other dependencies. As long as
+    # this is the case and using gribjump is an experimental feature in HAT, we
+    # point to a development release that should work for most users.
 	"gribjumplib==0.10.3.dev20250908"
     ]
 
