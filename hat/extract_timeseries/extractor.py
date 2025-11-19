@@ -1,4 +1,4 @@
-from dask.diagnostics.progress import ProgressBar
+from dask.diagnostics import ProgressBar
 import pandas as pd
 import xarray as xr
 import numpy as np
