@@ -124,12 +124,24 @@ def _process_gribjump(grid_config: dict[str, Any], df: pd.DataFrame) -> xr.Datas
 
     station_names = df["station_name"].values
     unique_indices, duplication_indexes = np.unique(df["index_1d"].values, return_inverse=True)  # type: ignore[call-overload]
-    # TODO: Double-check this. Converting indices to ranges is currently
-    # faster than using indices directly, should be fixed in the gribjump
-    # source.
+
+    # Converting indices to ranges is currently faster than using indices
+    # directly. This is a problem in the earthkit-data gribjump source and will
+    # be fixed there.
     ranges = [(i, i + 1) for i in unique_indices]
 
-    gribjump_config = {"source": {"gribjump": {**grid_config["source"]["gribjump"], "ranges": ranges}}}
+    gribjump_config = {
+        "source": {
+            "gribjump": {
+                **grid_config["source"]["gribjump"],
+                "ranges": ranges,
+                # fetch_coords_from_fdb is currently very slow. Needs fix in
+                # earthkit-data gribjump source.
+                # "fetch_coords_from_fdb": True,
+            }
+        },
+        "to_xarray_options": grid_config.get("to_xarray_options", {}),
+    }
 
     masked_da, var_name = load_da(gribjump_config, 2)
 
@@ -168,11 +180,11 @@ def process_inputs(station_config: dict[str, Any], grid_config: dict[str, Any]) 
     return _process_regular(grid_config, df)
 
 
-def mask_array_np(arr, mask):
+def mask_array_np(arr: np.ndarray, mask: np.ndarray) -> np.ndarray:
     return arr[..., mask]
 
 
-def apply_mask(da, mask, coordx, coordy):
+def apply_mask(da: xr.DataArray, mask: np.ndarray, coordx: str, coordy: str) -> xr.DataArray:
     task = xr.apply_ufunc(
         mask_array_np,
         da,
