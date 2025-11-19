@@ -41,8 +41,8 @@ dependencies = [
     "tqdm",
     "ipyleaflet",
     "ipywidgets",
-    "earthkit-data>=0.13.8",
-    "earthkit-hydro",
+    "earthkit-data>=0.18.2",
+    "earthkit-hydro>=1.0.0",
     "earthkit-meteo",
     "cfgrib", # check if necessary
     "netCDF4", # check if necessary
@@ -61,12 +61,22 @@ dependencies = [
 
 [project.optional-dependencies]
     test = [
-        "pytest"
+        "pytest",
+        "pytest-cov"
     ]
     dev = [
         "pytest",
+        "pytest-cov",
         "ruff",
         "pre-commit"
+    ]
+    gribjump = [
+	"earthkit-data[gribjump]",
+    # At this time, there is not an official release on PyPI which can be easily
+    # installed without potential ABI issues with other dependencies. As long as
+    # this is the case and using gribjump is an experimental feature in HAT, we
+    # point to a development release that should work for most users.
+	"gribjumplib==0.10.3.dev20250908"
     ]
 
 [project.scripts]
@@ -96,6 +106,11 @@ indent-style = "space"
 addopts = "--pdbcls=IPython.terminal.debugger:Pdb"
 testpaths = [
     "tests",
+]
+filterwarnings = [
+    # Probably harmless numpy 2.x ABI warning from netCDF4's Cython extension
+    # See: https://github.com/Unidata/netcdf4-python/issues/1354
+    "ignore:numpy.ndarray size changed:RuntimeWarning",
 ]
 
 # Packaging/setuptools options
