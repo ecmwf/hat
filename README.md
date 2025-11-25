@@ -57,7 +57,9 @@ pip install hydro-analysis-toolkit[gribjump]
 ```
 
 > [!NOTE]
-> The gribjump feature is experimental and depends on a pre-release version of `gribjumplib`. This feature is not recommended for production use and may change or break in future releases.
+> The gribjump feature is experimental. It is not recommended for production use and may change or break in future releases.
+> Information on how to build gribjump can be found in [GribJump's source code](https://github.com/ecmwf/gribjump/). Experimental
+> wheels of `gribjumplib` can also be found [on PyPI](https://pypi.org/project/gribjumplib/).
 
 
 ## Licence
