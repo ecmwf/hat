@@ -47,7 +47,7 @@ def apply_blacklist(blacklist_config, metric_grid, grid_area_coords1, grid_area_
     return metric_grid, grid_area_coords1, grid_area_coords2
 
 
-def outputs_to_df(df, indx, indy, cindx, cindy, errors, grid_area_coords1, grid_area_coords2, filename):
+def outputs_to_df(df, indx, indy, cindx, cindy, errors, grid_area_coords1, grid_area_coords2, shape, filename):
     df["opt_x_index"] = indx
     df["opt_y_index"] = indy
     df["near_x_index"] = cindx
@@ -55,6 +55,7 @@ def outputs_to_df(df, indx, indy, cindx, cindy, errors, grid_area_coords1, grid_
     df["opt_error"] = errors
     df["opt_x_coord"] = grid_area_coords1[indx, 0]
     df["opt_y_coord"] = grid_area_coords2[0, indy]
+    df["opt_1d_index"] = indy + shape[1] * indx
     if filename is not None:
         df.to_csv(filename, index=False)
     return df
@@ -109,6 +110,7 @@ def mapper(config):
         *mapping_outputs,
         grid_area_coords1,
         grid_area_coords2,
+        shape=grid_area_coords1.shape,
         filename=config["output"]["file"] if config.get("output", None) is not None else None,
     )
     generate_summary_plots(df, config.get("plot", None))

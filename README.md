@@ -50,6 +50,18 @@ pip install -e .[dev]
 pre-commit install
 ```
 
+HAT provides **experimental** support for earthkit-data's [gribjump source](https://earthkit-data.readthedocs.io/en/latest/guide/sources.html#gribjump).
+To install the gribjump extras for testing and experimentation, run:
+```bash
+pip install hydro-analysis-toolkit[gribjump]
+```
+
+> [!NOTE]
+> The gribjump feature is experimental. It is not recommended for production use and may change or break in future releases.
+> Information on how to build gribjump can be found in [GribJump's source code](https://github.com/ecmwf/gribjump/). Experimental
+> wheels of `gribjumplib` can also be found [on PyPI](https://pypi.org/project/gribjumplib/).
+
+
 ## Licence
 
 ```
