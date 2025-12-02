@@ -3,8 +3,6 @@ import argparse
 import sys
 
 from hat import _LOGGER as logger
-from hat.compute_hydrostats.stat_calc import stat_calc
-from hat.extract_timeseries.extractor import extractor
 from hat.station_mapping.mapper import mapper
 
 
@@ -24,8 +22,6 @@ def commandlineify(func):
 
 
 mapper_cli = commandlineify(mapper)
-extractor_cli = commandlineify(extractor)
-stat_calc_cli = commandlineify(stat_calc)
 
 
 if __name__ == "__main__":
