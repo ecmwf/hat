@@ -10,7 +10,7 @@ If you have already [installed](installation.md) hat then
 
 Run a command line tool, for example
 
-    $ hat-extract-timeseries --help
+    $ hat-station-mapping --help
 
 For more information on individual command line tools, use the `--help` option at the command line or read the documentation, for instance for the [station mapping](station_mapping.md) tool.
 
