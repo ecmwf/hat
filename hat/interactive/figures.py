@@ -152,10 +152,17 @@ class DetForecastFigure(go.FigureWidget):
         layout = go.Layout(layout)
         super().__init__(*args, layout=layout, **kwargs)
 
-    def add_hat_trace(self, trace_name: str, x, y, **kwargs):
+    def add_hat_trace(self, trace_name: str, x, y, name=None, **kwargs):
         trace_style = self._hat_traces.get_hat_style(trace_name)
-        trace_kwargs = {"x": x, "y": y, **trace_style, **kwargs}
-        self.add_trace(go.Scatter(**trace_kwargs))
+        tname = name or trace_name
+        trace_kwargs = {"x": x, "y": y, "name": tname, **trace_style, **kwargs}
+        trace_exists = any([trace.name == tname for trace in self.data])
+        if trace_exists:
+            for trace in self.data:
+                if trace.name == tname:
+                    trace.update(trace_kwargs)
+        else:
+            self.add_trace(go.Scatter(**trace_kwargs))
 
     def hat_plot(
         self, valid_dates: list[datetime], forecast: list[float], thresholds: dict[str, float | None], **kwargs
