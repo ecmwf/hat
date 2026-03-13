@@ -42,7 +42,7 @@ dependencies = [
     "ipyleaflet",
     "ipywidgets",
     "earthkit-data>=0.18.2",
-    "earthkit-hydro>=1.0.0",
+    "earthkit-hydro>=1.2.0",
     "earthkit-meteo",
     "cfgrib", # check if necessary
     "netCDF4", # check if necessary
@@ -51,8 +51,7 @@ dependencies = [
     "floods-html",
     "geopy",
     "setuptools",
-    "anywidget",
-    "earthkit-utils<=0.1.2"
+    "anywidget"
 ]
 
 [project.urls]

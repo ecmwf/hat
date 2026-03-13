@@ -68,11 +68,13 @@ class StationMapping:
                 area_error = self.metric_error_func(station_metric[i], subset_metric)
 
             error = area_error + self.lambd * distance_error
+            area = subset_metric
 
             try:
                 best_error_1d_index = np.nanargmin(error)
                 min_index = np.unravel_index(best_error_1d_index, shape)
                 best_error = error[best_error_1d_index]
+                best_area = area[best_error_1d_index]
 
                 center_offset_x = closest_idx - searchbox_min_x
                 center_offset_y = closest_idy - searchbox_min_y
@@ -80,11 +82,13 @@ class StationMapping:
                 closest_1d_index = center_offset_x * subset_width + center_offset_y
 
                 closest_error = error[closest_1d_index]
+                closest_area = area[closest_1d_index]
 
                 if closest_error <= self.min_error:  # if nearest cell is good enough
                     indx = closest_idx
                     indy = closest_idy
                     best_error = closest_error
+                    best_area = closest_area
                 elif best_error <= self.max_error:
                     indx = (min_index[0] + searchbox_min_x) % grid_area_coords1.shape[0]
                     indy = (min_index[1] + searchbox_min_y) % grid_area_coords1.shape[1]
@@ -92,6 +96,7 @@ class StationMapping:
                     indx = closest_idx
                     indy = closest_idy
                     best_error = closest_error
+                    best_area = closest_area
             except ValueError:
                 center_offset_x = closest_idx - searchbox_min_x
                 center_offset_y = closest_idy - searchbox_min_y
@@ -99,9 +104,11 @@ class StationMapping:
                 closest_1d_index = center_offset_x * subset_width + center_offset_y
 
                 closest_error = error[closest_1d_index]
+                closest_area = area[closest_1d_index]
                 indx = closest_idx
                 indy = closest_idy
                 best_error = closest_error
+                best_area = closest_area
 
             indxs[i] = indx
             indys[i] = indy
@@ -111,4 +118,4 @@ class StationMapping:
 
             errors[i] = best_error
 
-        return indxs, indys, closest_indxs, closest_indys, errors
+        return indxs, indys, best_area, closest_indxs, closest_indys, closest_area, errors

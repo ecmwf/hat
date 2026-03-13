@@ -47,12 +47,16 @@ def apply_blacklist(blacklist_config, metric_grid, grid_area_coords1, grid_area_
     return metric_grid, grid_area_coords1, grid_area_coords2
 
 
-def outputs_to_df(df, indx, indy, cindx, cindy, errors, grid_area_coords1, grid_area_coords2, shape, filename):
+def outputs_to_df(
+    df, indx, indy, area, cindx, cindy, carae, errors, grid_area_coords1, grid_area_coords2, shape, filename
+):
     df["opt_x_index"] = indx
     df["opt_y_index"] = indy
     df["near_x_index"] = cindx
     df["near_y_index"] = cindy
+    df["near_area"] = carae
     df["opt_error"] = errors
+    df["opt_area"] = area
     df["opt_x_coord"] = grid_area_coords1[indx, 0]
     df["opt_y_coord"] = grid_area_coords2[0, indy]
     df["opt_1d_index"] = indy + shape[1] * indx
