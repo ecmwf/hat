@@ -122,4 +122,4 @@ class StationMapping:
             best_areas[i] = best_area
             closest_areas[i] = closest_area
 
-        return indxs, indys, best_area, closest_indxs, closest_indys, closest_area, errors
+        return indxs, indys, best_areas, closest_indxs, closest_indys, closest_areas, errors
