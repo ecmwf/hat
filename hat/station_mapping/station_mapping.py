@@ -28,6 +28,8 @@ class StationMapping:
         closest_indxs = np.empty(num_stations, dtype=int)
         closest_indys = np.empty(num_stations, dtype=int)
         errors = np.empty(num_stations, dtype=float)
+        closest_areas = np.empty(num_stations, dtype=float)
+        best_areas = np.empty(num_stations, dtype=float)
 
         for i in range(num_stations):
             station_x, station_y = station_coords1[i], station_coords2[i]
@@ -117,5 +119,7 @@ class StationMapping:
             closest_indys[i] = closest_idy
 
             errors[i] = best_error
+            best_areas[i] = best_area
+            closest_areas[i] = closest_area
 
         return indxs, indys, best_area, closest_indxs, closest_indys, closest_area, errors
