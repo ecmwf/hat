@@ -12,7 +12,7 @@ from ipywidgets import HTML, Button, DatePicker, HBox, Label, Layout, Output, Te
 from earthkit.meteo.score import crps
 
 
-from floods_html import floods_html
+import floods_html as fh
 
 
 class ThrottledClick:
@@ -677,6 +677,45 @@ class UpdatingHTML(Widget):
         with open(json_path, "r") as f:
             json_info = json.load(f)
 
-        htmls = floods_html.json_to_html(json_info["data"], svg_location=svg_path)
+        htmls = fh.json_to_html(json_info["data"], svg_location=svg_path)
+        large_html_string = "".join(htmls)
+        self.HTML_object.value = large_html_string
+
+
+class VerificationJSONWidget(UpdatingHTML):
+    """A widget to display the point information and forecast verification information in 
+    the HTML format, using the standard verification JSON file as input and floods_html 
+    to convert the JSON to HTML.
+    """
+
+    def update(self, index, *args, **kwargs):
+        json_name = self.config["json_template"].format(date=self.config["date"], station_id=index)
+        with open(json_name, "r") as f:
+            data = json.load(f)
+
+        json_object = fh.FHJson()
+
+        station_metadata = data["table_attributes"]
+
+        table = fh.FHTable(title="Point Information", html_options={"class": ["table", "table-bordered"]})
+        header_list = [fh.FHTableEntry(value="Point ID")]
+        row_list = [fh.FHTableEntry(value=index)]
+        for record in station_metadata:
+            header_list.append(fh.FHTableEntry(value=list(record.keys())[0]))
+            row_list.append(fh.FHTableEntry(value=list(record.values())[0]))
+        table.add_header(header_list)
+        table.add_row(row_list)
+
+        json_object.add(table)
+        
+        images = data["images"]
+        for _, options in images.items():
+            json_object.add(
+                fh.FHFigure(title=options["title"], filename=options["name"]),
+            )
+
+        svg_path = self.config["svg"].format(date=self.config["date"])
+
+        htmls = fh.json_to_html(json_object, resources_root=svg_path)
         large_html_string = "".join(htmls)
         self.HTML_object.value = large_html_string

@@ -2,10 +2,11 @@ import os
 
 import ipywidgets
 import pandas as pd
+import geopandas as gpd
 import xarray as xr
 from IPython.display import display
 
-from hat.interactive.leaflet import LeafletMap, StatsColormap, PPColormap, ReportingPointsColormap
+from hat.interactive.leaflet import LeafletMap, StatsColormap, PPColormap, ReportingPointsColormap, VerificationPointsColormap
 from hat.interactive.widgets import (
     MetaDataWidget,
     PlotlyWidget,
@@ -13,6 +14,7 @@ from hat.interactive.widgets import (
     StatisticsWidget,
     WidgetsManager,
     UpdatingHTML,
+    VerificationJSONWidget,
 )
 
 
@@ -540,6 +542,71 @@ class ReportingPointsExplorer(StationsExplorer):
             colormap,
             self.widgets,
             self.config["station_coordinates"],
+        )
+
+        # Initialize frame elements
+        frame = self.create_frame()
+
+        # Display the main layout
+        display(frame)
+
+
+class VerificationPointsExplorer(ReportingPointsExplorer):
+    """Similar to the ReportingPointsExplorer but for the verification points, 
+    using the standard verification JSON file as input and floods_html to convert the JSON to HTML.
+    """
+    def __init__(self, config):
+        # Initialise base class
+        self.config = config
+
+        self.station_index = self.config["station_id_column_name"]
+
+        # Title label
+        self.title_label = ipywidgets.Label(
+            "Interactive Map Visualisation of Verification Points",
+            layout=ipywidgets.Layout(justify_content="center"),
+            style={"font_weight": "bold", "font_size": "24px", "font_family": "Arial"},
+        )
+
+        self.stations_metadata = gpd.read_file(config["stations_layer"].format(date=self.config["date"]))
+
+        # Create the main leaflet map
+        self.leafletmap = LeafletMap()
+        # Create the interactive widgets
+        widgets = {}
+        # Create loading widget
+        self.loading_widget = ipywidgets.Label(value="")
+        widgets["html"] = VerificationJSONWidget(self.config)
+        self.widgets = WidgetsManager(widgets, config["station_id_column_name"], self.loading_widget)
+
+    def plot(self):
+        """
+        Plot the stations markers colored by a given metric.
+
+        Parameters
+        ----------
+        colorby : str, optional
+            The name of the metric to color the stations by.
+        sim : str, optional
+            The name of the simulation to use for the metric.
+        limits : list, optional
+            A list of two values representing the minimum and maximum values
+            for the color bar.
+        mp_colormap : str, optional
+            The name of the matplotlib colormap to use for the color bar.
+
+        """
+
+        # create colormap from statistics
+        colormap = VerificationPointsColormap(self.config["target_variable"])
+
+        # add layer to the leaflet map
+        self.leafletmap.add_geolayer(
+            self.stations_metadata,
+            colormap,
+            self.widgets,
+            self.config["station_coordinates"],
+            station_id_colname=self.config["station_id_column_name"],
         )
 
         # Initialize frame elements

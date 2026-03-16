@@ -505,3 +505,49 @@ class ReportingPointsColormap(PyleafletColormap):
             return style
 
         return map_color
+
+class VerificationPointsColormap(PyleafletColormap):
+    """
+    A class handling the colormap of a pyleaflet map colored by a statistic.
+
+    Parameters
+    ----------
+    target_variable : str
+        The name of the variable in the station metadata to use for coloring the points.
+    
+    """
+
+    def __init__(
+        self,
+        target_variable="crpss_pers",
+    ):
+
+        self.target_variable = target_variable
+
+        cmap_colors = [
+            (252/256., 236/256., 226/256.),
+            (244/256., 183/256., 186/256.),
+            (236/256., 113/256., 160/256.),
+            (187/256., 46/256., 137/256.),
+            (115/256., 14/256., 117/256.),
+        ]
+        colormap = mpl.colors.ListedColormap(cmap_colors)
+
+        self.vals = [1, 3, 6, 10, 100]
+
+        super().__init__(colormap)
+
+    def style_callback(self):
+        def map_color(feature):
+            for colour, val in zip(self.colormap.colors, self.vals):
+                if feature["properties"][self.target_variable] < val:
+                    color = mpl.colors.rgb2hex(colour)
+                    break
+
+            style = {
+                "color": "black",
+                "fillColor": color,
+            }
+            return style
+
+        return map_color
