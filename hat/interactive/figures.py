@@ -2,6 +2,8 @@ from datetime import datetime
 from pathlib import Path
 import yaml
 
+import numpy as np
+
 import plotly.graph_objects as go
 
 
@@ -84,12 +86,8 @@ class AIFLForecastStyles(PlotlyTraceStyleCollection):
             self.update_hat_style(trace_name, option)
 
 
-class DetForecastFigure(go.FigureWidget):
-    """wrapper object to hold base plot layout and styles for common elements for a forecast plot.
-    Extends the data handling notion of a normal plotly Figure
-
-    Allow configuration/labelling of axes, titles, etc. + overriding layout defaults via configuration
-    """
+class ForecastFigure(go.FigureWidget):
+    """base figure for forecast plots, with sensible defaults for axes, titles, etc."""
 
     base_font = dict(family="Roboto", size=12, color="rgb(82, 82, 82)")
     base_layout = dict(
@@ -164,19 +162,143 @@ class DetForecastFigure(go.FigureWidget):
         else:
             self.add_trace(go.Scatter(**trace_kwargs))
 
+
+class DetForecastFigure(ForecastFigure):
+    """wrapper object to hold base plot layout and styles for common elements for a forecast plot.
+    Extends the data handling notion of a normal plotly Figure
+
+    Allow configuration/labelling of axes, titles, etc. + overriding layout defaults via configuration
+    """
+
     def hat_plot(
         self, valid_dates: list[datetime], forecast: list[float], thresholds: dict[str, float | None], **kwargs
     ):
-        for thres, label in zip(["rl_2.0", "rl_5.0", "rl_20.0"], ["2-yr RP", "5-yr RP", "20-yr RP"]):
-            if thresholds[thres] is not None:
-                yvals = [float(thresholds[thres])] * len(valid_dates)
-                self.add_hat_trace(thres, x=valid_dates, y=yvals, name=label)
+        if thresholds is not None:
+            for thres, label in zip(["rl_2.0", "rl_5.0", "rl_20.0"], ["2-yr RP", "5-yr RP", "20-yr RP"]):
+                if thresholds[thres] is not None:
+                    yvals = [float(thresholds[thres])] * len(valid_dates)
+                    self.add_hat_trace(thres, x=valid_dates, y=yvals, name=label)
         self.add_hat_trace("aifl", x=valid_dates, y=forecast, name="AIFL")
 
 
-class EnsembleForecastFigure(go.FigureWidget):
+class EnsembleForecastFigure(ForecastFigure):
     """fan style of plot for ensemble forecast data"""
 
+    def __init__(self, *args, style_overrides=None, layout_overrides=None, **kwargs):
+        self.base_layout = deep_update(self.base_layout, {"hovermode": "closest"})
+        super().__init__(*args, style_overrides=style_overrides, layout_overrides=layout_overrides, **kwargs)
 
-class EnsembleBoxPlotForecastFigure(go.FigureWidget):
+    def add_ensemble_traces(self, valid_dates: list[datetime], ens_data=np.ndarray["time", "number"]):
+        y_max = ens_data.max(axis=1)
+        y_min = ens_data.min(axis=1)
+        y_q25 = np.quantile(ens_data, 0.25, axis=1)
+        y_q75 = np.quantile(ens_data, 0.75, axis=1)
+        y_max = ens_data.max(axis=1)
+        y_mean = ens_data.mean(axis=1)
+
+        # Min-Max band
+        self.add_trace(
+            go.Scatter(
+                x=valid_dates,
+                y=y_min,
+                mode="lines",
+                line=dict(width=0),
+                hoverinfo="skip",
+                showlegend=False,
+                name="_min",
+            )
+        )
+        self.add_trace(
+            go.Scatter(
+                x=valid_dates,
+                y=y_max,
+                mode="lines",
+                line=dict(width=0),
+                fill="tonexty",
+                fillcolor="rgba(91,137,197,0.12)",
+                name="Min-Max range",
+                hoverinfo="skip",
+            )
+        )
+
+        # IQR band
+        self.add_trace(
+            go.Scatter(
+                x=valid_dates,
+                y=y_q25,
+                mode="lines",
+                line=dict(width=0),
+                hoverinfo="skip",
+                showlegend=False,
+                name="_q25",
+            )
+        )
+        self.add_trace(
+            go.Scatter(
+                x=valid_dates,
+                y=y_q75,
+                mode="lines",
+                line=dict(width=0),
+                fill="tonexty",
+                fillcolor="rgba(67,111,177,0.28)",
+                name="Interquartile range",
+                hoverinfo="skip",
+            )
+        )
+
+        # Member lines
+        custom_stats = np.column_stack([y_min, y_q25, y_q75, y_mean, y_max])
+        for member in range(ens_data.shape[1]):
+            self.add_trace(
+                go.Scatter(
+                    x=valid_dates,
+                    y=ens_data[:, member],
+                    mode="lines+markers",
+                    line=dict(color="rgba(45,86,152,0.20)", width=1),
+                    marker=dict(size=0, opacity=0),
+                    name=f"# {member}",
+                    legendgroup="members",
+                    showlegend=False,
+                    customdata=custom_stats,
+                    hovertemplate=(
+                        "<b>%{x}</b><br>"
+                        "Member: <b>%{y:.3f}</b><br>"
+                        "Min: %{customdata[0]:.3f} | Max: %{customdata[4]:.3f}<br>"
+                        "IQR: %{customdata[1]:.3f} \u2013 %{customdata[2]:.3f}<br>"
+                        "Mean: %{customdata[3]:.3f}<extra>%{fullData.name}</extra>"
+                    ),
+                    hoverlabel=dict(bgcolor="rgba(25,47,89,0.95)", font=dict(color="white")),
+                )
+            )
+
+        # Mean line on top
+        self.add_trace(
+            go.Scatter(
+                x=valid_dates,
+                y=y_mean,
+                mode="lines",
+                line=dict(color="rgb(8,48,107)", width=3),
+                name="Mean",
+                customdata=custom_stats,
+                hovertemplate=(
+                    "<b>%{x}</b><br>"
+                    "Mean: <b>%{y:.3f}</b><br>"
+                    "Min: %{customdata[0]:.3f} | Max: %{customdata[4]:.3f}<br>"
+                    "IQR: %{customdata[1]:.3f} \u2013 %{customdata[2]:.3f}<extra>Mean</extra>"
+                ),
+            )
+        )
+
+    def hat_plot(
+        self, valid_dates: list[datetime], forecast: list[list[float]], thresholds: dict[str, float | None], **kwargs
+    ):
+        if thresholds is not None:
+            for thres, label in zip(["rl_2.0", "rl_5.0", "rl_20.0"], ["2-yr RP", "5-yr RP", "20-yr RP"]):
+                if thresholds[thres] is not None:
+                    yvals = [float(thresholds[thres])] * len(valid_dates)
+                    self.add_hat_trace(thres, x=valid_dates, y=yvals, name=label)
+        self.add_ensemble_traces(valid_dates, np.array(forecast))
+
+
+class EnsembleBoxPlotForecastFigure(ForecastFigure):
     """box-plot style of plot for ensemble forecast data"""
