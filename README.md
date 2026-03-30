@@ -16,22 +16,16 @@
 </p>
 
 <p align="center">
-  <!-- <a href="#quick-start">Quick Start</a>
-  • -->
   <a href="#installation">Installation</a>
-  •
-  <a href="https://hydro-analysis-toolkit.readthedocs.io">Documentation</a>
 </p>
 
 > \[!IMPORTANT\]
 > This software is **Emerging** and subject to ECMWF's guidelines on [Software Maturity](https://github.com/ecmwf/codex/raw/refs/heads/main/Project%20Maturity).
 
-The Hydrological Analysis Toolkit (HAT) is a software suite for hydrologists working with simulated and observed river discharge. HAT performs data analysis on hydrological datasets, with its main features being:
-- mapping station locations into hydrological model grids
-- interactive visualizations
+The Hydrological Analysis Toolkit (HAT) is a toolkit for interactive visualizations for hydrological applications.
 
 > [!NOTE]
-> The station extraction and hydrostats functionality formerly in HAT now live in [ecmwf/hyve](https://github.com/ecmwf/hyve).
+> The station extraction and hydrostats functionality formerly in HAT now live in [ecmwf/hyve](https://github.com/ecmwf/hyve), and the station mapping functionality now lives in [ecmwf/hydro-station-mapping](https://github.com/ecmwf/hydro-station-mapping).
 
 ### Installation
 
