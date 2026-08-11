@@ -9,7 +9,7 @@ import plotly.graph_objs as go
 from IPython.display import clear_output, display
 from ipywidgets import HTML, Button, DatePicker, HBox, Label, Layout, Output, Text, VBox
 
-from earthkit.meteo.score import crps_from_ensemble as crps
+from earthkit.meteo.score import crps
 
 
 from floods_html import floods_html

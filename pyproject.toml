@@ -36,15 +36,12 @@ dependencies = [
     "xarray",
     "matplotlib",
     "geopandas",
-    "typer", # check if necessary
-    "humanize", # check if necessary
     "tqdm",
     "ipyleaflet",
     "ipywidgets",
-    "earthkit>=1",
-    "cfgrib", # check if necessary
-    "netCDF4", # check if necessary
-    "eccodes", # check if necessary
+    "earthkit-data<=0.20",
+    "earthkit-hydro~=1.0",
+    "earthkit-meteo==0.6.2",
     "plotly",
     "floods-html",
     "geopy",
