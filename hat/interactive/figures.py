@@ -39,10 +39,8 @@ class PlotlyTraceStyleCollection:
         return cls.from_dict(yaml_config)
 
     @classmethod
-    def from_dict(cls, layout_dict: dict):
-        layout_kwargs = {k: v for k, v in layout_dict.items() if k != "hat_trace_styles"}
-        hat_trace_styles = layout_dict.get("hat_trace_styles", {})
-        return cls(hat_trace_styles=hat_trace_styles, **layout_kwargs)
+    def from_dict(cls, hat_trace_styles: dict):
+        return cls(hat_trace_styles=hat_trace_styles)
 
 
 class AIFLForecastStyles(PlotlyTraceStyleCollection):
@@ -188,7 +186,13 @@ class EnsembleForecastFigure(ForecastFigure):
         self.base_layout = deep_update(self.base_layout, {"hovermode": "closest"})
         super().__init__(*args, style_overrides=style_overrides, layout_overrides=layout_overrides, **kwargs)
 
-    def add_ensemble_traces(self, valid_dates: list[datetime], ens_data=np.ndarray["time", "number"]):
+    def add_ensemble_traces(
+        self,
+        valid_dates: list[datetime],
+        ens_data=np.ndarray["time", "number"],
+        highlight_control: bool = False,
+        **kwargs,
+    ):
         y_max = ens_data.max(axis=1)
         y_min = ens_data.min(axis=1)
         y_q25 = np.quantile(ens_data, 0.25, axis=1)
@@ -249,14 +253,19 @@ class EnsembleForecastFigure(ForecastFigure):
         # Member lines
         custom_stats = np.column_stack([y_min, y_q25, y_q75, y_mean, y_max])
         for member in range(ens_data.shape[1]):
+            line_style = dict(color="rgba(45,86,152,0.20)", width=1)
+            member_name = f"# {member}"
+            if highlight_control and member == 0:
+                line_style = dict(color="rgba(45,86,152,0.8)", width=3)
+                member_name = "cf"
             self.add_trace(
                 go.Scatter(
                     x=valid_dates,
                     y=ens_data[:, member],
                     mode="lines+markers",
-                    line=dict(color="rgba(45,86,152,0.20)", width=1),
+                    line=line_style,
                     marker=dict(size=0, opacity=0),
-                    name=f"# {member}",
+                    name=member_name,
                     legendgroup="members",
                     showlegend=False,
                     customdata=custom_stats,
@@ -290,14 +299,19 @@ class EnsembleForecastFigure(ForecastFigure):
         )
 
     def hat_plot(
-        self, valid_dates: list[datetime], forecast: list[list[float]], thresholds: dict[str, float | None], **kwargs
+        self,
+        valid_dates: list[datetime],
+        forecast: list[list[float]],
+        thresholds: dict[str, float | None],
+        highlight_control: bool = False,
+        **kwargs,
     ):
         if thresholds is not None:
             for thres, label in zip(["rl_2.0", "rl_5.0", "rl_20.0"], ["2-yr RP", "5-yr RP", "20-yr RP"]):
                 if thresholds[thres] is not None:
                     yvals = [float(thresholds[thres])] * len(valid_dates)
                     self.add_hat_trace(thres, x=valid_dates, y=yvals, name=label)
-        self.add_ensemble_traces(valid_dates, np.array(forecast))
+        self.add_ensemble_traces(valid_dates, np.array(forecast), highlight_control=highlight_control)
 
 
 class EnsembleBoxPlotForecastFigure(ForecastFigure):
