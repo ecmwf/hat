@@ -539,10 +539,14 @@ class VerificationPointsColormap(PyleafletColormap):
 
     def style_callback(self):
         def map_color(feature):
-            for colour, val in zip(self.colormap.colors, self.vals):
-                if feature["properties"][self.target_variable] < val:
-                    color = mpl.colors.rgb2hex(colour)
-                    break
+            feat_field = feature["properties"][self.target_variable]
+            if feat_field is None:
+                color = "#000000"
+            else:
+                for colour, val in zip(self.colormap.colors, self.vals):
+                    if feat_field < val:
+                        color = mpl.colors.rgb2hex(colour)
+                        break
 
             style = {
                 "color": "black",
