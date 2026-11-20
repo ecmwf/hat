@@ -16,13 +16,6 @@ jobs:
       - run: ruff check # check linting violations
       - run: ruff format --check --exclude *.ipynb # check formatting
 
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - run: pip install -r docs/requirements.txt
-      - run: mkdocs build
-
   setup_and_test:
     runs-on: ubuntu-latest
     steps:

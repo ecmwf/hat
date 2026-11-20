@@ -4,13 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hydro_analysis_toolkit"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     {name = "European Centre for Medium-Range Weather Forecasts (ECMWF)", email = "software.support@ecmwf.int"},
 ]
 maintainers = [
     {name = "Corentin Carton de Wiart", email = "corentin.carton@ecmwf.int"},
-    {name = "Oisín M. Morrison", email = "oisin.morrison@ecmwf.int"}
 ]
 description = "ECMWF's Hydrological Analysis Toolkit"
 license = { text = "Apache License Version 2.0" }
@@ -21,11 +20,11 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering"
     ]
 dynamic = ["version", "readme"]
@@ -56,7 +55,7 @@ dependencies = [
 
 [project.urls]
     repository = "https://github.com/ecmwf/hat"
-    documentation = "https://hydro-analysis-toolkit.readthedocs.io"
+    documentation = "https://github.com/ecmwf/hat"
     issues = "https://github.com/ecmwf/hat/issues"
 
 [project.optional-dependencies]
@@ -70,9 +69,6 @@ dependencies = [
         "ruff",
         "pre-commit"
     ]
-
-[project.scripts]
-    hat-station-mapping = "hat.cli:mapper_cli"
 
 # Linting settings
 [tool.ruff]
