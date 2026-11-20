@@ -118,3 +118,8 @@ __version__ = "{version}"
 parentdir_prefix_version='hat-'  # get version from GitHub-like tarballs
 fallback_version='0.7.1'
 local_scheme = "no-local-version"
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.31.0",
+]
